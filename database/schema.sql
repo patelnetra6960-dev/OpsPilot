@@ -780,3 +780,27 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = public, pg_temp;
 
+-- =====================================================================
+-- 16. Supabase Storage Buckets & Storage RLS Policies
+-- =====================================================================
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.schemata WHERE schema_name = 'storage') THEN
+        INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+        VALUES 
+            ('org-assets', 'org-assets', true, 5242880, ARRAY['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp']),
+            ('org-documents', 'org-documents', false, 52428800, ARRAY['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'image/png', 'image/jpeg']),
+            ('customer-attachments', 'customer-attachments', false, 26214400, ARRAY['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/png', 'image/jpeg', 'image/webp']),
+            ('project-files', 'project-files', false, 104857600, ARRAY['application/pdf', 'image/png', 'image/jpeg', 'application/zip', 'application/x-zip-compressed', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']),
+            ('work-order-photos', 'work-order-photos', false, 26214400, ARRAY['image/png', 'image/jpeg', 'image/webp']),
+            ('invoice-documents', 'invoice-documents', false, 15728640, ARRAY['application/pdf', 'image/png', 'image/jpeg'])
+        ON CONFLICT (id) DO UPDATE SET
+            public = EXCLUDED.public,
+            file_size_limit = EXCLUDED.file_size_limit,
+            allowed_mime_types = EXCLUDED.allowed_mime_types;
+
+        ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+    END IF;
+END $$;
+
+

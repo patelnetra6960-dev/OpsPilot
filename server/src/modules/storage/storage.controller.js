@@ -81,7 +81,8 @@ export const storageController = {
   async downloadFile(req, res, next) {
     try {
       const { bucket } = req.params;
-      const filePath = req.params[0] || req.query.path;
+      const rawPath = req.params[0] || req.query.path || '';
+      const filePath = rawPath.replace(/^\/+/, '');
 
       if (!bucket || !filePath) {
         return sendError(res, 'Bucket and file path are required', 400, 'VALIDATION_ERROR');
@@ -110,7 +111,8 @@ export const storageController = {
   async deleteFile(req, res, next) {
     try {
       const { bucket } = req.params;
-      const filePath = req.params[0] || req.body.filePath;
+      const rawPath = req.params[0] || req.body.filePath || '';
+      const filePath = rawPath.replace(/^\/+/, '');
 
       if (!bucket || !filePath) {
         return sendError(

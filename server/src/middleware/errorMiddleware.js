@@ -7,11 +7,17 @@ export const notFoundHandler = (req, res) => {
 };
 
 export const globalErrorHandler = (err, req, res, _next) => {
-  logger.error(`Unhandled error on ${req.method} ${req.originalUrl}`, err);
-
   const statusCode = err.status || err.statusCode || 500;
   const message = err.message || 'Internal Server Error';
   const errorCode = err.code || 'INTERNAL_SERVER_ERROR';
+
+  if (statusCode >= 500) {
+    logger.error(`Unhandled server error on ${req.method} ${req.originalUrl}:`, err);
+  } else {
+    logger.warn(
+      `Request rejected with ${statusCode} (${errorCode}) on ${req.method} ${req.originalUrl}: ${message}`
+    );
+  }
 
   return sendError(res, message, statusCode, errorCode, env.isProduction ? null : err.stack);
 };
