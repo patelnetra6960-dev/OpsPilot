@@ -11,7 +11,12 @@ import logger from '../utils/logger.js';
 export const requireTenant = async (req, res, next) => {
   try {
     if (!req.user) {
-      return sendError(res, 'Authentication context missing before tenant resolution', 401, 'UNAUTHORIZED');
+      return sendError(
+        res,
+        'Authentication context missing before tenant resolution',
+        401,
+        'UNAUTHORIZED'
+      );
     }
 
     // Extract tenant ID from header, query, or path parameter
@@ -33,16 +38,26 @@ export const requireTenant = async (req, res, next) => {
       );
 
       if (!organization) {
-        return sendError(res, `Organization '${tenantId}' not found or inactive`, 404, 'TENANT_NOT_FOUND');
+        return sendError(
+          res,
+          `Organization '${tenantId}' not found or inactive`,
+          404,
+          'TENANT_NOT_FOUND'
+        );
       }
 
       // Check membership
       const membership = mockDatabase.memberships.find(
-        (m) => m.organization_id === organization.id && m.user_id === req.user.id && m.status === 'active'
+        (m) =>
+          m.organization_id === organization.id &&
+          m.user_id === req.user.id &&
+          m.status === 'active'
       );
 
       if (!membership && !req.user.is_superadmin) {
-        logger.warn(`Cross-tenant breach prevented: User ${req.user.id} attempted to access Org ${organization.id}`);
+        logger.warn(
+          `Cross-tenant breach prevented: User ${req.user.id} attempted to access Org ${organization.id}`
+        );
         return sendError(
           res,
           'Access Denied: You do not have active membership in this organization',
@@ -58,7 +73,12 @@ export const requireTenant = async (req, res, next) => {
 
     // Production Supabase Tenant & Membership Verification
     if (!supabaseAdmin) {
-      return sendError(res, 'Database service unavailable for tenant verification', 503, 'SERVICE_UNAVAILABLE');
+      return sendError(
+        res,
+        'Database service unavailable for tenant verification',
+        503,
+        'SERVICE_UNAVAILABLE'
+      );
     }
 
     // 1. Verify organization exists and is active
@@ -82,7 +102,9 @@ export const requireTenant = async (req, res, next) => {
       .maybeSingle();
 
     if ((memError || !membership) && !req.user.is_superadmin) {
-      logger.warn(`Cross-tenant breach prevented: User ${req.user.id} tried accessing tenant ${organization.id}`);
+      logger.warn(
+        `Cross-tenant breach prevented: User ${req.user.id} tried accessing tenant ${organization.id}`
+      );
       return sendError(
         res,
         'Access Denied: You do not have active membership in this organization',
@@ -109,7 +131,12 @@ export const requireTenant = async (req, res, next) => {
 export const requireTenantRole = (allowedRoles = []) => {
   return (req, res, next) => {
     if (!req.membership) {
-      return sendError(res, 'Tenant membership context not loaded', 500, 'MEMBERSHIP_CONTEXT_MISSING');
+      return sendError(
+        res,
+        'Tenant membership context not loaded',
+        500,
+        'MEMBERSHIP_CONTEXT_MISSING'
+      );
     }
 
     if (req.user?.is_superadmin) {

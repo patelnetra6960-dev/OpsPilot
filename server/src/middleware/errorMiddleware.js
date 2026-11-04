@@ -6,18 +6,12 @@ export const notFoundHandler = (req, res) => {
   return sendError(res, `Route not found: ${req.method} ${req.originalUrl}`, 404, 'NOT_FOUND');
 };
 
-export const globalErrorHandler = (err, req, res, next) => {
+export const globalErrorHandler = (err, req, res, _next) => {
   logger.error(`Unhandled error on ${req.method} ${req.originalUrl}`, err);
 
   const statusCode = err.status || err.statusCode || 500;
   const message = err.message || 'Internal Server Error';
   const errorCode = err.code || 'INTERNAL_SERVER_ERROR';
 
-  return sendError(
-    res,
-    message,
-    statusCode,
-    errorCode,
-    env.isProduction ? null : err.stack
-  );
+  return sendError(res, message, statusCode, errorCode, env.isProduction ? null : err.stack);
 };

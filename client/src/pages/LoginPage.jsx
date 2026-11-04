@@ -124,7 +124,10 @@ export const LoginPage = () => {
         </div>
 
         {/* Standard Form */}
-        <form onSubmit={handleSubmit} className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4"
+        >
           <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">
             Or Sign In with Supabase Auth
           </div>

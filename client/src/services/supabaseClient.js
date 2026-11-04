@@ -8,19 +8,20 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 if (import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || import.meta.env.SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error(
     'CRITICAL SECURITY VIOLATION: Supabase Service Role Key detected in frontend bundle! ' +
-    'Service-role credentials must strictly reside on the backend server.'
+      'Service-role credentials must strictly reside on the backend server.'
   );
 }
 
 // Client initialized strictly with public Anon key
-export const supabase = (supabaseUrl && supabaseAnonKey && !supabaseUrl.includes('mock-opspilot'))
-  ? createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true
-      }
-    })
-  : null;
+export const supabase =
+  supabaseUrl && supabaseAnonKey && !supabaseUrl.includes('mock-opspilot')
+    ? createClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true
+        }
+      })
+    : null;
 
 export default supabase;

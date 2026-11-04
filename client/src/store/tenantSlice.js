@@ -8,12 +8,15 @@ export const fetchMyOrganizations = createAsyncThunk(
       const response = await apiClient.get('/organizations/my');
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.error?.message || 'Failed to fetch organizations');
+      return rejectWithValue(
+        error.response?.data?.error?.message || 'Failed to fetch organizations'
+      );
     }
   }
 );
 
-const savedTenantId = localStorage.getItem('opspilot_active_tenant_id') || '11111111-1111-1111-1111-111111111111';
+const savedTenantId =
+  localStorage.getItem('opspilot_active_tenant_id') || '11111111-1111-1111-1111-111111111111';
 
 const defaultInitialTenant = {
   id: '11111111-1111-1111-1111-111111111111',

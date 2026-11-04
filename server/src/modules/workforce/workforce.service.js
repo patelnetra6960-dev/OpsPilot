@@ -30,15 +30,14 @@ export const workforceService = {
       return members;
     }
 
-    let query = supabaseAdmin
-      .from('workforce_members')
-      .select('*')
-      .eq('organization_id', tenantId);
+    let query = supabaseAdmin.from('workforce_members').select('*').eq('organization_id', tenantId);
 
     if (department) query = query.eq('department', department);
     if (status) query = query.eq('status', status);
     if (search) {
-      query = query.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%,employee_code.ilike.%${search}%`);
+      query = query.or(
+        `first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%,employee_code.ilike.%${search}%`
+      );
     }
 
     const { data, error } = await query.order('created_at', { ascending: false });

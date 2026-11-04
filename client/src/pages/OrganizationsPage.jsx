@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Building2, Plus, Check, Shield, Globe, Calendar, X } from 'lucide-react';
+import { Building2, Plus, Check, X } from 'lucide-react';
 import { setCurrentTenant, fetchMyOrganizations } from '../store/tenantSlice.js';
 import apiClient from '../services/apiClient.js';
 import TenantBadge from '../components/common/TenantBadge.jsx';
@@ -38,7 +38,9 @@ export const OrganizationsPage = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight">Organization & Tenant Workspaces</h1>
+          <h1 className="text-2xl font-extrabold text-white tracking-tight">
+            Organization & Tenant Workspaces
+          </h1>
           <p className="text-xs text-slate-400 mt-1">
             Manage your organization affiliations, subscription plans, and tenant boundaries.
           </p>
@@ -71,7 +73,10 @@ export const OrganizationsPage = () => {
                   <div className="w-10 h-10 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
                     <Building2 className="w-5 h-5" />
                   </div>
-                  <TenantBadge role={org.role || 'owner'} tier={org.subscription_tier || 'starter'} />
+                  <TenantBadge
+                    role={org.role || 'owner'}
+                    tier={org.subscription_tier || 'starter'}
+                  />
                 </div>
 
                 <div>

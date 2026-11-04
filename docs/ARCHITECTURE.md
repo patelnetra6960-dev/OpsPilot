@@ -4,11 +4,12 @@
 **Status:** Approved Architectural Specification  
 **Authors:** Senior Software Architect & PostgreSQL Database Architect  
 **Target Delivery Window:** 8–12 Weeks (Solo Developer / Rapid Delivery)  
-**System:** OpsPilot — Multi-Tenant Enterprise Operations & Workforce Management SaaS  
+**System:** OpsPilot — Multi-Tenant Enterprise Operations & Workforce Management SaaS
 
 ---
 
 ## Table of Contents
+
 1. [High-Level Architecture Diagram](#1-high-level-architecture-diagram)
 2. [Frontend Architecture](#2-frontend-architecture)
 3. [Backend Modular Monolith Architecture](#3-backend-modular-monolith-architecture)
@@ -44,7 +45,7 @@ flowchart TB
 
     subgraph "Application Layer (Modular Monolith)"
         ExpressApp["Node.js / Express.js Server\n(Port 5000)"]
-        
+
         subgraph "Middleware Pipeline"
             SecMW["Security MW\n(Helmet, CORS)"]
             AuthMW["Auth MW\n(Supabase JWT)"]
@@ -74,7 +75,7 @@ flowchart TB
     Browser -->|HTTPS| ReverseProxy
     MobileWeb -->|HTTPS| ReverseProxy
     CustomerPortal -->|HTTPS| ReverseProxy
-    
+
     ReverseProxy -->|Proxy /api| ExpressApp
     ReverseProxy -->|Static Assets| Browser
 
@@ -108,15 +109,18 @@ flowchart TB
 ## 2. Frontend Architecture
 
 ### 2.1 Technology Stack & Organization
+
 The frontend is constructed as a modern Single Page Application (SPA) using:
-* **Core Framework:** React 19 (JavaScript ES2024)
-* **Build Tooling:** Vite 6 with Hot Module Replacement (HMR)
-* **Styling:** Tailwind CSS with custom enterprise design tokens
-* **State Management:** Redux Toolkit (RTK) with modular feature slices
-* **Routing:** React Router v7 with protected route hierarchies and tenant context guards
-* **Icons & UI Primitives:** Lucide React
+
+- **Core Framework:** React 19 (JavaScript ES2024)
+- **Build Tooling:** Vite 6 with Hot Module Replacement (HMR)
+- **Styling:** Tailwind CSS with custom enterprise design tokens
+- **State Management:** Redux Toolkit (RTK) with modular feature slices
+- **Routing:** React Router v7 with protected route hierarchies and tenant context guards
+- **Icons & UI Primitives:** Lucide React
 
 ### 2.2 Directory Structure
+
 ```
 client/
 ├── index.html
@@ -157,6 +161,7 @@ client/
 ```
 
 ### 2.3 State Management Architecture (Redux Toolkit)
+
 The client state is partitioned into three core slices to decouple network, identity, and UI concerns:
 
 ```mermaid
@@ -175,6 +180,7 @@ flowchart LR
 ```
 
 ### 2.4 Route Hierarchy and Route Guards
+
 ```
 /login                     -> Public (AuthLayout)
 /register                  -> Public (AuthLayout)
@@ -197,9 +203,11 @@ flowchart LR
 ## 3. Backend Modular Monolith Architecture
 
 ### 3.1 Why a Modular Monolith?
+
 A Modular Monolith provides the **domain isolation and clean boundaries** of microservices without the operational overhead of distributed transactions, network latency, multiple deployment pipelines, and complex service meshes. For a solo engineer delivering within 2–3 months, this maximizes developer velocity while remaining enterprise-grade and maintainable.
 
 ### 3.2 Modular Monolith Structure
+
 Each domain resides in its own isolated module under `server/src/modules/` containing its own controllers, services, validation schemas, and routes:
 
 ```
@@ -223,6 +231,7 @@ server/
 ```
 
 ### 3.3 Domain Decoupling & In-Process Communication
+
 To prevent tight coupling between modules, domains communicate across boundaries via **Service Interface Contracts** and an **In-Process Domain Event Emitter** (`EventEmitter`):
 
 ```mermaid
@@ -253,8 +262,9 @@ flowchart TD
 ## 4. Database Architecture & Data Models
 
 ### 4.1 PostgreSQL Database Engine & Extensions
-* Engine: Supabase PostgreSQL 15+
-* Extensions Enabled: `uuid-ossp`, `pgcrypto`, `pg_trgm` (fuzzy text search)
+
+- Engine: Supabase PostgreSQL 15+
+- Extensions Enabled: `uuid-ossp`, `pgcrypto`, `pg_trgm` (fuzzy text search)
 
 ### 4.2 Entity Relationship Diagram (ERD)
 
@@ -408,11 +418,14 @@ erDiagram
 ```
 
 ### 4.3 Soft Deletion Architecture
+
 To prevent catastrophic cascading deletes of operational history, all primary tables implement universal soft deletion via:
+
 ```sql
 ALTER TABLE public.workforce_members ADD COLUMN deleted_at TIMESTAMPTZ DEFAULT NULL;
 CREATE INDEX idx_workforce_members_active ON public.workforce_members(organization_id) WHERE deleted_at IS NULL;
 ```
+
 All read queries and RLS policies include `WHERE deleted_at IS NULL`. Hard deletes are strictly prohibited by omitting `DELETE` policies on audit logs and historical operational records.
 
 ---
@@ -434,14 +447,14 @@ sequenceDiagram
     Client->>SupaAuth: supabase.auth.signInWithPassword({ email, password })
     SupaAuth-->>Client: Return Session Object (access_token, refresh_token, user)
     Client->>Client: Store access_token in Memory / localStorage
-    
+
     Note over Client,API: Outbound Authenticated API Request
     Client->>API: GET /api/organizations/my (Headers: Authorization: Bearer <JWT>)
     API->>API: requireAuth: Decode & Verify RS256 JWT
     API->>DB: Fetch user profile & tenant memberships
     DB-->>API: Return memberships [Acme (Owner), Apex (Member)]
     API-->>Client: 200 OK with User & Organizations
-    
+
     Note over Client,SupaAuth: Automatic Background Token Refresh
     Client->>SupaAuth: supabase.auth.refreshSession()
     SupaAuth-->>Client: Return new access_token (every 60 mins)
@@ -452,13 +465,14 @@ sequenceDiagram
 ## 6. Authorization Flow & Dual-Tier RBAC
 
 OpsPilot implements a **Dual-Tier Defense-in-Depth Authorization Model**:
+
 1. **Tier 1 (Application Layer):** Express middleware validates tenant context and user role before executing domain code.
 2. **Tier 2 (Database Layer):** PostgreSQL Row Level Security (RLS) policies mathematically restrict rows returned by any query based on the executing user's UUID.
 
 ```mermaid
 flowchart TD
     Req["Incoming HTTP Request\nHeader: Authorization: Bearer <JWT>\nHeader: X-Tenant-Id: <UUID>"] --> MWAuth["1. requireAuth Middleware\n• Validates Supabase JWT\n• Attaches req.user = { id, email, is_superadmin }"]
-    
+
     MWAuth -->|Valid User| MWTenant["2. requireTenant Middleware\n• Extracts X-Tenant-Id\n• Checks user membership in organization_members\n• Attaches req.tenant and req.membership"]
     MWAuth -->|Invalid / Expired| Err401["401 Unauthorized"]
 
@@ -477,7 +491,9 @@ flowchart TD
 ## 7. Multi-Tenant Architecture & Isolation Engine
 
 ### 7.1 Tenant Context Resolution
+
 The active tenant is resolved dynamically per request using the `X-Tenant-Id` HTTP header:
+
 1. When a user switches organizations in the UI dropdown, Redux updates `currentTenant` and writes the UUID to `localStorage.setItem('opspilot_active_tenant_id', id)`.
 2. The Axios client interceptor attaches `X-Tenant-Id: <UUID>` to every outbound HTTP call.
 3. The Express `requireTenant` middleware verifies that the user actually belongs to that organization:
@@ -490,11 +506,15 @@ The active tenant is resolved dynamically per request using the `X-Tenant-Id` HT
 4. If valid, `req.tenant` and `req.membership` are attached to the request object. If invalid, the request is rejected immediately with `403 Forbidden`.
 
 ### 7.2 Proof of Zero Data Leakage
+
 Even if an application developer inadvertently writes:
+
 ```sql
 SELECT * FROM workforce_members; -- Missing WHERE organization_id = x
 ```
+
 The **PostgreSQL RLS engine** intercepts the statement:
+
 ```sql
 CREATE POLICY "Members can view workforce in their organization"
 ON public.workforce_members FOR SELECT
@@ -502,6 +522,7 @@ USING (
     public.is_member_of(organization_id) OR public.is_superadmin()
 );
 ```
+
 The query execution plan will automatically append the internal security filter, making cross-tenant data leakage mathematically impossible.
 
 ---
@@ -509,9 +530,11 @@ The query execution plan will automatically append the internal security filter,
 ## 8. API Communication Flow & Protocol Standards
 
 ### 8.1 Standardized Response Envelope
+
 All API endpoints return a predictable JSON envelope:
 
 #### Success Response (200 / 201)
+
 ```json
 {
   "success": true,
@@ -527,6 +550,7 @@ All API endpoints return a predictable JSON envelope:
 ```
 
 #### Error Response (400 / 401 / 403 / 404 / 500)
+
 ```json
 {
   "success": false,
@@ -542,16 +566,19 @@ All API endpoints return a predictable JSON envelope:
 ```
 
 ### 8.2 Standardized Pagination Protocol
+
 All list endpoints enforce pagination parameters:
-* `page`: Integer $\ge 1$ (default: `1`)
-* `limit`: Integer between `1` and `100` (default: `25`)
-* Returns `meta.totalCount` and `meta.hasMore` for infinite-scroll or paginated tables.
+
+- `page`: Integer $\ge 1$ (default: `1`)
+- `limit`: Integer between `1` and `100` (default: `25`)
+- Returns `meta.totalCount` and `meta.hasMore` for infinite-scroll or paginated tables.
 
 ---
 
 ## 9. Real-Time Communication Architecture
 
 ### 9.1 Architecture: Supabase Realtime (WebSocket CDC)
+
 Instead of operating an independent Socket.IO server (which introduces complex sticky sessions and horizontal clustering overhead for a solo developer), OpsPilot utilizes **Supabase Realtime**.
 
 Supabase Realtime captures PostgreSQL **Change Data Capture (CDC)** events from the Write-Ahead Log (WAL) and broadcasts them over WebSockets directly to subscribed client channels:
@@ -567,7 +594,7 @@ sequenceDiagram
 
     Dispatcher->>Client: Open Dispatch Dashboard
     Client->>RT: Subscribe to Channel "tenant-orders:<org_id>"
-    
+
     Tech->>API: POST /api/dispatch/:id/status { status: 'COMPLETED' }
     API->>DB: UPDATE work_orders SET status = 'COMPLETED' WHERE id = :id
     DB->>RT: WAL Change Event (UPDATE on work_orders)
@@ -576,15 +603,18 @@ sequenceDiagram
 ```
 
 ### 9.2 Channel Security Partitioning
+
 Channels are strictly partitioned by organization ID:
-* Channel name: `realtime:tenant:{organization_id}:dispatch`
-* The client passes their Supabase JWT when connecting to the WebSocket; Supabase Realtime verifies the JWT against PostgreSQL RLS to ensure clients can **only** receive broadcasts for their own tenant.
+
+- Channel name: `realtime:tenant:{organization_id}:dispatch`
+- The client passes their Supabase JWT when connecting to the WebSocket; Supabase Realtime verifies the JWT against PostgreSQL RLS to ensure clients can **only** receive broadcasts for their own tenant.
 
 ---
 
 ## 10. File Upload & Storage Architecture
 
 ### 10.1 Two-Phase Presigned URL Upload Pattern
+
 To preserve backend server bandwidth and prevent memory bloat, large file uploads (work order photos, PDF certificates) **never stream through Express**. Instead, a secure Two-Phase Presigned URL pattern is used:
 
 ```mermaid
@@ -600,19 +630,20 @@ sequenceDiagram
     API->>Storage: createSignedUploadUrl(`${tenantId}/${category}/${uuid}.jpg`)
     Storage-->>API: Return { signedUrl, path }
     API-->>Client: 200 OK with { signedUrl, path }
-    
+
     Client->>Storage: Direct HTTP PUT file to signedUrl
     Storage-->>Client: 200 OK Upload Successful
-    
+
     Client->>API: POST /api/documents/confirm\n{ path, fileSizeBytes, workOrderId }
     API->>DB: INSERT INTO document_records (organization_id, path, ...)
     API-->>Client: 201 Created (Document Registered)
 ```
 
 ### 10.2 Bucket Security & Tenant Folder Isolation
-* Bucket: `org-documents` (Private)
-* Object Storage Path: `/{organization_id}/{category}/{year}/{month}/{file_uuid}.{ext}`
-* Supabase Storage RLS Policy enforces:
+
+- Bucket: `org-documents` (Private)
+- Object Storage Path: `/{organization_id}/{category}/{year}/{month}/{file_uuid}.{ext}`
+- Supabase Storage RLS Policy enforces:
   ```sql
   CREATE POLICY "Tenant Members can read tenant documents"
   ON storage.objects FOR SELECT
@@ -629,6 +660,7 @@ sequenceDiagram
 ## 11. Error-Handling Architecture
 
 ### 11.1 Error Hierarchy
+
 OpsPilot utilizes a structured, custom error hierarchy inheriting from standard `Error`:
 
 ```
@@ -642,21 +674,26 @@ AppError (Base class: message, statusCode, code, isOperational)
 ```
 
 ### 11.2 Centralized Error Middleware (`errorMiddleware.js`)
+
 All route handlers wrap async logic or rely on Express async error forwarding (`next(err)`). The centralized error handler:
+
 1. Logs the error stack with timestamp and request metadata via `logger.error()`.
 2. Hides internal database stack traces in production (`env.isProduction`).
 3. Sends the standard error envelope.
 
 ### 11.3 Frontend Error Boundaries & Toast Handlers
-* React Error Boundaries capture unexpected UI rendering crashes and present a clean "Something went wrong — Reload Workspace" fallback.
-* Axios response interceptor displays user-friendly transient toast alerts for network disconnects (HTTP 0) or permission rejections (HTTP 403).
+
+- React Error Boundaries capture unexpected UI rendering crashes and present a clean "Something went wrong — Reload Workspace" fallback.
+- Axios response interceptor displays user-friendly transient toast alerts for network disconnects (HTTP 0) or permission rejections (HTTP 403).
 
 ---
 
 ## 12. Logging, Auditing & Monitoring
 
 ### 12.1 Structured Logging (Pino / Winston Pattern)
+
 All logs are emitted as structured JSON in production for automated ingestion:
+
 ```json
 {
   "level": "info",
@@ -672,20 +709,25 @@ All logs are emitted as structured JSON in production for automated ingestion:
 ```
 
 ### 12.2 Immutable Append-Only Audit Trail (`public.audit_logs`)
+
 Every state-modifying action (create, update, delete, status transition) triggers an audit log record:
-* Stores `old_values` (JSONB) and `new_values` (JSONB) for side-by-side diffing.
-* Records client IP address and User-Agent.
-* Database RLS guarantees immutability: **no `UPDATE` or `DELETE` permissions** exist on `public.audit_logs`.
+
+- Stores `old_values` (JSONB) and `new_values` (JSONB) for side-by-side diffing.
+- Records client IP address and User-Agent.
+- Database RLS guarantees immutability: **no `UPDATE` or `DELETE` permissions** exist on `public.audit_logs`.
 
 ### 12.3 System Health Endpoint (`/api/health`)
+
 Provides automated uptime monitoring tools (e.g., UptimeRobot, Datadog) with instant status:
-* Returns `status: "healthy"`, uptime seconds, PostgreSQL connection pool state, and memory consumption.
+
+- Returns `status: "healthy"`, uptime seconds, PostgreSQL connection pool state, and memory consumption.
 
 ---
 
 ## 13. Deployment & Infrastructure Architecture
 
 ### 13.1 Production Topology
+
 OpsPilot is designed for low-cost, high-reliability deployment on standard modern cloud infrastructure (e.g. Render, Railway, DigitalOcean, or AWS ECS):
 
 ```mermaid
@@ -714,25 +756,27 @@ flowchart LR
 ```
 
 ### 13.2 Containerization Strategy (Docker)
+
 A production multi-stage `Dockerfile` is provided for zero-dependency container deployment:
-* **Stage 1 (Builder):** Compiles Vite React frontend into optimized static bundle.
-* **Stage 2 (Runtime):** Lightweight Node.js Alpine image running Express API and serving static assets with gzip compression.
+
+- **Stage 1 (Builder):** Compiles Vite React frontend into optimized static bundle.
+- **Stage 2 (Runtime):** Lightweight Node.js Alpine image running Express API and serving static assets with gzip compression.
 
 ---
 
 ## 14. Technology Decision Matrix & Architectural Rationale
 
-| Architecture Choice | Selected Technology | Alternative Considered | Why Selected over Alternative? |
-|---|---|---|---|
-| **Frontend Framework** | **React 19 + Vite 6** | Next.js / Remix | OpsPilot is an authenticated enterprise SPA dashboard with zero need for SEO. Vite + React delivers instant builds, simpler deployment (static Nginx/S3), zero SSR hydration bugs, and full compatibility with mobile web. |
-| **Backend Architecture** | **Modular Monolith (Express)** | Microservices | Microservices introduce massive devops overhead, distributed tracing, and network latency. A modular monolith allows a solo developer to develop rapidly in a single repository while preserving strict domain boundaries. |
-| **Database & Auth** | **Supabase PostgreSQL + RLS** | MongoDB / Prisma / Custom Auth | PostgreSQL provides rock-solid relational integrity and ACID transactions. Supabase eliminates months of bespoke auth/storage development and provides database-level Row Level Security (RLS) for mathematical multi-tenant isolation. |
-| **State Management** | **Redux Toolkit (RTK)** | Zustand / Context API | RTK provides standardized DevTools, predictable state transitions, and structured async thunks ideal for complex enterprise multi-tenant state (tenant switching, session syncing, RBAC guards). |
-| **CSS & Design** | **Tailwind CSS** | Material UI / Chakra | Tailwind compiles to ultra-lightweight CSS ($< 25\text{ KB}$), produces zero runtime CSS-in-JS overhead, and enables building an enterprise high-contrast dark/light design system effortlessly. |
-| **Realtime Engine** | **Supabase Realtime** | Socket.IO Server | Supabase Realtime hooks directly into PostgreSQL WAL change streams with zero custom socket server maintenance, eliminating sticky sessions and Redis adapter clustering. |
-| **File Storage** | **Supabase Storage (Signed URLs)** | Express Multipart Uploads | Offloads high-bandwidth uploads directly from client to S3-compatible cloud storage, protecting backend Node.js event loop from memory bloat. |
+| Architecture Choice      | Selected Technology                | Alternative Considered         | Why Selected over Alternative?                                                                                                                                                                                                          |
+| ------------------------ | ---------------------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Frontend Framework**   | **React 19 + Vite 6**              | Next.js / Remix                | OpsPilot is an authenticated enterprise SPA dashboard with zero need for SEO. Vite + React delivers instant builds, simpler deployment (static Nginx/S3), zero SSR hydration bugs, and full compatibility with mobile web.              |
+| **Backend Architecture** | **Modular Monolith (Express)**     | Microservices                  | Microservices introduce massive devops overhead, distributed tracing, and network latency. A modular monolith allows a solo developer to develop rapidly in a single repository while preserving strict domain boundaries.              |
+| **Database & Auth**      | **Supabase PostgreSQL + RLS**      | MongoDB / Prisma / Custom Auth | PostgreSQL provides rock-solid relational integrity and ACID transactions. Supabase eliminates months of bespoke auth/storage development and provides database-level Row Level Security (RLS) for mathematical multi-tenant isolation. |
+| **State Management**     | **Redux Toolkit (RTK)**            | Zustand / Context API          | RTK provides standardized DevTools, predictable state transitions, and structured async thunks ideal for complex enterprise multi-tenant state (tenant switching, session syncing, RBAC guards).                                        |
+| **CSS & Design**         | **Tailwind CSS**                   | Material UI / Chakra           | Tailwind compiles to ultra-lightweight CSS ($< 25\text{ KB}$), produces zero runtime CSS-in-JS overhead, and enables building an enterprise high-contrast dark/light design system effortlessly.                                        |
+| **Realtime Engine**      | **Supabase Realtime**              | Socket.IO Server               | Supabase Realtime hooks directly into PostgreSQL WAL change streams with zero custom socket server maintenance, eliminating sticky sessions and Redis adapter clustering.                                                               |
+| **File Storage**         | **Supabase Storage (Signed URLs)** | Express Multipart Uploads      | Offloads high-bandwidth uploads directly from client to S3-compatible cloud storage, protecting backend Node.js event loop from memory bloat.                                                                                           |
 
 ---
 
 **End of System Architecture Specification**  
-*Document verified and ready for implementation.*
+_Document verified and ready for implementation._

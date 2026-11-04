@@ -9,11 +9,19 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function runMigrations() {
-  if (!env.DATABASE_URL || env.DATABASE_URL.includes('localhost:54322') && !process.env.RUN_LOCAL_PG) {
-    logger.info('Database migration runner: No live DATABASE_URL provided. Checking SQL files syntax integrity.');
+  if (
+    !env.DATABASE_URL ||
+    (env.DATABASE_URL.includes('localhost:54322') && !process.env.RUN_LOCAL_PG)
+  ) {
+    logger.info(
+      'Database migration runner: No live DATABASE_URL provided. Checking SQL files syntax integrity.'
+    );
     const migrationsDir = path.resolve(__dirname, '../../../supabase/migrations');
-    const files = fs.readdirSync(migrationsDir).filter((f) => f.endsWith('.sql')).sort();
-    
+    const files = fs
+      .readdirSync(migrationsDir)
+      .filter((f) => f.endsWith('.sql'))
+      .sort();
+
     logger.info(`Found ${files.length} SQL migration files in ${migrationsDir}:`);
     for (const file of files) {
       const content = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
@@ -35,7 +43,10 @@ async function runMigrations() {
     logger.info('Connected. Executing migrations...');
 
     const migrationsDir = path.resolve(__dirname, '../../../supabase/migrations');
-    const files = fs.readdirSync(migrationsDir).filter((f) => f.endsWith('.sql')).sort();
+    const files = fs
+      .readdirSync(migrationsDir)
+      .filter((f) => f.endsWith('.sql'))
+      .sort();
 
     for (const file of files) {
       logger.info(`Executing migration: ${file}...`);

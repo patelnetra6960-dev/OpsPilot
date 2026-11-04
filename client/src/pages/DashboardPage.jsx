@@ -1,22 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { 
-  Users, 
-  ShieldCheck, 
-  Building2, 
-  Activity, 
-  ArrowUpRight, 
-  CheckCircle2, 
-  AlertTriangle,
-  Server,
-  Database
+import {
+  Users,
+  ShieldCheck,
+  Building2,
+  Activity,
+  ArrowUpRight,
+  CheckCircle2,
+  Server
 } from 'lucide-react';
 import apiClient from '../services/apiClient.js';
 import { Link } from 'react-router-dom';
 
 export const DashboardPage = () => {
   const { currentTenant } = useSelector((state) => state.tenant);
-  const { user } = useSelector((state) => state.auth);
 
   const [stats, setStats] = useState(null);
   const [health, setHealth] = useState(null);
@@ -67,7 +64,8 @@ export const DashboardPage = () => {
               Enterprise Operations Control Center
             </h1>
             <p className="text-slate-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
-              Real-time multi-tenant operations, workforce scheduling, field dispatch, and data isolation powered by PostgreSQL RLS.
+              Real-time multi-tenant operations, workforce scheduling, field dispatch, and data
+              isolation powered by PostgreSQL RLS.
             </p>
           </div>
 
@@ -98,9 +96,7 @@ export const DashboardPage = () => {
             <div className="text-2xl font-bold text-white">
               {loading ? '...' : stats?.totalStaff || 0}
             </div>
-            <div className="text-[11px] text-slate-400 mt-1">
-              Isolated to {currentTenant?.name}
-            </div>
+            <div className="text-[11px] text-slate-400 mt-1">Isolated to {currentTenant?.name}</div>
           </div>
         </div>
 
@@ -143,7 +139,9 @@ export const DashboardPage = () => {
         {/* Security Engine Status */}
         <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-5 space-y-3">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-semibold uppercase tracking-wider">RLS & Tenant Engine</span>
+            <span className="text-xs font-semibold uppercase tracking-wider">
+              RLS & Tenant Engine
+            </span>
             <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
               <ShieldCheck className="w-4 h-4" />
             </div>
@@ -152,9 +150,7 @@ export const DashboardPage = () => {
             <div className="text-2xl font-bold text-emerald-400 flex items-center gap-1.5">
               <span>Enforced</span>
             </div>
-            <div className="text-[11px] text-slate-400 mt-1">
-              Zero cross-tenant data leakage
-            </div>
+            <div className="text-[11px] text-slate-400 mt-1">Zero cross-tenant data leakage</div>
           </div>
         </div>
       </div>
@@ -167,7 +163,9 @@ export const DashboardPage = () => {
               <Server className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white">Active Multi-Tenant Architecture Context</h2>
+              <h2 className="text-base font-bold text-white">
+                Active Multi-Tenant Architecture Context
+              </h2>
               <p className="text-xs text-slate-400">
                 Verified organization session headers and backend security boundary status
               </p>
@@ -208,7 +206,9 @@ export const DashboardPage = () => {
             </div>
             <div className="flex justify-between items-center py-1 border-b border-slate-800/80">
               <span className="text-slate-400">Database Row Level Security:</span>
-              <span className="text-emerald-400 font-semibold">{health?.features?.databaseRLS || 'Enforced'}</span>
+              <span className="text-emerald-400 font-semibold">
+                {health?.features?.databaseRLS || 'Enforced'}
+              </span>
             </div>
             <div className="flex justify-between items-center py-1">
               <span className="text-slate-400">Frontend Service Role Key Exposure:</span>

@@ -10,7 +10,12 @@ export const requireAuth = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return sendError(res, 'Authentication required: missing or malformed Bearer token', 401, 'UNAUTHORIZED');
+      return sendError(
+        res,
+        'Authentication required: missing or malformed Bearer token',
+        401,
+        'UNAUTHORIZED'
+      );
     }
 
     const token = authHeader.split(' ')[1];
@@ -36,12 +41,26 @@ export const requireAuth = async (req, res, next) => {
 
     // Production Supabase Auth Verification
     if (!supabaseAdmin) {
-      return sendError(res, 'Supabase authentication service unavailable', 503, 'SERVICE_UNAVAILABLE');
+      return sendError(
+        res,
+        'Supabase authentication service unavailable',
+        503,
+        'SERVICE_UNAVAILABLE'
+      );
     }
 
-    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
+    const {
+      data: { user },
+      error
+    } = await supabaseAdmin.auth.getUser(token);
     if (error || !user) {
-      return sendError(res, 'Invalid or expired authentication token', 401, 'INVALID_TOKEN', error?.message);
+      return sendError(
+        res,
+        'Invalid or expired authentication token',
+        401,
+        'INVALID_TOKEN',
+        error?.message
+      );
     }
 
     // Fetch user profile from public.users_profiles

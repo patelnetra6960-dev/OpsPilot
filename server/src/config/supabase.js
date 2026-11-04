@@ -130,7 +130,7 @@ export const mockDatabase = {
       designation: 'Lead Fleet Dispatcher',
       employment_type: 'full_time',
       status: 'active',
-      hourly_rate: 42.50
+      hourly_rate: 42.5
     },
     {
       id: 'w2',
@@ -143,7 +143,7 @@ export const mockDatabase = {
       designation: 'Inventory Supervisor',
       employment_type: 'full_time',
       status: 'active',
-      hourly_rate: 38.00
+      hourly_rate: 38.0
     },
     {
       id: 'w3',
@@ -156,7 +156,7 @@ export const mockDatabase = {
       designation: 'Mobile Technician',
       employment_type: 'contract',
       status: 'active',
-      hourly_rate: 45.00
+      hourly_rate: 45.0
     },
     {
       id: 'w4',
@@ -169,7 +169,7 @@ export const mockDatabase = {
       designation: 'Senior Technician',
       employment_type: 'full_time',
       status: 'active',
-      hourly_rate: 50.00
+      hourly_rate: 50.0
     },
     {
       id: 'w5',
@@ -182,7 +182,7 @@ export const mockDatabase = {
       designation: 'Dispatcher Coordinator',
       employment_type: 'full_time',
       status: 'active',
-      hourly_rate: 32.00
+      hourly_rate: 32.0
     }
   ],
   auditLogs: []

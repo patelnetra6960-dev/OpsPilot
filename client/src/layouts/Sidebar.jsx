@@ -46,7 +46,9 @@ export const Sidebar = () => {
                 SaaS
               </span>
             </div>
-            <div className="text-[11px] text-slate-400 font-medium -mt-0.5">Enterprise Operations</div>
+            <div className="text-[11px] text-slate-400 font-medium -mt-0.5">
+              Enterprise Operations
+            </div>
           </div>
         </div>
 
@@ -90,7 +92,8 @@ export const Sidebar = () => {
             <span>Multi-Tenant RLS Active</span>
           </div>
           <div className="text-[11px] text-slate-400 leading-relaxed">
-            Data boundary isolated to <span className="font-semibold text-slate-200">{currentTenant?.name || 'Tenant'}</span>.
+            Data boundary isolated to{' '}
+            <span className="font-semibold text-slate-200">{currentTenant?.name || 'Tenant'}</span>.
           </div>
           <div className="text-[9px] font-mono text-slate-400 truncate pt-1 border-t border-slate-800">
             ID: {currentTenant?.id}

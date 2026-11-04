@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import organizationController from './organization.controller.js';
 import { requireAuth } from '../../middleware/authMiddleware.js';
-import { requireTenant, requireTenantRole } from '../../middleware/tenantMiddleware.js';
+import { requireTenant } from '../../middleware/tenantMiddleware.js';
 
 const router = Router();
 

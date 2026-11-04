@@ -21,7 +21,11 @@ export const workforceController = {
   async getDirectory(req, res, next) {
     try {
       const { department, status, search } = req.query;
-      const workforce = await workforceService.getWorkforce(req.tenant.id, { department, status, search });
+      const workforce = await workforceService.getWorkforce(req.tenant.id, {
+        department,
+        status,
+        search
+      });
       return sendSuccess(res, workforce, `Workforce directory for ${req.tenant.name}`);
     } catch (error) {
       next(error);
@@ -35,10 +39,19 @@ export const workforceController = {
     try {
       const validation = createMemberSchema.safeParse(req.body);
       if (!validation.success) {
-        return sendError(res, 'Validation failed', 400, 'VALIDATION_ERROR', validation.error.format());
+        return sendError(
+          res,
+          'Validation failed',
+          400,
+          'VALIDATION_ERROR',
+          validation.error.format()
+        );
       }
 
-      const newMember = await workforceService.createWorkforceMember(req.tenant.id, validation.data);
+      const newMember = await workforceService.createWorkforceMember(
+        req.tenant.id,
+        validation.data
+      );
       return sendSuccess(res, newMember, 'Workforce member added successfully', 201);
     } catch (error) {
       next(error);

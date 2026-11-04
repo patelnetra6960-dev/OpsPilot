@@ -11,7 +11,7 @@ export const organizationService = {
         (m) => m.user_id === userId && m.status === 'active'
       );
       const orgIds = userMemberships.map((m) => m.organization_id);
-      
+
       const orgs = mockDatabase.organizations
         .filter((org) => orgIds.includes(org.id))
         .map((org) => {
@@ -27,7 +27,8 @@ export const organizationService = {
 
     const { data, error } = await supabaseAdmin
       .from('organization_members')
-      .select(`
+      .select(
+        `
         role,
         status,
         organization:organizations (
@@ -39,7 +40,8 @@ export const organizationService = {
           settings,
           created_at
         )
-      `)
+      `
+      )
       .eq('user_id', userId)
       .eq('status', 'active');
 
@@ -74,7 +76,12 @@ export const organizationService = {
    * Create a new Organization (Tenant) and assign creator as Owner
    */
   async createOrganization({ name, slug, subscription_tier = 'starter', settings = {} }, userId) {
-    const formattedSlug = slug || name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
+    const formattedSlug =
+      slug ||
+      name
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '-')
+        .replace(/-+/g, '-');
 
     if (env.isMockMode) {
       const newOrg = {
@@ -118,14 +125,12 @@ export const organizationService = {
     if (orgError) throw orgError;
 
     // Add creator as organization owner
-    const { error: memError } = await supabaseAdmin
-      .from('organization_members')
-      .insert({
-        organization_id: newOrg.id,
-        user_id: userId,
-        role: 'owner',
-        status: 'active'
-      });
+    const { error: memError } = await supabaseAdmin.from('organization_members').insert({
+      organization_id: newOrg.id,
+      user_id: userId,
+      role: 'owner',
+      status: 'active'
+    });
 
     if (memError) throw memError;
 
@@ -160,7 +165,8 @@ export const organizationService = {
 
     const { data, error } = await supabaseAdmin
       .from('organization_members')
-      .select(`
+      .select(
+        `
         id,
         role,
         status,
@@ -171,7 +177,8 @@ export const organizationService = {
           full_name,
           avatar_url
         )
-      `)
+      `
+      )
       .eq('organization_id', orgId);
 
     if (error) throw error;

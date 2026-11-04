@@ -1,16 +1,28 @@
 export const logger = {
   info: (message, meta = {}) => {
-    console.log(`[INFO]  [${new Date().toISOString()}] ${message}`, Object.keys(meta).length ? JSON.stringify(meta) : '');
+    console.log(
+      `[INFO]  [${new Date().toISOString()}] ${message}`,
+      Object.keys(meta).length ? JSON.stringify(meta) : ''
+    );
   },
   warn: (message, meta = {}) => {
-    console.warn(`[WARN]  [${new Date().toISOString()}] ${message}`, Object.keys(meta).length ? JSON.stringify(meta) : '');
+    console.warn(
+      `[WARN]  [${new Date().toISOString()}] ${message}`,
+      Object.keys(meta).length ? JSON.stringify(meta) : ''
+    );
   },
   error: (message, error = null) => {
-    console.error(`[ERROR] [${new Date().toISOString()}] ${message}`, error ? (error.stack || error) : '');
+    console.error(
+      `[ERROR] [${new Date().toISOString()}] ${message}`,
+      error ? error.stack || error : ''
+    );
   },
   debug: (message, meta = {}) => {
     if (process.env.NODE_ENV !== 'production') {
-      console.debug(`[DEBUG] [${new Date().toISOString()}] ${message}`, Object.keys(meta).length ? JSON.stringify(meta) : '');
+      console.debug(
+        `[DEBUG] [${new Date().toISOString()}] ${message}`,
+        Object.keys(meta).length ? JSON.stringify(meta) : ''
+      );
     }
   }
 };

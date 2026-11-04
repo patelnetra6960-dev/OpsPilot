@@ -16,10 +16,14 @@ export const TenantBadge = ({ role = 'member', tier = 'starter' }) => {
 
   return (
     <div className="flex items-center gap-1.5 text-xs font-medium">
-      <span className={`px-2 py-0.5 rounded-full border capitalize ${roleColors[role] || roleColors.member}`}>
+      <span
+        className={`px-2 py-0.5 rounded-full border capitalize ${roleColors[role] || roleColors.member}`}
+      >
         {role}
       </span>
-      <span className={`px-2 py-0.5 rounded-full border uppercase tracking-wider text-[10px] ${tierColors[tier] || tierColors.starter}`}>
+      <span
+        className={`px-2 py-0.5 rounded-full border uppercase tracking-wider text-[10px] ${tierColors[tier] || tierColors.starter}`}
+      >
         {tier}
       </span>
     </div>

@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "OpsPilot — Multi-tenant Enterprise Operations & Workforce Management SaaS",
   "private": true,
+  "type": "module",
   "workspaces": [
     "server",
     "client"
@@ -15,8 +16,13 @@
     "build:client": "npm --prefix client run build",
     "build": "npm run build:client",
     "test:server": "npm --prefix server test",
-    "test": "npm run test:server",
-    "migrate": "node server/src/database/migrate.js"
+    "test:integration": "node --test tests/integration/**/*.test.js",
+    "test": "npm run test:server && npm run test:integration",
+    "check:env": "node scripts/check-env.js",
+    "migrate": "node server/src/database/migrate.js",
+    "lint": "eslint .",
+    "format": "prettier --write \"**/*.{js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{js,jsx,json,md}\""
   },
   "keywords": [
     "multi-tenant",
@@ -29,5 +35,9 @@
     "rls"
   ],
   "author": "OpsPilot Core Team",
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "eslint": "^9.20.0",
+    "prettier": "^3.5.1"
+  }
 }

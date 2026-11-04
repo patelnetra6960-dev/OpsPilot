@@ -121,7 +121,9 @@ export const Navbar = () => {
                       key={tenant.id}
                       onClick={() => handleSelectTenant(tenant)}
                       className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition ${
-                        isSelected ? 'bg-indigo-600/20 border border-indigo-500/30 text-white' : 'hover:bg-slate-800 text-slate-300'
+                        isSelected
+                          ? 'bg-indigo-600/20 border border-indigo-500/30 text-white'
+                          : 'hover:bg-slate-800 text-slate-300'
                       }`}
                     >
                       <div>
@@ -138,7 +140,10 @@ export const Navbar = () => {
         </div>
 
         {currentTenant && (
-          <TenantBadge role={currentTenant.role || 'member'} tier={currentTenant.subscription_tier || 'starter'} />
+          <TenantBadge
+            role={currentTenant.role || 'member'}
+            tier={currentTenant.subscription_tier || 'starter'}
+          />
         )}
       </div>
 
@@ -169,7 +174,9 @@ export const Navbar = () => {
                     className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-slate-800 text-slate-200 transition"
                   >
                     <div className="font-semibold text-slate-100">{persona.label}</div>
-                    <div className="text-[10px] text-slate-400 font-mono mt-0.5">Org: {persona.tenant.name}</div>
+                    <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                      Org: {persona.tenant.name}
+                    </div>
                   </button>
                 ))}
               </div>
@@ -180,7 +187,10 @@ export const Navbar = () => {
         {/* User Profile */}
         <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
           <img
-            src={user?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}
+            src={
+              user?.avatar_url ||
+              'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'
+            }
             alt={user?.full_name || 'User'}
             className="w-8 h-8 rounded-full border border-slate-700 object-cover"
           />

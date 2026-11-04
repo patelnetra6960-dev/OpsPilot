@@ -24,7 +24,10 @@ export const PlaceholderModulePage = ({ title, milestone, description, features 
 
         <div className="pt-4 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-center gap-2">
           <ShieldCheck className="w-4 h-4 text-emerald-400" />
-          <span>Active Tenant Isolation Ready: <strong className="text-slate-200">{currentTenant?.name}</strong></span>
+          <span>
+            Active Tenant Isolation Ready:{' '}
+            <strong className="text-slate-200">{currentTenant?.name}</strong>
+          </span>
         </div>
       </div>
 

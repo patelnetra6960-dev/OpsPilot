@@ -13,7 +13,13 @@ export const sendSuccess = (res, data = null, message = 'Success', statusCode = 
   });
 };
 
-export const sendError = (res, message = 'An error occurred', statusCode = 500, errorCode = 'INTERNAL_ERROR', details = null) => {
+export const sendError = (
+  res,
+  message = 'An error occurred',
+  statusCode = 500,
+  errorCode = 'INTERNAL_ERROR',
+  details = null
+) => {
   const response = {
     success: false,
     error: {

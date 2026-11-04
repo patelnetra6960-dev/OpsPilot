@@ -29,10 +29,19 @@ export const organizationController = {
     try {
       const validation = createOrgSchema.safeParse(req.body);
       if (!validation.success) {
-        return sendError(res, 'Validation failed', 400, 'VALIDATION_ERROR', validation.error.format());
+        return sendError(
+          res,
+          'Validation failed',
+          400,
+          'VALIDATION_ERROR',
+          validation.error.format()
+        );
       }
 
-      const organization = await organizationService.createOrganization(validation.data, req.user.id);
+      const organization = await organizationService.createOrganization(
+        validation.data,
+        req.user.id
+      );
       return sendSuccess(res, organization, 'Organization created successfully', 201);
     } catch (error) {
       next(error);
@@ -44,10 +53,14 @@ export const organizationController = {
    */
   async getCurrentOrganization(req, res, next) {
     try {
-      return sendSuccess(res, {
-        organization: req.tenant,
-        membership: req.membership
-      }, 'Current organization details fetched');
+      return sendSuccess(
+        res,
+        {
+          organization: req.tenant,
+          membership: req.membership
+        },
+        'Current organization details fetched'
+      );
     } catch (error) {
       next(error);
     }

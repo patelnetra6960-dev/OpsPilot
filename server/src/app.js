@@ -15,11 +15,13 @@ const app = express();
 
 // Security and utility middleware
 app.use(helmet());
-app.use(cors({
-  origin: [env.CLIENT_URL, 'http://localhost:5173', 'http://localhost:3000'],
-  credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Tenant-Id']
-}));
+app.use(
+  cors({
+    origin: [env.CLIENT_URL, 'http://localhost:5173', 'http://localhost:3000'],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Tenant-Id']
+  })
+);
 
 if (!env.isTest) {
   app.use(morgan('dev'));

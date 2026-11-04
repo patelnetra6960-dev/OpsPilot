@@ -1,18 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { 
-  Users, 
-  Plus, 
-  Search, 
-  Filter, 
-  Mail, 
-  Briefcase, 
-  DollarSign, 
-  CheckCircle, 
-  Clock, 
-  X,
-  ShieldAlert
-} from 'lucide-react';
+import { Plus, Search, Filter, Mail, CheckCircle, X, ShieldAlert } from 'lucide-react';
 import apiClient from '../services/apiClient.js';
 
 export const WorkforcePage = () => {
@@ -33,7 +21,7 @@ export const WorkforcePage = () => {
     department: 'Operations',
     designation: 'Field Technician',
     employment_type: 'full_time',
-    hourly_rate: 35.00
+    hourly_rate: 35.0
   });
 
   const loadWorkforce = async () => {
@@ -84,7 +72,7 @@ export const WorkforcePage = () => {
           department: 'Operations',
           designation: 'Field Technician',
           employment_type: 'full_time',
-          hourly_rate: 35.00
+          hourly_rate: 35.0
         });
         loadWorkforce();
       }
@@ -99,7 +87,9 @@ export const WorkforcePage = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-extrabold text-white tracking-tight">Workforce Directory</h1>
+            <h1 className="text-2xl font-extrabold text-white tracking-tight">
+              Workforce Directory
+            </h1>
             <span className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-mono">
               {currentTenant?.name}
             </span>
@@ -182,7 +172,8 @@ export const WorkforcePage = () => {
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-indigo-600/20 border border-indigo-500/30 text-indigo-300 flex items-center justify-center font-bold text-xs uppercase">
-                          {member.first_name[0]}{member.last_name[0]}
+                          {member.first_name[0]}
+                          {member.last_name[0]}
                         </div>
                         <div>
                           <div className="font-semibold text-slate-100">
@@ -216,11 +207,13 @@ export const WorkforcePage = () => {
                     </td>
 
                     <td className="py-3.5 px-4">
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold capitalize ${
-                        member.status === 'active' 
-                          ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' 
-                          : 'bg-amber-950 text-amber-400 border border-amber-800'
-                      }`}>
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold capitalize ${
+                          member.status === 'active'
+                            ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
+                            : 'bg-amber-950 text-amber-400 border border-amber-800'
+                        }`}
+                      >
                         <CheckCircle className="w-3 h-3" />
                         {member.status}
                       </span>
@@ -241,7 +234,8 @@ export const WorkforcePage = () => {
               <div>
                 <h3 className="text-base font-bold text-white">Add Workforce Member</h3>
                 <p className="text-xs text-slate-400">
-                  Target Tenant: <span className="text-indigo-400 font-semibold">{currentTenant?.name}</span>
+                  Target Tenant:{' '}
+                  <span className="text-indigo-400 font-semibold">{currentTenant?.name}</span>
                 </p>
               </div>
               <button
