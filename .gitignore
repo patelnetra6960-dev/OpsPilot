@@ -33,3 +33,8 @@ yarn-debug.log*
 # OS Generated Files
 .DS_Store
 Thumbs.db
+
+# Supabase Local
+supabase/.temp/
+supabase/.branches/
+
