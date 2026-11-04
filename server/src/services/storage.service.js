@@ -3,10 +3,10 @@ import {
   createSignedStorageUrl,
   deleteStorageFile,
   recordAuditLog
-} from '../../utils/supabaseHelpers.js';
-import { supabaseAdmin, mockDatabase } from '../../config/supabase.js';
-import env from '../../config/env.js';
-import logger from '../../utils/logger.js';
+} from '../utils/supabaseHelpers.js';
+import { supabaseAdmin, mockDatabase } from '../config/supabase.js';
+import env from '../config/env.js';
+import logger from '../utils/logger.js';
 
 // Initialize mock storage files array if needed
 if (!mockDatabase.storageFiles) {
@@ -55,7 +55,6 @@ export const storageService = {
       }
     }
 
-    // Validate bucket, file size, MIME type, and file name
     const validation = validateStorageUpload({
       bucket,
       fileName,
@@ -70,7 +69,6 @@ export const storageService = {
       throw err;
     }
 
-    // Strict multi-tenant folder path convention: <organization_id>/<category>/<file_name>
     const cleanFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
     const storagePath = `${organizationId}/${category}/${cleanFileName}`;
 
@@ -89,7 +87,6 @@ export const storageService = {
         createdAt: new Date().toISOString()
       };
 
-      // Upsert mock file
       const existingIdx = mockDatabase.storageFiles.findIndex(
         (f) => f.bucket === bucket && f.storagePath === storagePath
       );
@@ -178,7 +175,6 @@ export const storageService = {
       throw err;
     }
 
-    // Tenant isolation verification: filePath MUST begin with user's organizationId
     if (!isSuperadmin) {
       const pathPrefix = filePath.split('/')[0];
       if (pathPrefix !== organizationId) {
@@ -193,7 +189,6 @@ export const storageService = {
         throw err;
       }
 
-      // Role boundary checks for sensitive buckets
       if (userRole === 'customer') {
         if (['org-documents', 'project-files'].includes(bucket)) {
           const err = new Error(`Customer accounts cannot access files in '${bucket}'`);
@@ -232,7 +227,6 @@ export const storageService = {
       throw err;
     }
 
-    // Tenant isolation verification
     if (!isSuperadmin) {
       const pathPrefix = filePath.split('/')[0];
       if (pathPrefix !== organizationId) {
@@ -242,7 +236,6 @@ export const storageService = {
         throw err;
       }
 
-      // Deletion privileges restricted to Managers, Admins, and Owners
       if (!['owner', 'admin', 'manager'].includes(userRole)) {
         const err = new Error(
           'Forbidden: Deleting storage files requires Manager or Administrator privileges'
@@ -256,7 +249,7 @@ export const storageService = {
     await deleteStorageFile(bucket, filePath);
 
     if (env.isMockMode || !supabaseAdmin) {
-      mockDatabase.storageFiles = mockDatabase.storageFiles.filter(
+      mockDatabase.storageFiles = (mockDatabase.storageFiles || []).filter(
         (f) => !(f.bucket === bucket && f.storagePath === filePath)
       );
     }
@@ -292,7 +285,7 @@ export const storageService = {
     }
 
     if (env.isMockMode || !supabaseAdmin) {
-      let filtered = mockDatabase.storageFiles.filter(
+      let filtered = (mockDatabase.storageFiles || []).filter(
         (f) => f.bucket === bucket && f.organizationId === organizationId
       );
       if (category) {

@@ -1,14 +1,14 @@
-import { supabaseAdmin, mockDatabase } from '../../config/supabase.js';
-import env from '../../config/env.js';
+import workforceRepository from '../repositories/workforce.repository.js';
+import { supabaseAdmin, mockDatabase } from '../config/supabase.js';
+import env from '../config/env.js';
 
 export const workforceService = {
   /**
    * Get all workforce members for a specific tenant
-   * Guarantees tenant isolation: tenantId is enforced as the primary query filter
    */
   async getWorkforce(tenantId, { department, status, search } = {}) {
-    if (env.isMockMode) {
-      let members = mockDatabase.workforce.filter(
+    if (env.isMockMode || !supabaseAdmin) {
+      let members = (mockDatabase.workforce || []).filter(
         (w) => w.organization_id === tenantId && !w.deleted_at
       );
 
@@ -48,14 +48,14 @@ export const workforceService = {
 
     const { data, error } = await query.order('created_at', { ascending: false });
     if (error) throw error;
-    return data;
+    return data || [];
   },
 
   /**
-   * Create a new workforce member strictly attached to tenantId
+   * Create a new workforce member
    */
-  async createWorkforceMember(tenantId, memberData) {
-    if (env.isMockMode) {
+  async createMember(tenantId, memberData) {
+    if (env.isMockMode || !supabaseAdmin) {
       const newMember = {
         id: `wm-${Date.now()}`,
         organization_id: tenantId,
@@ -64,6 +64,8 @@ export const workforceService = {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
+
+      if (!mockDatabase.workforce) mockDatabase.workforce = [];
       mockDatabase.workforce.push(newMember);
       return newMember;
     }
@@ -82,46 +84,10 @@ export const workforceService = {
   },
 
   /**
-   * Get operational statistics for the dashboard
+   * Get operational statistics for workforce
    */
-  async getWorkforceStats(tenantId) {
-    if (env.isMockMode) {
-      const members = mockDatabase.workforce.filter(
-        (w) => w.organization_id === tenantId && !w.deleted_at
-      );
-      const activeCount = members.filter((m) => m.status === 'active').length;
-      const onLeaveCount = members.filter((m) => m.status === 'on_leave').length;
-      const departments = [...new Set(members.map((m) => m.department))];
-
-      return {
-        totalStaff: members.length,
-        activeStaff: activeCount,
-        onLeave: onLeaveCount,
-        departmentsCount: departments.length,
-        departments
-      };
-    }
-
-    const { data, error } = await supabaseAdmin
-      .from('workforce_members')
-      .select('status, department')
-      .eq('organization_id', tenantId)
-      .is('deleted_at', null);
-
-    if (error) throw error;
-
-    const totalStaff = data.length;
-    const activeStaff = data.filter((m) => m.status === 'active').length;
-    const onLeave = data.filter((m) => m.status === 'on_leave').length;
-    const departments = [...new Set(data.map((m) => m.department).filter(Boolean))];
-
-    return {
-      totalStaff,
-      activeStaff,
-      onLeave,
-      departmentsCount: departments.length,
-      departments
-    };
+  async getOperationalStats(tenantId) {
+    return workforceRepository.getOperationalStats(tenantId);
   }
 };
 

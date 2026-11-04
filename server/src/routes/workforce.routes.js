@@ -1,7 +1,9 @@
 import { Router } from 'express';
-import workforceController from './workforce.controller.js';
-import { requireAuth } from '../../middleware/authMiddleware.js';
-import { requireTenant, requireTenantRole } from '../../middleware/tenantMiddleware.js';
+import workforceController from '../controllers/workforce.controller.js';
+import { requireAuth } from '../middleware/authMiddleware.js';
+import { requireTenant, requireTenantRole } from '../middleware/tenantMiddleware.js';
+import { validate } from '../middleware/validateMiddleware.js';
+import { createWorkforceSchema } from '../validators/workforce.validator.js';
 
 const router = Router();
 
@@ -25,6 +27,7 @@ router.get(
 router.post(
   '/',
   requireTenantRole(['owner', 'admin', 'manager']),
+  validate(createWorkforceSchema),
   workforceController.createMember
 );
 

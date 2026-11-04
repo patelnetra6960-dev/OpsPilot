@@ -1,7 +1,7 @@
-import { supabaseAdmin, mockDatabase } from '../../config/supabase.js';
-import organizationService from '../organizations/organization.service.js';
-import env from '../../config/env.js';
-import logger from '../../utils/logger.js';
+import { supabaseAdmin, mockDatabase } from '../config/supabase.js';
+import organizationService from './organization.service.js';
+import env from '../config/env.js';
+import logger from '../utils/logger.js';
 
 export const authService = {
   /**
@@ -32,7 +32,7 @@ export const authService = {
     // Mock Mode Implementation
     if (env.isMockMode || !supabaseAdmin) {
       const normalizedEmail = email.trim().toLowerCase();
-      const existingUser = mockDatabase.users.find(
+      const existingUser = (mockDatabase.users || []).find(
         (u) => u.email.toLowerCase() === normalizedEmail
       );
 
@@ -53,6 +53,7 @@ export const authService = {
         created_at: new Date().toISOString()
       };
 
+      if (!mockDatabase.users) mockDatabase.users = [];
       mockDatabase.users.push(newUser);
 
       // Provision initial organization
@@ -64,7 +65,6 @@ export const authService = {
         newUser.id
       );
 
-      // Mock session tokens
       const session = {
         access_token: `mock-token-${newUser.id}`,
         refresh_token: `mock-refresh-${newUser.id}`,
@@ -100,7 +100,6 @@ export const authService = {
 
     const user = authData.user;
 
-    // Create user profile in public.user_profiles
     const { error: profileError } = await supabaseAdmin.from('user_profiles').upsert({
       id: user.id,
       email: user.email,
@@ -112,7 +111,6 @@ export const authService = {
       logger.error('Failed to create public user profile during registration', profileError);
     }
 
-    // Provision default organization
     let organization = null;
     if (organization_name) {
       try {
@@ -151,10 +149,11 @@ export const authService = {
       throw err;
     }
 
-    // Mock Mode Authentication
     if (env.isMockMode || !supabaseAdmin) {
       const normalizedEmail = email.trim().toLowerCase();
-      const matchedUser = mockDatabase.users.find((u) => u.email.toLowerCase() === normalizedEmail);
+      const matchedUser = (mockDatabase.users || []).find(
+        (u) => u.email.toLowerCase() === normalizedEmail
+      );
 
       if (!matchedUser) {
         const err = new Error('Invalid email or password');
@@ -163,7 +162,6 @@ export const authService = {
         throw err;
       }
 
-      // Load user's affiliated organizations
       const organizations = await organizationService.getUserOrganizations(matchedUser.id);
       const activeOrg = organizations[0] || null;
 
@@ -183,7 +181,6 @@ export const authService = {
       };
     }
 
-    // Production Supabase Auth Sign-In
     const { data, error } = await supabaseAdmin.auth.signInWithPassword({
       email,
       password
@@ -196,7 +193,6 @@ export const authService = {
       throw err;
     }
 
-    // Fetch profile & organizations
     const { data: profile } = await supabaseAdmin
       .from('user_profiles')
       .select('*')
@@ -240,7 +236,7 @@ export const authService = {
   },
 
   /**
-   * 4. Verify Email Address via OTP / Confirmation Token
+   * 4. Verify Email Address
    */
   async verifyEmail({ email, token, type = 'signup' }) {
     if (!token) {
