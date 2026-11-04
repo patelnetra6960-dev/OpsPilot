@@ -1,6 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Users, ShieldCheck, Activity, Send, Sparkles } from 'lucide-react';
+import {
+  Users,
+  ShieldCheck,
+  Activity,
+  Send,
+  Sparkles,
+  CalendarCheck,
+  Building2,
+  CreditCard
+} from 'lucide-react';
 import apiClient from '../services/apiClient.js';
 import { Link } from 'react-router-dom';
 import { Card, Badge, Skeleton } from '../components/ui/index.js';
