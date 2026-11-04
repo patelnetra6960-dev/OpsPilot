@@ -1,0 +1,33 @@
+{
+  "name": "opspilot-monorepo",
+  "version": "1.0.0",
+  "description": "OpsPilot — Multi-tenant Enterprise Operations & Workforce Management SaaS",
+  "private": true,
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install",
+    "dev:server": "npm --prefix server run dev",
+    "dev:client": "npm --prefix client run dev",
+    "dev": "node scripts/dev.js",
+    "build:client": "npm --prefix client run build",
+    "build": "npm run build:client",
+    "test:server": "npm --prefix server test",
+    "test": "npm run test:server",
+    "migrate": "node server/src/database/migrate.js"
+  },
+  "keywords": [
+    "multi-tenant",
+    "saas",
+    "workforce-management",
+    "react",
+    "express",
+    "supabase",
+    "postgresql",
+    "rls"
+  ],
+  "author": "OpsPilot Core Team",
+  "license": "UNLICENSED"
+}
