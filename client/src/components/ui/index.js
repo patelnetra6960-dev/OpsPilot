@@ -15,6 +15,7 @@ export {
 } from './Table.jsx';
 export { Modal } from './Modal.jsx';
 export { Drawer } from './Drawer.jsx';
+export { ConfirmDialog } from './ConfirmDialog.jsx';
 export { ToastItem, ToastContainer } from './Toast.jsx';
 export { Skeleton, SkeletonText, SkeletonCard, SkeletonTable } from './Skeleton.jsx';
 export { LoadingSpinner, LoadingOverlay } from './LoadingSpinner.jsx';

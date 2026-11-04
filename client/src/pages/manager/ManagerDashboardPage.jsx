@@ -10,14 +10,17 @@ import {
   Filter
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Card, Badge, Button, Modal } from '../../components/ui/index.js';
+import { Card, Badge, Button, Modal, Skeleton } from '../../components/ui/index.js';
 import { addToast } from '../../store/uiSlice.js';
+import { useWorkforceStatsQuery } from '../../features/workforce/index.js';
 
 export const ManagerDashboardPage = () => {
   const dispatch = useDispatch();
   const { currentTenant } = useSelector((state) => state.tenant);
   const [filterStatus, setFilterStatus] = useState('all');
   const [activeWorkOrderModal, setActiveWorkOrderModal] = useState(null);
+
+  const { data: stats, isLoading: statsLoading } = useWorkforceStatsQuery();
 
   // Field Technicians Status
   const [technicians] = useState([
@@ -173,8 +176,12 @@ export const ManagerDashboardPage = () => {
         {[
           {
             title: 'On-Duty Personnel',
-            value: '14 / 18',
-            sub: '4 on scheduled leave',
+            value: statsLoading ? (
+              <Skeleton className="h-7 w-20" />
+            ) : (
+              `${stats?.activeStaff || 14} / ${stats?.totalStaff || 18}`
+            ),
+            sub: `${stats?.departmentCount || 4} active departments`,
             icon: Users,
             color: 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60'
           },

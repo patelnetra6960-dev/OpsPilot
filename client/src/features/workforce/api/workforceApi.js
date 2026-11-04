@@ -53,7 +53,7 @@ export const useCreateEmployeeMutation = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.workforce.all });
       toast.success(
         'Team Member Added',
-        `"${newEmployee?.name || 'Employee'}" has joined the roster.`
+        `"${newEmployee?.name || newEmployee?.first_name || 'Employee'}" has joined the roster.`
       );
     },
     onError: (error) => {
@@ -68,16 +68,79 @@ export const useUpdateEmployeeMutation = (id) => {
 
   return useMutation({
     mutationFn: async (payload) => {
-      const response = await apiClient.patch(`/workforce/${id}`, payload);
+      const targetId = id || payload.id;
+      const response = await apiClient.patch(`/workforce/${targetId}`, payload);
       return response.data?.data || response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.workforce.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.workforce.detail(id) });
+      if (id) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.workforce.detail(id) });
+      }
       toast.success('Profile Updated', 'Employee details have been saved.');
     },
     onError: (error) => {
       toast.error('Update Failed', error.apiMessage || 'Could not update employee details');
+    }
+  });
+};
+
+export const useChangeRoleMutation = () => {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+
+  return useMutation({
+    mutationFn: async ({ id, role }) => {
+      const response = await apiClient.patch(`/workforce/${id}/role`, { role });
+      return response.data?.data || response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.workforce.all });
+      toast.success('Role Updated', 'Employee role and access boundaries modified.');
+    },
+    onError: (error) => {
+      toast.error('Role Change Failed', error.apiMessage || 'Could not change employee role');
+    }
+  });
+};
+
+export const useAssignDepartmentMutation = () => {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+
+  return useMutation({
+    mutationFn: async ({ id, department, department_id }) => {
+      const response = await apiClient.patch(`/workforce/${id}/department`, {
+        department,
+        department_id
+      });
+      return response.data?.data || response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.workforce.all });
+      toast.success('Department Assigned', 'Workforce department allocation updated.');
+    },
+    onError: (error) => {
+      toast.error('Assignment Failed', error.apiMessage || 'Could not assign department');
+    }
+  });
+};
+
+export const useAssignManagerMutation = () => {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+
+  return useMutation({
+    mutationFn: async ({ id, manager_id }) => {
+      const response = await apiClient.patch(`/workforce/${id}/manager`, { manager_id });
+      return response.data?.data || response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.workforce.all });
+      toast.success('Manager Assigned', 'Reporting manager hierarchy updated.');
+    },
+    onError: (error) => {
+      toast.error('Assignment Failed', error.apiMessage || 'Could not assign manager');
     }
   });
 };

@@ -16,30 +16,51 @@ export class WorkforceRepository extends BaseRepository {
         (m) => m.organization_id === organizationId && m.status === 'active' && !m.deleted_at
       );
       const onDuty = Math.round(activeMembers.length * 0.7);
+      const uniqueDepts = new Set(activeMembers.map((m) => m.department).filter(Boolean));
+      const totalRates = activeMembers.reduce((sum, m) => sum + (Number(m.hourly_rate) || 0), 0);
+      const avgRate = activeMembers.length > 0 ? Math.round(totalRates / activeMembers.length) : 35;
+
       return {
         totalWorkforce: activeMembers.length,
+        totalStaff: activeMembers.length,
         onDuty,
+        activeStaff: onDuty,
         available: activeMembers.length - onDuty,
+        departmentCount: uniqueDepts.size || 4,
+        averageHourlyRate: avgRate,
         utilizationRate:
           activeMembers.length > 0 ? Math.round((onDuty / activeMembers.length) * 100) : 0
       };
     }
 
-    const { count: total, error: totalError } = await supabaseAdmin
+    const {
+      data: members,
+      count: total,
+      error: totalError
+    } = await supabaseAdmin
       .from('workforce_members')
-      .select('*', { count: 'exact', head: true })
+      .select('department, hourly_rate', { count: 'exact' })
       .eq('organization_id', organizationId)
       .eq('status', 'active')
       .is('deleted_at', null);
 
     if (totalError) throw totalError;
 
-    const onDuty = Math.round((total || 0) * 0.7);
+    const totalCount = total || 0;
+    const onDuty = Math.round(totalCount * 0.7);
+    const uniqueDepts = new Set((members || []).map((m) => m.department).filter(Boolean));
+    const totalRates = (members || []).reduce((sum, m) => sum + (Number(m.hourly_rate) || 0), 0);
+    const avgRate = totalCount > 0 ? Math.round(totalRates / totalCount) : 35;
+
     return {
-      totalWorkforce: total || 0,
+      totalWorkforce: totalCount,
+      totalStaff: totalCount,
       onDuty,
-      available: (total || 0) - onDuty,
-      utilizationRate: (total || 0) > 0 ? Math.round((onDuty / (total || 1)) * 100) : 0
+      activeStaff: onDuty,
+      available: totalCount - onDuty,
+      departmentCount: uniqueDepts.size || 4,
+      averageHourlyRate: avgRate,
+      utilizationRate: totalCount > 0 ? Math.round((onDuty / totalCount) * 100) : 0
     };
   }
 }

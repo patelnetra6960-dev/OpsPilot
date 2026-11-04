@@ -190,3 +190,34 @@ export const useLogoutMutation = () => {
     }
   });
 };
+
+/**
+ * Mutation for updating user profile
+ */
+export const useUpdateProfileMutation = () => {
+  const dispatch = useDispatch();
+  const queryClient = useQueryClient();
+  const toast = useToast();
+
+  return useMutation({
+    mutationFn: async (payload) => {
+      const response = await apiClient.patch('/auth/profile', payload);
+      return response.data?.data || response.data;
+    },
+    onSuccess: (updatedUser) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.auth.currentUser() });
+      if (updatedUser) {
+        dispatch(
+          loginSuccess({
+            user: updatedUser,
+            token: localStorage.getItem('opspilot_auth_token') || ''
+          })
+        );
+      }
+      toast.success('Profile Saved', 'Personal profile details updated successfully.');
+    },
+    onError: (error) => {
+      toast.error('Update Failed', error.apiMessage || 'Could not update profile');
+    }
+  });
+};

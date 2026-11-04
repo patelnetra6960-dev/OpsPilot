@@ -1,8 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { User, Bell, Building2, CreditCard, Shield, Lock, Save } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Card, Badge, Button, Input, Select } from '../../components/ui/index.js';
 import { addToast } from '../../store/uiSlice.js';
+import { useUpdateProfileMutation } from '../../features/auth/api/authApi.js';
+import {
+  useCurrentOrganizationQuery,
+  useUpdateCurrentOrganizationMutation
+} from '../../features/organizations/api/organizationApi.js';
 
 export const SettingsPage = () => {
   const dispatch = useDispatch();
@@ -11,16 +16,42 @@ export const SettingsPage = () => {
 
   const [activeTab, setActiveTab] = useState('profile');
 
+  // Mutation and query hooks
+  const updateProfileMutation = useUpdateProfileMutation();
+  const updateOrgMutation = useUpdateCurrentOrganizationMutation();
+  const { data: orgData } = useCurrentOrganizationQuery({
+    enabled: Boolean(currentTenant?.id)
+  });
+
   // Profile form state
   const [fullName, setFullName] = useState(user?.full_name || 'Alex Rivera');
   const [email, setEmail] = useState(user?.email || 'alex.director@acme.com');
-  const [phone, setPhone] = useState('+1 (555) 392-8100');
+  const [phone, setPhone] = useState(user?.phone || '+1 (555) 392-8100');
   const [jobTitle, setJobTitle] = useState('Operations Managing Director');
 
   // Org form state
   const [orgName, setOrgName] = useState(currentTenant?.name || 'Acme Logistics Global');
   const [orgSlug, setOrgSlug] = useState(currentTenant?.slug || 'acme-logistics');
   const [tier, setTier] = useState(currentTenant?.subscription_tier || 'enterprise');
+
+  // Sync profile data when user changes
+  useEffect(() => {
+    if (user) {
+      if (user.full_name) setFullName(user.full_name);
+      if (user.email) setEmail(user.email);
+      if (user.phone) setPhone(user.phone);
+    }
+  }, [user]);
+
+  // Sync org data when org query returns
+  useEffect(() => {
+    const activeOrg = orgData || currentTenant;
+    if (activeOrg) {
+      if (activeOrg.name) setOrgName(activeOrg.name);
+      if (activeOrg.slug) setOrgSlug(activeOrg.slug);
+      if (activeOrg.subscription_tier) setTier(activeOrg.subscription_tier);
+    }
+  }, [orgData, currentTenant]);
 
   // Notification toggles
   const [emailAlerts, setEmailAlerts] = useState(true);
@@ -33,24 +64,18 @@ export const SettingsPage = () => {
 
   const handleSaveProfile = (e) => {
     e.preventDefault();
-    dispatch(
-      addToast({
-        type: 'success',
-        title: 'Profile Saved',
-        message: 'Personal profile and contact info updated successfully'
-      })
-    );
+    updateProfileMutation.mutate({
+      full_name: fullName,
+      phone
+    });
   };
 
   const handleSaveOrg = (e) => {
     e.preventDefault();
-    dispatch(
-      addToast({
-        type: 'success',
-        title: 'Organization Updated',
-        message: 'Tenant settings and company configuration updated'
-      })
-    );
+    updateOrgMutation.mutate({
+      name: orgName,
+      slug: orgSlug
+    });
   };
 
   const handleSaveNotifications = (e) => {
@@ -191,9 +216,17 @@ export const SettingsPage = () => {
                 </div>
 
                 <div className="pt-2">
-                  <Button type="submit" variant="primary" size="sm">
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="sm"
+                    loading={updateProfileMutation.isPending}
+                    disabled={updateProfileMutation.isPending}
+                  >
                     <Save className="w-3.5 h-3.5 mr-1.5" />
-                    <span>Save Profile Changes</span>
+                    <span>
+                      {updateProfileMutation.isPending ? 'Saving...' : 'Save Profile Changes'}
+                    </span>
                   </Button>
                 </div>
               </form>
@@ -364,9 +397,17 @@ export const SettingsPage = () => {
             />
 
             <div className="pt-2">
-              <Button type="submit" variant="primary" size="sm">
+              <Button
+                type="submit"
+                variant="primary"
+                size="sm"
+                loading={updateOrgMutation.isPending}
+                disabled={updateOrgMutation.isPending}
+              >
                 <Save className="w-3.5 h-3.5 mr-1.5" />
-                <span>Save Organization Settings</span>
+                <span>
+                  {updateOrgMutation.isPending ? 'Saving...' : 'Save Organization Settings'}
+                </span>
               </Button>
             </div>
           </form>

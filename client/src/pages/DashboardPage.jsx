@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import {
   Users,
@@ -8,42 +8,38 @@ import {
   Sparkles,
   CalendarCheck,
   Building2,
-  CreditCard
+  CreditCard,
+  UserPlus,
+  Mail,
+  Clock,
+  CheckCircle2,
+  ShieldAlert
 } from 'lucide-react';
-import apiClient from '../services/apiClient.js';
 import { Link } from 'react-router-dom';
-import { Card, Badge, Skeleton } from '../components/ui/index.js';
+import { Card, Badge, Skeleton, Button } from '../components/ui/index.js';
+import { useAuth } from '../hooks/useAuth.js';
+import { useWorkforceStatsQuery } from '../features/workforce/index.js';
+import { useCurrentOrganizationQuery } from '../features/organizations/index.js';
+import { useAuditLogsQuery } from '../features/audit/index.js';
 import { PROTOTYPE_ANALYTICS } from '../data/prototypeData.js';
 
 export const DashboardPage = () => {
   const { currentTenant } = useSelector((state) => state.tenant);
-  const [timeRange, setTimeRange] = useState('30D'); // 'Today' | '7D' | '30D' | 'YTD'
+  const { user, isAdmin, isOwner, isManager } = useAuth();
+  const [timeRange, setTimeRange] = useState('30D');
 
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { data: stats, isLoading: statsLoading } = useWorkforceStatsQuery();
+  const { data: orgData } = useCurrentOrganizationQuery({
+    enabled: Boolean(currentTenant?.id)
+  });
 
-  useEffect(() => {
-    const loadDashboardData = async () => {
-      try {
-        setLoading(true);
-        const [statsRes] = await Promise.all([
-          apiClient.get('/workforce/stats').catch(() => ({ data: { data: null } }))
-        ]);
+  const canViewAudit = isAdmin || isOwner;
+  const { data: auditData, isLoading: auditLoading } = useAuditLogsQuery(
+    { limit: 5 },
+    { enabled: canViewAudit }
+  );
 
-        if (statsRes.data?.data) {
-          setStats(statsRes.data.data);
-        }
-      } catch (err) {
-        console.error('Error fetching dashboard data', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (currentTenant?.id) {
-      loadDashboardData();
-    }
-  }, [currentTenant]);
+  const activeOrg = orgData || currentTenant;
 
   return (
     <div className="space-y-6">
@@ -53,13 +49,16 @@ export const DashboardPage = () => {
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="brand" size="sm" dot>
-                Tenant: {currentTenant?.name}
+                Tenant: {activeOrg?.name || 'Active Tenant'}
               </Badge>
               <span className="text-xs text-indigo-200/80 font-mono">
-                Tier: {currentTenant?.subscription_tier?.toUpperCase()}
+                Tier: {activeOrg?.subscription_tier?.toUpperCase() || 'ENTERPRISE'}
               </span>
               <span className="text-[10px] bg-white/10 text-indigo-200 px-2 py-0.5 rounded-full font-mono">
-                RLS Partition: {currentTenant?.id ? `${currentTenant.id.slice(0, 8)}...` : 'Active'}
+                Role: {user?.role?.toUpperCase() || 'OWNER'}
+              </span>
+              <span className="text-[10px] bg-white/10 text-indigo-200 px-2 py-0.5 rounded-full font-mono">
+                RLS Partition: {activeOrg?.id ? `${activeOrg.id.slice(0, 8)}...` : 'Active'}
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
@@ -101,6 +100,48 @@ export const DashboardPage = () => {
         </div>
       </div>
 
+      {/* Role Permitted Quick Actions Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+          <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+            Permitted Management Actions:
+          </span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {(isAdmin || isOwner) && (
+            <>
+              <Link to="/workforce">
+                <Button variant="primary" size="sm">
+                  <UserPlus className="w-3.5 h-3.5 mr-1.5" />
+                  <span>Manage Workforce</span>
+                </Button>
+              </Link>
+              <Link to="/workforce">
+                <Button variant="secondary" size="sm">
+                  <Mail className="w-3.5 h-3.5 mr-1.5" />
+                  <span>Send Invite</span>
+                </Button>
+              </Link>
+            </>
+          )}
+          {isManager && (
+            <Link to="/manager">
+              <Button variant="primary" size="sm">
+                <CalendarCheck className="w-3.5 h-3.5 mr-1.5" />
+                <span>Manager Command</span>
+              </Button>
+            </Link>
+          )}
+          <Link to="/shifts">
+            <Button variant="outline" size="sm">
+              <Clock className="w-3.5 h-3.5 mr-1.5" />
+              <span>Shift Rota</span>
+            </Button>
+          </Link>
+        </div>
+      </div>
+
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Workforce */}
@@ -113,10 +154,10 @@ export const DashboardPage = () => {
           </div>
           <div>
             <div className="text-2xl font-extrabold text-slate-900 dark:text-white">
-              {loading ? <Skeleton className="h-8 w-16" /> : stats?.totalStaff || 18}
+              {statsLoading ? <Skeleton className="h-8 w-16" /> : stats?.totalStaff || 18}
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-              Active in {currentTenant?.name}
+              {stats?.departmentCount || 4} active departments
             </div>
           </div>
         </Card>
@@ -131,7 +172,7 @@ export const DashboardPage = () => {
           </div>
           <div>
             <div className="text-2xl font-extrabold text-slate-900 dark:text-white">
-              {loading ? <Skeleton className="h-8 w-16" /> : stats?.activeStaff || 14}
+              {statsLoading ? <Skeleton className="h-8 w-16" /> : stats?.activeStaff || 14}
             </div>
             <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-1">
               98.2% punctuality rate
@@ -142,15 +183,21 @@ export const DashboardPage = () => {
         {/* Work Orders Today */}
         <Card hover className="p-5 space-y-3">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-            <span className="text-xs font-bold uppercase tracking-wider">Active Dispatches</span>
+            <span className="text-xs font-bold uppercase tracking-wider">Avg Hourly Index</span>
             <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400">
-              <Send className="w-4 h-4" />
+              <CreditCard className="w-4 h-4" />
             </div>
           </div>
           <div>
-            <div className="text-2xl font-extrabold text-slate-900 dark:text-white">8 Orders</div>
+            <div className="text-2xl font-extrabold text-slate-900 dark:text-white">
+              {statsLoading ? (
+                <Skeleton className="h-8 w-16" />
+              ) : (
+                `$${stats?.averageHourlyRate || 42}/hr`
+              )}
+            </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-              6 on site, 2 en route
+              Payroll standard rate
             </div>
           </div>
         </Card>
@@ -267,6 +314,72 @@ export const DashboardPage = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          </Card>
+
+          {/* Operational Activity & Audit Trail Card */}
+          <Card variant="default" className="p-5 space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+              <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                <Activity className="w-3.5 h-3.5 text-indigo-500" />
+                <span>Recent Operational Activity</span>
+              </span>
+              <span className="text-[11px] text-slate-400 font-mono">Live RLS Stream</span>
+            </div>
+
+            <div className="space-y-2">
+              {auditLoading ? (
+                <div className="space-y-2 py-2">
+                  <Skeleton className="h-6 w-full" />
+                  <Skeleton className="h-6 w-3/4" />
+                </div>
+              ) : auditData && auditData.length > 0 ? (
+                auditData.slice(0, 4).map((log, idx) => (
+                  <div
+                    key={log.id || idx}
+                    className="flex items-center justify-between text-xs p-2 rounded-lg bg-slate-50 dark:bg-slate-850 border border-slate-100 dark:border-slate-800"
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">
+                        {log.action}
+                      </span>
+                      <span className="text-slate-400 text-[11px] truncate">
+                        {log.actor?.email || log.user_id || 'System'}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-mono shrink-0 ml-2">
+                      {log.created_at
+                        ? new Date(log.created_at).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })
+                        : 'Recent'}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs p-2 rounded-lg bg-slate-50 dark:bg-slate-850 border border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">
+                        Shift Rota Dispatched
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-mono">10m ago</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs p-2 rounded-lg bg-slate-50 dark:bg-slate-850 border border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center gap-2">
+                      <ShieldAlert className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">
+                        Safety Credential Verified
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-mono">25m ago</span>
+                  </div>
+                </div>
+              )}
             </div>
           </Card>
         </div>
