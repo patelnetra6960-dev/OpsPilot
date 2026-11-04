@@ -1,15 +1,16 @@
 -- =====================================================================
--- OpsPilot Consolidated PostgreSQL Schema
--- Architecture: Multi-Tenant Modular Monolith with Row-Level Security
--- Primary Engine: Supabase PostgreSQL 15+
+-- OpsPilot Consolidated Complete Normalized PostgreSQL Schema
+-- Architecture: Multi-Tenant Modular Monolith with Dual-Tier RLS
+-- Engine: PostgreSQL 15+ / Supabase
+-- Covers all 27 domain entities with normalized relationships & constraints
 -- =====================================================================
 
--- 1. Enable Required Extensions
+-- 1. Extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 
--- 2. Helper Functions
+-- 2. Universal updated_at Trigger Function
 CREATE OR REPLACE FUNCTION public.set_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -18,12 +19,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- 3. Security Definer Helper Functions
 CREATE OR REPLACE FUNCTION public.is_member_of(org_id UUID)
 RETURNS BOOLEAN AS $$
 BEGIN
     RETURN EXISTS (
         SELECT 1 
-        FROM public.organization_members 
+        FROM public.organization_memberships 
         WHERE organization_id = org_id 
           AND user_id = auth.uid() 
           AND status = 'active'
@@ -36,7 +38,7 @@ RETURNS BOOLEAN AS $$
 BEGIN
     RETURN EXISTS (
         SELECT 1 
-        FROM public.organization_members 
+        FROM public.organization_memberships 
         WHERE organization_id = org_id 
           AND user_id = auth.uid() 
           AND status = 'active'
@@ -50,14 +52,16 @@ RETURNS BOOLEAN AS $$
 BEGIN
     RETURN EXISTS (
         SELECT 1 
-        FROM public.users_profiles 
+        FROM public.user_profiles 
         WHERE id = auth.uid() 
           AND is_superadmin = true
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
 
--- 3. Organizations (Multi-Tenant Workspaces)
+-- =====================================================================
+-- 1. Organizations (Tenants)
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS public.organizations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255) NOT NULL,
@@ -70,8 +74,10 @@ CREATE TABLE IF NOT EXISTS public.organizations (
     deleted_at TIMESTAMPTZ DEFAULT NULL
 );
 
--- 4. Users Profiles
-CREATE TABLE IF NOT EXISTS public.users_profiles (
+-- =====================================================================
+-- 2. User Profiles
+-- =====================================================================
+CREATE TABLE IF NOT EXISTS public.user_profiles (
     id UUID PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
     full_name VARCHAR(255),
@@ -83,25 +89,84 @@ CREATE TABLE IF NOT EXISTS public.users_profiles (
     deleted_at TIMESTAMPTZ DEFAULT NULL
 );
 
--- 5. Organization Memberships
-CREATE TABLE IF NOT EXISTS public.organization_members (
+CREATE OR REPLACE VIEW public.users_profiles WITH (security_invoker = true) AS
+SELECT * FROM public.user_profiles;
+
+-- =====================================================================
+-- 3. Roles, Permissions & Role Permissions (RBAC)
+-- =====================================================================
+CREATE TABLE IF NOT EXISTS public.roles (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    slug VARCHAR(100) NOT NULL,
+    description TEXT,
+    is_system BOOLEAN DEFAULT false NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    CONSTRAINT uq_roles_org_slug UNIQUE (organization_id, slug)
+);
+
+CREATE TABLE IF NOT EXISTS public.permissions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100) UNIQUE NOT NULL,
+    module VARCHAR(50) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.role_permissions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    role_id UUID NOT NULL REFERENCES public.roles(id) ON DELETE CASCADE,
+    permission_id UUID NOT NULL REFERENCES public.permissions(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    CONSTRAINT uq_role_permission UNIQUE (role_id, permission_id)
+);
+
+-- =====================================================================
+-- 4. Organization Memberships
+-- =====================================================================
+CREATE TABLE IF NOT EXISTS public.organization_memberships (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES public.users_profiles(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES public.user_profiles(id) ON DELETE CASCADE,
+    role_id UUID REFERENCES public.roles(id) ON DELETE SET NULL,
     role VARCHAR(50) NOT NULL DEFAULT 'employee' CHECK (role IN ('owner', 'admin', 'manager', 'employee', 'customer', 'member')),
     status VARCHAR(50) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'invited', 'suspended')),
-    invited_by UUID REFERENCES public.users_profiles(id) ON DELETE SET NULL,
+    invited_by UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,
     joined_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    CONSTRAINT uq_org_member UNIQUE (organization_id, user_id)
+    CONSTRAINT uq_org_membership UNIQUE (organization_id, user_id)
 );
 
--- 6. Workforce Directory
+CREATE OR REPLACE VIEW public.organization_members WITH (security_invoker = true) AS
+SELECT * FROM public.organization_memberships;
+
+-- =====================================================================
+-- 5. Departments
+-- =====================================================================
+CREATE TABLE IF NOT EXISTS public.departments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    code VARCHAR(50) NOT NULL,
+    description TEXT,
+    manager_id UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    deleted_at TIMESTAMPTZ DEFAULT NULL,
+    CONSTRAINT uq_departments_org_code UNIQUE (organization_id, code)
+);
+
+-- =====================================================================
+-- 6. Workforce Directory & Rosters
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS public.workforce_members (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
-    user_id UUID REFERENCES public.users_profiles(id) ON DELETE SET NULL,
+    user_id UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,
+    department_id UUID REFERENCES public.departments(id) ON DELETE SET NULL,
     employee_code VARCHAR(100) NOT NULL,
     first_name VARCHAR(150) NOT NULL,
     last_name VARCHAR(150) NOT NULL,
@@ -120,7 +185,6 @@ CREATE TABLE IF NOT EXISTS public.workforce_members (
     CONSTRAINT uq_workforce_org_employee_code UNIQUE (organization_id, employee_code)
 );
 
--- 7. Shifts & Attendance
 CREATE TABLE IF NOT EXISTS public.shift_schedules (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
@@ -154,7 +218,7 @@ CREATE TABLE IF NOT EXISTS public.attendance_records (
     total_hours NUMERIC(6, 2) DEFAULT 0.00,
     break_minutes INTEGER DEFAULT 0,
     status VARCHAR(50) DEFAULT 'pending_approval' CHECK (status IN ('pending_approval', 'approved', 'disputed', 'rejected')),
-    approved_by UUID REFERENCES public.users_profiles(id) ON DELETE SET NULL,
+    approved_by UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,
     approved_at TIMESTAMPTZ,
     notes TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -162,7 +226,47 @@ CREATE TABLE IF NOT EXISTS public.attendance_records (
     deleted_at TIMESTAMPTZ DEFAULT NULL
 );
 
--- 8. Assets & Inventory
+-- =====================================================================
+-- 7. Customers & Suppliers
+-- =====================================================================
+CREATE TABLE IF NOT EXISTS public.customers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    contact_person VARCHAR(255),
+    email VARCHAR(255),
+    phone VARCHAR(50),
+    address TEXT,
+    sla_tier VARCHAR(50) DEFAULT 'standard' CHECK (sla_tier IN ('standard', 'priority', 'critical', 'premium')),
+    status VARCHAR(50) DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'suspended')),
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    deleted_at TIMESTAMPTZ DEFAULT NULL
+);
+
+CREATE OR REPLACE VIEW public.clients WITH (security_invoker = true) AS
+SELECT * FROM public.customers;
+
+CREATE TABLE IF NOT EXISTS public.suppliers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    code VARCHAR(50) NOT NULL,
+    contact_name VARCHAR(255),
+    email VARCHAR(255),
+    phone VARCHAR(50),
+    address TEXT,
+    payment_terms VARCHAR(100) DEFAULT 'Net 30',
+    status VARCHAR(50) DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'preferred')),
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    deleted_at TIMESTAMPTZ DEFAULT NULL,
+    CONSTRAINT uq_suppliers_org_code UNIQUE (organization_id, code)
+);
+
+-- =====================================================================
+-- 8. Assets, Inventory Items & Stock Transactions
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS public.assets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
@@ -171,6 +275,10 @@ CREATE TABLE IF NOT EXISTS public.assets (
     category VARCHAR(100) DEFAULT 'equipment' CHECK (category IN ('vehicle', 'heavy_machinery', 'diagnostic_tool', 'equipment', 'facility')),
     status VARCHAR(50) DEFAULT 'available' CHECK (status IN ('available', 'assigned', 'maintenance', 'retired')),
     assigned_to UUID REFERENCES public.workforce_members(id) ON DELETE SET NULL,
+    supplier_id UUID REFERENCES public.suppliers(id) ON DELETE SET NULL,
+    serial_number VARCHAR(100),
+    purchase_date DATE,
+    purchase_cost NUMERIC(12, 2) DEFAULT 0.00 CHECK (purchase_cost >= 0),
     last_service_date DATE,
     next_service_date DATE,
     metadata JSONB DEFAULT '{}'::jsonb,
@@ -186,6 +294,7 @@ CREATE TABLE IF NOT EXISTS public.inventory_items (
     sku VARCHAR(100) NOT NULL,
     name VARCHAR(255) NOT NULL,
     category VARCHAR(100) NOT NULL,
+    supplier_id UUID REFERENCES public.suppliers(id) ON DELETE SET NULL,
     location VARCHAR(255),
     in_stock INTEGER DEFAULT 0 NOT NULL CHECK (in_stock >= 0),
     reorder_level INTEGER DEFAULT 5 NOT NULL CHECK (reorder_level >= 0),
@@ -197,26 +306,26 @@ CREATE TABLE IF NOT EXISTS public.inventory_items (
     CONSTRAINT uq_inventory_org_sku UNIQUE (organization_id, sku)
 );
 
--- 9. Clients & Projects
-CREATE TABLE IF NOT EXISTS public.clients (
+CREATE TABLE IF NOT EXISTS public.stock_transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
-    name VARCHAR(255) NOT NULL,
-    contact_person VARCHAR(255),
-    email VARCHAR(255),
-    phone VARCHAR(50),
-    address TEXT,
-    sla_tier VARCHAR(50) DEFAULT 'standard' CHECK (sla_tier IN ('standard', 'priority', 'critical', 'premium')),
-    status VARCHAR(50) DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'suspended')),
-    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    deleted_at TIMESTAMPTZ DEFAULT NULL
+    inventory_item_id UUID NOT NULL REFERENCES public.inventory_items(id) ON DELETE CASCADE,
+    transaction_type VARCHAR(50) NOT NULL CHECK (transaction_type IN ('inbound', 'outbound', 'adjustment', 'scrap', 'transfer')),
+    quantity INTEGER NOT NULL,
+    unit_price NUMERIC(10, 2) DEFAULT 0.00 CHECK (unit_price >= 0),
+    work_order_id UUID,
+    reference_note TEXT,
+    performed_by UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
+-- =====================================================================
+-- 9. Projects, Project Members & Milestones
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS public.projects (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
-    client_id UUID REFERENCES public.clients(id) ON DELETE SET NULL,
+    customer_id UUID REFERENCES public.customers(id) ON DELETE SET NULL,
     project_code VARCHAR(100) NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -234,6 +343,16 @@ CREATE TABLE IF NOT EXISTS public.projects (
     CONSTRAINT uq_projects_org_code UNIQUE (organization_id, project_code)
 );
 
+CREATE TABLE IF NOT EXISTS public.project_members (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+    project_id UUID NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
+    workforce_member_id UUID NOT NULL REFERENCES public.workforce_members(id) ON DELETE CASCADE,
+    project_role VARCHAR(100) DEFAULT 'Technician',
+    assigned_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    CONSTRAINT uq_project_member UNIQUE (project_id, workforce_member_id)
+);
+
 CREATE TABLE IF NOT EXISTS public.project_milestones (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
@@ -246,11 +365,13 @@ CREATE TABLE IF NOT EXISTS public.project_milestones (
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
--- 10. Service Requests, Work Orders & Tasks
+-- =====================================================================
+-- 10. Service Requests, Work Orders & Checklists
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS public.service_requests (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
-    client_id UUID REFERENCES public.clients(id) ON DELETE SET NULL,
+    customer_id UUID REFERENCES public.customers(id) ON DELETE SET NULL,
     request_code VARCHAR(100) NOT NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT,
@@ -270,7 +391,7 @@ CREATE TABLE IF NOT EXISTS public.work_orders (
     organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
     work_order_code VARCHAR(100) NOT NULL,
     title VARCHAR(255) NOT NULL,
-    client_id UUID REFERENCES public.clients(id) ON DELETE SET NULL,
+    customer_id UUID REFERENCES public.customers(id) ON DELETE SET NULL,
     service_request_id UUID REFERENCES public.service_requests(id) ON DELETE SET NULL,
     assigned_to UUID REFERENCES public.workforce_members(id) ON DELETE SET NULL,
     asset_id UUID REFERENCES public.assets(id) ON DELETE SET NULL,
@@ -300,17 +421,23 @@ CREATE TABLE IF NOT EXISTS public.work_order_checklists (
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
+-- =====================================================================
+-- 11. Tasks, Task Assignments, Comments & Attachments
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS public.tasks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
     task_code VARCHAR(100) NOT NULL,
     title VARCHAR(255) NOT NULL,
+    description TEXT,
     category VARCHAR(100) DEFAULT 'Maintenance',
     priority VARCHAR(50) DEFAULT 'normal' CHECK (priority IN ('urgent', 'high', 'normal', 'low')),
     column_name VARCHAR(50) DEFAULT 'todo' CHECK (column_name IN ('todo', 'in_progress', 'review', 'completed')),
     assigned_to UUID REFERENCES public.workforce_members(id) ON DELETE SET NULL,
     project_id UUID REFERENCES public.projects(id) ON DELETE SET NULL,
+    work_order_id UUID REFERENCES public.work_orders(id) ON DELETE SET NULL,
     due_date DATE,
+    created_by UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,
     checklist_total INTEGER DEFAULT 0 CHECK (checklist_total >= 0),
     checklist_completed INTEGER DEFAULT 0 CHECK (checklist_completed >= 0),
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -319,8 +446,41 @@ CREATE TABLE IF NOT EXISTS public.tasks (
     CONSTRAINT uq_tasks_org_code UNIQUE (organization_id, task_code)
 );
 
--- 11. Expenses & Invoices
-CREATE TABLE IF NOT EXISTS public.expense_claims (
+CREATE TABLE IF NOT EXISTS public.task_assignments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+    task_id UUID NOT NULL REFERENCES public.tasks(id) ON DELETE CASCADE,
+    workforce_member_id UUID NOT NULL REFERENCES public.workforce_members(id) ON DELETE CASCADE,
+    assigned_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    CONSTRAINT uq_task_assignment UNIQUE (task_id, workforce_member_id)
+);
+
+CREATE TABLE IF NOT EXISTS public.task_comments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+    task_id UUID NOT NULL REFERENCES public.tasks(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES public.user_profiles(id) ON DELETE CASCADE,
+    comment_text TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.task_attachments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+    task_id UUID NOT NULL REFERENCES public.tasks(id) ON DELETE CASCADE,
+    file_name VARCHAR(255) NOT NULL,
+    file_url TEXT NOT NULL,
+    file_size INTEGER NOT NULL CHECK (file_size >= 0),
+    mime_type VARCHAR(100),
+    uploaded_by UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+-- =====================================================================
+-- 12. Expenses & Expense Approvals
+-- =====================================================================
+CREATE TABLE IF NOT EXISTS public.expenses (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
     claim_code VARCHAR(100) NOT NULL,
@@ -333,20 +493,36 @@ CREATE TABLE IF NOT EXISTS public.expense_claims (
     receipt_url TEXT,
     receipt_attached BOOLEAN DEFAULT false NOT NULL,
     status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'reimbursed')),
-    reviewed_by UUID REFERENCES public.users_profiles(id) ON DELETE SET NULL,
+    reviewed_by UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,
     reviewed_at TIMESTAMPTZ,
     review_notes TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     deleted_at TIMESTAMPTZ DEFAULT NULL,
-    CONSTRAINT uq_expense_claims_org_code UNIQUE (organization_id, claim_code)
+    CONSTRAINT uq_expenses_org_code UNIQUE (organization_id, claim_code)
 );
 
+CREATE OR REPLACE VIEW public.expense_claims WITH (security_invoker = true) AS
+SELECT * FROM public.expenses;
+
+CREATE TABLE IF NOT EXISTS public.expense_approvals (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+    expense_id UUID NOT NULL REFERENCES public.expenses(id) ON DELETE CASCADE,
+    approver_id UUID NOT NULL REFERENCES public.user_profiles(id) ON DELETE RESTRICT,
+    decision VARCHAR(50) NOT NULL CHECK (decision IN ('approved', 'rejected', 'requested_changes')),
+    notes TEXT,
+    decided_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+-- =====================================================================
+-- 13. Invoices, Line Items & Payments
+-- =====================================================================
 CREATE TABLE IF NOT EXISTS public.invoices (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
     invoice_number VARCHAR(100) NOT NULL,
-    client_id UUID NOT NULL REFERENCES public.clients(id) ON DELETE RESTRICT,
+    customer_id UUID NOT NULL REFERENCES public.customers(id) ON DELETE RESTRICT,
     work_order_id UUID REFERENCES public.work_orders(id) ON DELETE SET NULL,
     issue_date DATE NOT NULL DEFAULT CURRENT_DATE,
     due_date DATE NOT NULL,
@@ -366,6 +542,7 @@ CREATE TABLE IF NOT EXISTS public.invoice_items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
     invoice_id UUID NOT NULL REFERENCES public.invoices(id) ON DELETE CASCADE,
+    inventory_item_id UUID REFERENCES public.inventory_items(id) ON DELETE SET NULL,
     description VARCHAR(255) NOT NULL,
     quantity NUMERIC(10, 2) NOT NULL DEFAULT 1.00 CHECK (quantity > 0),
     unit_price NUMERIC(10, 2) NOT NULL CHECK (unit_price >= 0),
@@ -373,11 +550,40 @@ CREATE TABLE IF NOT EXISTS public.invoice_items (
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
--- 12. Audit Logs
+CREATE TABLE IF NOT EXISTS public.payments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+    invoice_id UUID NOT NULL REFERENCES public.invoices(id) ON DELETE CASCADE,
+    payment_reference VARCHAR(100) NOT NULL,
+    amount NUMERIC(12, 2) NOT NULL CHECK (amount > 0),
+    payment_method VARCHAR(50) NOT NULL CHECK (payment_method IN ('credit_card', 'ach', 'bank_transfer', 'check', 'cash', 'stripe')),
+    status VARCHAR(50) DEFAULT 'completed' CHECK (status IN ('pending', 'completed', 'failed', 'refunded')),
+    paid_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    recorded_by UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,
+    notes TEXT,
+    CONSTRAINT uq_payment_org_ref UNIQUE (organization_id, payment_reference)
+);
+
+-- =====================================================================
+-- 14. Notifications & Immutable Audit Logs
+-- =====================================================================
+CREATE TABLE IF NOT EXISTS public.notifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES public.user_profiles(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    type VARCHAR(50) DEFAULT 'info' CHECK (type IN ('info', 'success', 'warning', 'error', 'dispatch', 'alert')),
+    action_url TEXT,
+    is_read BOOLEAN DEFAULT false NOT NULL,
+    read_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS public.audit_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
-    user_id UUID REFERENCES public.users_profiles(id) ON DELETE SET NULL,
+    user_id UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,
     action VARCHAR(100) NOT NULL,
     entity_type VARCHAR(100) NOT NULL,
     entity_id VARCHAR(100),

@@ -1,5 +1,5 @@
 -- OpsPilot PostgreSQL Schema Migration: 001_core_extensions_and_tenants.sql
--- Description: Core Database Extensions, Universal Updated_At Trigger, Organizations & User Memberships
+-- Description: Core Database Extensions, Universal Updated_At Trigger, Organizations & User Profiles
 
 -- 1. Enable Required Extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -38,8 +38,8 @@ CREATE TRIGGER trg_organizations_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION public.set_updated_at();
 
--- 4. Users Profiles (Extends Supabase auth.users or acts as profile entity)
-CREATE TABLE IF NOT EXISTS public.users_profiles (
+-- 4. User Profiles (Extends Supabase auth.users or acts as standalone profile entity)
+CREATE TABLE IF NOT EXISTS public.user_profiles (
     id UUID PRIMARY KEY, -- Matches auth.users(id) in Supabase
     email VARCHAR(255) UNIQUE NOT NULL,
     full_name VARCHAR(255),
@@ -51,37 +51,16 @@ CREATE TABLE IF NOT EXISTS public.users_profiles (
     deleted_at TIMESTAMPTZ DEFAULT NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_users_profiles_email ON public.users_profiles(email);
-CREATE INDEX IF NOT EXISTS idx_users_profiles_superadmin ON public.users_profiles(is_superadmin) WHERE is_superadmin = true;
+CREATE INDEX IF NOT EXISTS idx_user_profiles_email ON public.user_profiles(email);
+CREATE INDEX IF NOT EXISTS idx_user_profiles_superadmin ON public.user_profiles(is_superadmin) WHERE is_superadmin = true;
+CREATE INDEX IF NOT EXISTS idx_user_profiles_active ON public.user_profiles(id) WHERE deleted_at IS NULL;
 
-DROP TRIGGER IF EXISTS trg_users_profiles_updated_at ON public.users_profiles;
-CREATE TRIGGER trg_users_profiles_updated_at
-    BEFORE UPDATE ON public.users_profiles
+DROP TRIGGER IF EXISTS trg_user_profiles_updated_at ON public.user_profiles;
+CREATE TRIGGER trg_user_profiles_updated_at
+    BEFORE UPDATE ON public.user_profiles
     FOR EACH ROW
     EXECUTE FUNCTION public.set_updated_at();
 
--- 5. Organization Memberships (Tenant Mapping & RBAC)
-CREATE TABLE IF NOT EXISTS public.organization_members (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES public.users_profiles(id) ON DELETE CASCADE,
-    role VARCHAR(50) NOT NULL DEFAULT 'employee' CHECK (role IN ('owner', 'admin', 'manager', 'employee', 'customer', 'member')),
-    status VARCHAR(50) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'invited', 'suspended')),
-    invited_by UUID REFERENCES public.users_profiles(id) ON DELETE SET NULL,
-    joined_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    CONSTRAINT uq_org_member UNIQUE (organization_id, user_id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_org_members_org ON public.organization_members(organization_id);
-CREATE INDEX IF NOT EXISTS idx_org_members_user ON public.organization_members(user_id);
-CREATE INDEX IF NOT EXISTS idx_org_members_role ON public.organization_members(role);
-CREATE INDEX IF NOT EXISTS idx_org_members_status ON public.organization_members(status);
-CREATE INDEX IF NOT EXISTS idx_org_members_lookup ON public.organization_members(organization_id, user_id, status);
-
-DROP TRIGGER IF EXISTS trg_organization_members_updated_at ON public.organization_members;
-CREATE TRIGGER trg_organization_members_updated_at
-    BEFORE UPDATE ON public.organization_members
-    FOR EACH ROW
-    EXECUTE FUNCTION public.set_updated_at();
+-- 5. Backward Compatibility Updatable View: users_profiles
+CREATE OR REPLACE VIEW public.users_profiles WITH (security_invoker = true) AS
+SELECT * FROM public.user_profiles;
