@@ -9,8 +9,8 @@ import apiV1Router from './routes/index.js';
 
 const app = express();
 
-// Security headers
-app.use(helmet());
+// Security headers (contentSecurityPolicy disabled to permit Swagger UI documentation rendering)
+app.use(helmet({ contentSecurityPolicy: false }));
 
 // Cross-Origin Resource Sharing
 app.use(cors(corsOptions));
@@ -21,6 +21,9 @@ app.use(requestLogger);
 // Request body parsers
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Quick developer redirect for API docs
+app.get('/docs', (_req, res) => res.redirect('/api/v1/docs/'));
 
 // Apply rate limiting across API routes
 app.use('/api', defaultRateLimiter);

@@ -19,5 +19,7 @@ export const globalErrorHandler = (err, req, res, _next) => {
     );
   }
 
-  return sendError(res, message, statusCode, errorCode, env.isProduction ? null : err.stack);
+  const details = err.details || (env.isProduction ? null : err.stack);
+
+  return sendError(res, message, statusCode, errorCode, details);
 };

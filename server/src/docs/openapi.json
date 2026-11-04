@@ -1,0 +1,368 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "OpsPilot Enterprise API",
+    "version": "1.0.0",
+    "description": "Multi-tenant Enterprise Operations & Workforce Management REST API. Enforces cryptographic Supabase JWT authentication, strict tenant isolation headers, role/permission authorization, and standard JSON response envelopes."
+  },
+  "servers": [
+    {
+      "url": "/api/v1",
+      "description": "Primary API v1 Base"
+    },
+    {
+      "url": "/api",
+      "description": "Root API Alias"
+    }
+  ],
+  "security": [
+    {
+      "BearerAuth": [],
+      "TenantHeader": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Supabase authenticated user access token"
+      },
+      "TenantHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Tenant-Id",
+        "description": "Active Organization Tenant UUID"
+      }
+    },
+    "schemas": {
+      "StandardMeta": {
+        "type": "object",
+        "properties": {
+          "timestamp": { "type": "string", "format": "date-time" },
+          "requestId": { "type": "string" }
+        }
+      },
+      "PaginationMeta": {
+        "type": "object",
+        "properties": {
+          "page": { "type": "integer", "example": 1 },
+          "limit": { "type": "integer", "example": 20 },
+          "total": { "type": "integer", "example": 45 },
+          "totalPages": { "type": "integer", "example": 3 },
+          "hasNextPage": { "type": "boolean", "example": true },
+          "hasPrevPage": { "type": "boolean", "example": false }
+        }
+      },
+      "StandardError": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": { "type": "string", "example": "INSUFFICIENT_ROLE_PERMISSIONS" },
+              "message": {
+                "type": "string",
+                "example": "Forbidden: Requires one of [owner, admin] roles"
+              },
+              "details": { "type": "object", "nullable": true }
+            }
+          },
+          "meta": { "$ref": "#/components/schemas/StandardMeta" }
+        }
+      },
+      "Customer": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "cust-acme-1" },
+          "organization_id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string", "example": "Metro Health System" },
+          "company_name": { "type": "string", "example": "Metro Health Inc." },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "rachel.green@metrohealth.com"
+          },
+          "phone": { "type": "string", "example": "+1 555-0199" },
+          "customer_code": { "type": "string", "example": "CUST-1001" },
+          "sla_tier": {
+            "type": "string",
+            "enum": ["standard", "silver", "gold", "platinum", "critical", "premium"]
+          },
+          "status": { "type": "string", "enum": ["active", "inactive", "suspended"] },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateCustomerRequest": {
+        "type": "object",
+        "required": ["name", "email"],
+        "properties": {
+          "name": { "type": "string", "example": "Pinnacle Energy Corp" },
+          "company_name": { "type": "string", "example": "Pinnacle Inc" },
+          "email": { "type": "string", "format": "email", "example": "contact@pinnacle.com" },
+          "phone": { "type": "string", "example": "+1 (555) 345-6789" },
+          "sla_tier": {
+            "type": "string",
+            "enum": ["standard", "silver", "gold", "platinum", "critical", "premium"],
+            "default": "standard"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["active", "inactive", "suspended"],
+            "default": "active"
+          }
+        }
+      },
+      "WorkforceMember": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "w1" },
+          "organization_id": { "type": "string", "format": "uuid" },
+          "first_name": { "type": "string", "example": "Marcus" },
+          "last_name": { "type": "string", "example": "Vance" },
+          "email": { "type": "string", "format": "email" },
+          "designation": { "type": "string", "example": "Lead Field Supervisor" },
+          "department": { "type": "string", "example": "Field Operations" },
+          "status": { "type": "string", "enum": ["active", "on_leave", "suspended", "terminated"] },
+          "hourly_rate": { "type": "number", "example": 55.0 }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health check and diagnostic status",
+        "tags": ["Health"],
+        "security": [],
+        "responses": {
+          "200": { "description": "Backend is operational" }
+        }
+      }
+    },
+    "/customers": {
+      "get": {
+        "summary": "List customers with pagination, sorting, search and filtering",
+        "tags": ["Customers"],
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20 } },
+          { "name": "search", "in": "query", "schema": { "type": "string" } },
+          { "name": "status", "in": "query", "schema": { "type": "string" } },
+          { "name": "sla_tier", "in": "query", "schema": { "type": "string" } },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "schema": { "type": "string", "default": "created_at" }
+          },
+          {
+            "name": "sortOrder",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["asc", "desc"], "default": "desc" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Paginated customer list" },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden cross-tenant or role violation" }
+        }
+      },
+      "post": {
+        "summary": "Create new customer in active organization",
+        "tags": ["Customers"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateCustomerRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Customer successfully created" },
+          "400": { "description": "Validation error" },
+          "409": { "description": "Duplicate customer email conflict" }
+        }
+      }
+    },
+    "/customers/{id}": {
+      "get": {
+        "summary": "Retrieve customer by ID",
+        "tags": ["Customers"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Customer details retrieved" },
+          "404": { "description": "Customer not found in organization" }
+        }
+      },
+      "patch": {
+        "summary": "Partial update of customer record",
+        "tags": ["Customers"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateCustomerRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Customer updated successfully" },
+          "404": { "description": "Customer not found" }
+        }
+      },
+      "delete": {
+        "summary": "Soft-delete customer record",
+        "tags": ["Customers"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Customer soft-deleted successfully" }
+        }
+      }
+    },
+    "/customers/{id}/actions/{action}": {
+      "post": {
+        "summary": "Execute business workflow action on customer (e.g. suspend, activate)",
+        "tags": ["Customers"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
+          {
+            "name": "action",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "enum": ["suspend", "activate"] }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "notes": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Action executed successfully" },
+          "422": { "description": "Unsupported business action" }
+        }
+      }
+    },
+    "/workforce": {
+      "get": {
+        "summary": "List employees with directory filters and pagination",
+        "tags": ["Workforce"],
+        "responses": {
+          "200": { "description": "Workforce directory list" }
+        }
+      },
+      "post": {
+        "summary": "Create new workforce member",
+        "tags": ["Workforce"],
+        "responses": {
+          "201": { "description": "Workforce member created" }
+        }
+      }
+    },
+    "/workforce/stats": {
+      "get": {
+        "summary": "Workforce headcount and operational stats",
+        "tags": ["Workforce"],
+        "responses": {
+          "200": { "description": "Operational workforce metrics" }
+        }
+      }
+    },
+    "/organizations/my": {
+      "get": {
+        "summary": "List organizations affiliated with the current user",
+        "tags": ["Organizations"],
+        "responses": {
+          "200": { "description": "Affiliated organizations list" }
+        }
+      }
+    },
+    "/organizations": {
+      "post": {
+        "summary": "Provision new organization tenant",
+        "tags": ["Organizations"],
+        "responses": {
+          "201": { "description": "Organization created" }
+        }
+      }
+    },
+    "/organizations/current": {
+      "get": {
+        "summary": "View current active organization metadata",
+        "tags": ["Organizations"],
+        "responses": {
+          "200": { "description": "Current organization metadata" }
+        }
+      },
+      "patch": {
+        "summary": "Update current active organization",
+        "tags": ["Organizations"],
+        "responses": {
+          "200": { "description": "Organization updated" }
+        }
+      }
+    },
+    "/organizations/current/settings": {
+      "get": {
+        "summary": "View active organization operational settings",
+        "tags": ["Organizations"],
+        "responses": {
+          "200": { "description": "Organization settings" }
+        }
+      },
+      "patch": {
+        "summary": "Update organization operational settings",
+        "tags": ["Organizations"],
+        "responses": {
+          "200": { "description": "Organization settings updated" }
+        }
+      }
+    },
+    "/organizations/invitations": {
+      "get": {
+        "summary": "List pending and accepted membership invitations",
+        "tags": ["Organizations"],
+        "responses": {
+          "200": { "description": "Invitations list" }
+        }
+      },
+      "post": {
+        "summary": "Create cryptographic membership invitation",
+        "tags": ["Organizations"],
+        "responses": {
+          "201": { "description": "Invitation created" }
+        }
+      }
+    },
+    "/organizations/invitations/{token}/accept": {
+      "post": {
+        "summary": "Accept invitation and join organization tenant",
+        "tags": ["Organizations"],
+        "parameters": [
+          { "name": "token", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Joined organization successfully" }
+        }
+      }
+    }
+  }
+}
