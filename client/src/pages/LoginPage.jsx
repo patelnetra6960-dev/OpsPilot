@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { Layers, ShieldCheck, UserCheck, ArrowRight, Lock } from 'lucide-react';
+import { Layers, ShieldCheck, UserCheck, ArrowRight, Lock, Mail } from 'lucide-react';
 import { setCredentials } from '../store/authSlice.js';
 import { setCurrentTenant, setAvailableTenants } from '../store/tenantSlice.js';
+import { addToast } from '../store/uiSlice.js';
+import { Button, Input, Card, Badge, ThemeToggle } from '../components/ui/index.js';
 
 export const LoginPage = () => {
   const dispatch = useDispatch();
@@ -72,98 +74,108 @@ export const LoginPage = () => {
     dispatch(setCredentials({ user: demo.user, token: demo.token }));
     dispatch(setAvailableTenants([demo.tenant]));
     dispatch(setCurrentTenant(demo.tenant));
+    dispatch(
+      addToast({
+        type: 'success',
+        title: 'Authentication Successful',
+        message: `Signed in as ${demo.user.full_name}`
+      })
+    );
     navigate('/');
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Default fallback to first demo account
     handleQuickLogin(demoAccounts[0]);
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden">
-      {/* Background glow */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden transition-colors">
+      {/* Top right theme switcher */}
+      <div className="absolute top-4 right-4 z-20">
+        <ThemeToggle />
+      </div>
 
-      <div className="w-full max-w-md space-y-8 relative z-10">
+      {/* Ambient gradient glow */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-indigo-500/10 dark:bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="w-full max-w-md space-y-6 relative z-10">
         <div className="text-center space-y-2">
           <div className="inline-flex w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-indigo-400 items-center justify-center shadow-xl shadow-indigo-600/30">
             <Layers className="w-6 h-6 text-white" />
           </div>
-          <h2 className="text-3xl font-extrabold text-white tracking-tight">OpsPilot</h2>
-          <p className="text-xs text-slate-400 max-w-sm mx-auto">
+          <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            OpsPilot
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
             Multi-Tenant Enterprise Operations & Workforce Management Platform
           </p>
         </div>
 
         {/* Demo Fast Login Box */}
-        <div className="bg-slate-900/90 border border-indigo-900/40 rounded-2xl p-5 space-y-3 shadow-xl">
-          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400">
-            <UserCheck className="w-4 h-4" />
-            <span>Instant Demo Persona Access (One-Click)</span>
+        <Card className="p-5 space-y-3 shadow-lg border-indigo-200 dark:border-indigo-900/40">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+              <UserCheck className="w-4 h-4" />
+              <span>Instant Demo Personas</span>
+            </div>
+            <Badge variant="success" size="sm" dot>
+              1-Click
+            </Badge>
           </div>
+
           <div className="space-y-2">
             {demoAccounts.map((demo, idx) => (
               <button
                 key={idx}
                 type="button"
                 onClick={() => handleQuickLogin(demo)}
-                className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-indigo-500/50 hover:bg-slate-900 text-left transition group"
+                className="w-full flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-900 text-left transition group shadow-sm"
               >
                 <div>
-                  <div className="text-xs font-bold text-slate-100 group-hover:text-indigo-300">
+                  <div className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-300">
                     {demo.label}
                   </div>
                   <div className="text-[11px] text-slate-400 font-mono mt-0.5">{demo.email}</div>
                 </div>
-                <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-indigo-400 transition" />
+                <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-500 transition" />
               </button>
             ))}
           </div>
-        </div>
+        </Card>
 
         {/* Standard Form */}
-        <form
-          onSubmit={handleSubmit}
-          className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4"
-        >
-          <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-            Or Sign In with Supabase Auth
-          </div>
-          <div className="space-y-3">
-            <div>
-              <label className="block text-xs text-slate-400 mb-1">Corporate Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@company.com"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-slate-400 mb-1">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••••"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-              />
-            </div>
+        <Card className="p-6 space-y-4 shadow-lg">
+          <div className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            Or Sign In with Corporate Email
           </div>
 
-          <button
-            type="submit"
-            className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/30 transition flex items-center justify-center gap-2"
-          >
-            <Lock className="w-3.5 h-3.5" />
-            <span>Sign In to Organization Workspace</span>
-          </button>
-        </form>
+          <form onSubmit={handleSubmit} className="space-y-3.5">
+            <Input
+              label="Corporate Email"
+              type="email"
+              leftIcon={Mail}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="name@company.com"
+            />
 
-        <div className="text-center text-[11px] text-slate-500 flex items-center justify-center gap-1.5">
+            <Input
+              label="Password"
+              type="password"
+              leftIcon={Lock}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••••••"
+            />
+
+            <Button variant="primary" size="md" type="submit" fullWidth leftIcon={Lock}>
+              Sign In to Organization Workspace
+            </Button>
+          </form>
+        </Card>
+
+        <div className="text-center text-[11px] text-slate-400 dark:text-slate-500 flex items-center justify-center gap-1.5">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
           <span>Tenant isolation enforced at backend and database levels</span>
         </div>

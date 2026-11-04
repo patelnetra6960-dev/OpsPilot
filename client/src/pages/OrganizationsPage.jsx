@@ -1,14 +1,17 @@
 import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Building2, Plus, Check, X } from 'lucide-react';
+import { Building2, Plus, Check } from 'lucide-react';
 import { setCurrentTenant, fetchMyOrganizations } from '../store/tenantSlice.js';
+import { addToast } from '../store/uiSlice.js';
 import apiClient from '../services/apiClient.js';
 import TenantBadge from '../components/common/TenantBadge.jsx';
+import { Button, Input, Select, Card, Modal } from '../components/ui/index.js';
 
 export const OrganizationsPage = () => {
   const dispatch = useDispatch();
   const { availableTenants, currentTenant } = useSelector((state) => state.tenant);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
@@ -17,20 +20,43 @@ export const OrganizationsPage = () => {
 
   const handleSelectTenant = (tenant) => {
     dispatch(setCurrentTenant(tenant));
+    dispatch(
+      addToast({
+        type: 'info',
+        title: 'Active Workspace',
+        message: `Switched to ${tenant.name}`
+      })
+    );
   };
 
   const handleCreateOrg = async (e) => {
     e.preventDefault();
     try {
+      setSubmitting(true);
       const res = await apiClient.post('/organizations', formData);
       if (res.data?.success) {
         setIsModalOpen(false);
         setFormData({ name: '', slug: '', subscription_tier: 'starter' });
         dispatch(fetchMyOrganizations());
         dispatch(setCurrentTenant(res.data.data));
+        dispatch(
+          addToast({
+            type: 'success',
+            title: 'Organization Created',
+            message: `Workspace ${res.data.data.name} is ready`
+          })
+        );
       }
     } catch (err) {
-      alert(err.response?.data?.error?.message || 'Failed to create organization');
+      dispatch(
+        addToast({
+          type: 'error',
+          title: 'Creation Error',
+          message: err.response?.data?.error?.message || 'Failed to create organization'
+        })
+      );
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -38,21 +64,23 @@ export const OrganizationsPage = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight">
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
             Organization & Tenant Workspaces
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Manage your organization affiliations, subscription plans, and tenant boundaries.
           </p>
         </div>
 
-        <button
+        <Button
+          variant="primary"
+          size="md"
+          leftIcon={Plus}
           onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/30 transition self-start sm:self-auto"
+          className="self-start sm:self-auto"
         >
-          <Plus className="w-4 h-4" />
-          <span>New Organization</span>
-        </button>
+          New Organization
+        </Button>
       </div>
 
       {/* Organizations Grid */}
@@ -60,17 +88,17 @@ export const OrganizationsPage = () => {
         {availableTenants.map((org) => {
           const isSelected = org.id === currentTenant?.id;
           return (
-            <div
+            <Card
               key={org.id}
-              className={`rounded-2xl border p-5 flex flex-col justify-between transition ${
+              className={`p-6 flex flex-col justify-between transition-all ${
                 isSelected
-                  ? 'border-indigo-500 bg-slate-900/90 shadow-xl shadow-indigo-900/20 ring-1 ring-indigo-500'
-                  : 'border-slate-800 bg-slate-950/60 hover:border-slate-700'
+                  ? 'border-indigo-500 dark:border-indigo-500 ring-2 ring-indigo-500/20 shadow-lg'
+                  : ''
               }`}
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+                  <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-600/20 border border-indigo-200 dark:border-indigo-500/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
                     <Building2 className="w-5 h-5" />
                   </div>
                   <TenantBadge
@@ -80,105 +108,77 @@ export const OrganizationsPage = () => {
                 </div>
 
                 <div>
-                  <h3 className="text-base font-bold text-white">{org.name}</h3>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">{org.name}</h3>
                   <div className="text-xs font-mono text-slate-400 mt-0.5">slug: {org.slug}</div>
                 </div>
 
-                <div className="text-[11px] font-mono text-slate-400 pt-2 border-t border-slate-800/80 space-y-1">
+                <div className="text-[11px] font-mono text-slate-400 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-1">
                   <div>Tenant UUID: {org.id}</div>
                 </div>
               </div>
 
-              <div className="pt-4 mt-4 border-t border-slate-800 flex items-center justify-between">
+              <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 {isSelected ? (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
                     <Check className="w-4 h-4" />
                     Active Workspace
                   </span>
                 ) : (
-                  <button
-                    onClick={() => handleSelectTenant(org)}
-                    className="px-3 py-1.5 rounded-lg bg-slate-850 hover:bg-slate-800 text-xs font-medium text-slate-200 border border-slate-700 transition"
-                  >
-                    Switch to Workspace
-                  </button>
+                  <Button variant="secondary" size="sm" onClick={() => handleSelectTenant(org)}>
+                    Switch Workspace
+                  </Button>
                 )}
               </div>
-            </div>
+            </Card>
           );
         })}
       </div>
 
       {/* Create Organization Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-white">Create New Organization (Tenant)</h3>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Create New Organization (Tenant)"
+        description="Provision a new isolated organization database partition"
+      >
+        <form onSubmit={handleCreateOrg} className="space-y-4">
+          <Input
+            label="Organization Name"
+            required
+            placeholder="e.g. Nexus Logistics"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          />
 
-            <form onSubmit={handleCreateOrg} className="space-y-3 text-xs">
-              <div>
-                <label className="block text-slate-400 mb-1">Organization Name</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Nexus Logistics"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-indigo-500"
-                />
-              </div>
+          <Input
+            label="Slug (Subdomain / Identifier)"
+            placeholder="e.g. nexus-logistics"
+            value={formData.slug}
+            onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+            helperText="Lowercase letters, numbers and hyphens only."
+          />
 
-              <div>
-                <label className="block text-slate-400 mb-1">Slug (Subdomain / Identifier)</label>
-                <input
-                  type="text"
-                  placeholder="e.g. nexus-logistics"
-                  value={formData.slug}
-                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-indigo-500"
-                />
-              </div>
+          <Select
+            label="Subscription Tier"
+            value={formData.subscription_tier}
+            onChange={(e) => setFormData({ ...formData, subscription_tier: e.target.value })}
+            options={[
+              { value: 'starter', label: 'Starter' },
+              { value: 'growth', label: 'Growth' },
+              { value: 'enterprise', label: 'Enterprise' }
+            ]}
+          />
 
-              <div>
-                <label className="block text-slate-400 mb-1">Subscription Tier</label>
-                <select
-                  value={formData.subscription_tier}
-                  onChange={(e) => setFormData({ ...formData, subscription_tier: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-indigo-500"
-                >
-                  <option value="starter">Starter</option>
-                  <option value="growth">Growth</option>
-                  <option value="enterprise">Enterprise</option>
-                </select>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold shadow-md"
-                >
-                  Provision Tenant
-                </button>
-              </div>
-            </form>
+          <div className="flex justify-end gap-2.5 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <Button variant="outline" size="md" onClick={() => setIsModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" size="md" type="submit" isLoading={submitting}>
+              Provision Tenant
+            </Button>
           </div>
-        </div>
-      )}
+        </form>
+      </Modal>
     </div>
   );
 };

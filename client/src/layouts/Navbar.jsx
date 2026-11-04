@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Building2, ChevronDown, Check, LogOut, ShieldCheck, UserCheck, Menu } from 'lucide-react';
 import { setCurrentTenant } from '../store/tenantSlice.js';
 import { setCredentials, logout } from '../store/authSlice.js';
-import { toggleSidebar } from '../store/uiSlice.js';
+import { toggleSidebar, addToast } from '../store/uiSlice.js';
 import TenantBadge from '../components/common/TenantBadge.jsx';
+import { ThemeToggle } from '../components/ui/index.js';
 
 export const Navbar = () => {
   const dispatch = useDispatch();
@@ -70,20 +71,35 @@ export const Navbar = () => {
   const handleSelectTenant = (tenant) => {
     dispatch(setCurrentTenant(tenant));
     setDropdownOpen(false);
+    dispatch(
+      addToast({
+        type: 'info',
+        title: 'Workspace Switched',
+        message: `Active organization switched to ${tenant.name}`
+      })
+    );
   };
 
   const handleSelectPersona = (persona) => {
     dispatch(setCredentials({ user: persona.user, token: persona.token }));
     dispatch(setCurrentTenant(persona.tenant));
     setPersonaOpen(false);
+    dispatch(
+      addToast({
+        type: 'success',
+        title: 'Persona Activated',
+        message: `Switched to ${persona.label}`
+      })
+    );
   };
 
   return (
-    <header className="h-16 border-b border-slate-800 bg-slate-900/90 backdrop-blur-md px-4 flex items-center justify-between sticky top-0 z-30">
+    <header className="h-16 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-4 flex items-center justify-between sticky top-0 z-30 transition-colors">
       <div className="flex items-center gap-3">
         <button
+          type="button"
           onClick={() => dispatch(toggleSidebar())}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition lg:hidden"
+          className="p-1.5 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition lg:hidden"
         >
           <Menu className="w-5 h-5" />
         </button>
@@ -91,17 +107,18 @@ export const Navbar = () => {
         {/* Tenant Switcher Dropdown */}
         <div className="relative">
           <button
+            type="button"
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg border border-slate-700/80 bg-slate-800/80 hover:bg-slate-800 text-left transition shadow-sm"
+            className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 hover:bg-slate-100 dark:hover:bg-slate-800 text-left transition shadow-sm"
           >
-            <div className="w-6 h-6 rounded bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+            <div className="w-6 h-6 rounded-lg bg-indigo-500/10 dark:bg-indigo-600/20 border border-indigo-500/20 dark:border-indigo-500/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
               <Building2 className="w-3.5 h-3.5" />
             </div>
             <div className="flex flex-col">
-              <span className="text-xs font-semibold text-slate-200 leading-none">
+              <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 leading-none">
                 {currentTenant?.name || 'Select Organization'}
               </span>
-              <span className="text-[10px] text-slate-400 font-mono leading-none mt-1">
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono leading-none mt-1">
                 {currentTenant?.slug || 'no-tenant'}
               </span>
             </div>
@@ -109,8 +126,8 @@ export const Navbar = () => {
           </button>
 
           {dropdownOpen && (
-            <div className="absolute left-0 mt-2 w-72 rounded-xl bg-slate-850 border border-slate-700 shadow-2xl p-2 z-50 bg-slate-900">
-              <div className="text-[11px] font-semibold text-slate-400 px-3 py-1.5 uppercase tracking-wider">
+            <div className="absolute left-0 mt-2 w-72 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-2 z-50">
+              <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 px-3 py-1.5 uppercase tracking-wider">
                 Switch Organization (Tenant)
               </div>
               <div className="space-y-1">
@@ -119,18 +136,21 @@ export const Navbar = () => {
                   return (
                     <button
                       key={tenant.id}
+                      type="button"
                       onClick={() => handleSelectTenant(tenant)}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition ${
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition ${
                         isSelected
-                          ? 'bg-indigo-600/20 border border-indigo-500/30 text-white'
-                          : 'hover:bg-slate-800 text-slate-300'
+                          ? 'bg-indigo-50 dark:bg-indigo-600/20 border border-indigo-200 dark:border-indigo-500/30 text-indigo-900 dark:text-white'
+                          : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
                       }`}
                     >
                       <div>
                         <div className="text-xs font-semibold">{tenant.name}</div>
                         <div className="text-[10px] text-slate-400 font-mono">{tenant.slug}</div>
                       </div>
-                      {isSelected && <Check className="w-4 h-4 text-indigo-400" />}
+                      {isSelected && (
+                        <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                      )}
                     </button>
                   );
                 })}
@@ -147,33 +167,40 @@ export const Navbar = () => {
         )}
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
+        {/* Theme Toggle Button */}
+        <ThemeToggle />
+
         {/* Quick Persona Switcher for Verification & QA */}
         <div className="relative">
           <button
+            type="button"
             onClick={() => setPersonaOpen(!personaOpen)}
-            className="flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-lg bg-emerald-950/60 border border-emerald-800/80 text-emerald-300 hover:bg-emerald-900/60 transition"
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition shadow-sm"
             title="Switch demo persona to test multi-tenant access boundaries"
           >
             <UserCheck className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">QA Switcher:</span>
+            <span className="hidden sm:inline">QA:</span>
             <span className="font-semibold">{user?.full_name?.split(' ')[0]}</span>
             <ChevronDown className="w-3 h-3 ml-0.5" />
           </button>
 
           {personaOpen && (
-            <div className="absolute right-0 mt-2 w-64 rounded-xl bg-slate-900 border border-slate-700 shadow-2xl p-2 z-50">
-              <div className="text-[11px] font-semibold text-emerald-400 px-3 py-1.5 uppercase tracking-wider flex items-center gap-1">
+            <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-2 z-50">
+              <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 px-3 py-1.5 uppercase tracking-wider flex items-center gap-1">
                 <ShieldCheck className="w-3.5 h-3.5" /> QA Persona Simulation
               </div>
               <div className="space-y-1">
                 {demoPersonas.map((persona, index) => (
                   <button
                     key={index}
+                    type="button"
                     onClick={() => handleSelectPersona(persona)}
-                    className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-slate-800 text-slate-200 transition"
+                    className="w-full text-left px-3 py-2 rounded-xl text-xs hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition"
                   >
-                    <div className="font-semibold text-slate-100">{persona.label}</div>
+                    <div className="font-semibold text-slate-900 dark:text-slate-100">
+                      {persona.label}
+                    </div>
                     <div className="text-[10px] text-slate-400 font-mono mt-0.5">
                       Org: {persona.tenant.name}
                     </div>
@@ -185,27 +212,28 @@ export const Navbar = () => {
         </div>
 
         {/* User Profile */}
-        <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
+        <div className="flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-800">
           <img
             src={
               user?.avatar_url ||
               'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'
             }
             alt={user?.full_name || 'User'}
-            className="w-8 h-8 rounded-full border border-slate-700 object-cover"
+            className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-700 object-cover"
           />
           <div className="hidden md:flex flex-col text-left">
-            <span className="text-xs font-semibold text-slate-200 leading-tight">
+            <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 leading-tight">
               {user?.full_name || 'Operations Lead'}
             </span>
-            <span className="text-[10px] text-slate-400 font-mono leading-tight">
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono leading-tight">
               {user?.email}
             </span>
           </div>
           <button
+            type="button"
             onClick={() => dispatch(logout())}
             title="Log out"
-            className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition ml-1"
+            className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition ml-1"
           >
             <LogOut className="w-4 h-4" />
           </button>
