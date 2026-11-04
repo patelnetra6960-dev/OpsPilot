@@ -1,5 +1,6 @@
 import { supabaseAdmin, mockDatabase } from '../config/supabase.js';
 import organizationService from './organization.service.js';
+import auditService from './audit.service.js';
 import { revokeToken } from '../middleware/authMiddleware.js';
 import env from '../config/env.js';
 import logger from '../utils/logger.js';
@@ -157,6 +158,7 @@ export const authService = {
       );
 
       if (!matchedUser) {
+        logger.security('AUTH_LOGIN_FAILED', { email: normalizedEmail });
         const err = new Error('Invalid email or password');
         err.status = 401;
         err.code = 'INVALID_CREDENTIALS';
@@ -165,6 +167,22 @@ export const authService = {
 
       const organizations = await organizationService.getUserOrganizations(matchedUser.id);
       const activeOrg = organizations[0] || null;
+
+      logger.security('AUTH_LOGIN_SUCCESS', {
+        userId: matchedUser.id,
+        email: matchedUser.email,
+        organizationId: activeOrg?.id
+      });
+
+      if (activeOrg) {
+        await auditService.recordSecurityEvent({
+          organizationId: activeOrg.id,
+          userId: matchedUser.id,
+          action: 'AUTH_LOGIN_SUCCESS',
+          entityType: 'AUTH',
+          entityId: matchedUser.id
+        });
+      }
 
       const session = {
         access_token: `mock-token-${matchedUser.email.split('@')[0]}`,
@@ -224,6 +242,10 @@ export const authService = {
     if (token) {
       revokeToken(token);
     }
+
+    logger.security('AUTH_LOGOUT', {
+      tokenPrefix: token ? token.slice(0, 15) : 'unknown'
+    });
 
     if (env.isMockMode || !supabaseAdmin) {
       return { success: true, message: 'Logged out successfully' };

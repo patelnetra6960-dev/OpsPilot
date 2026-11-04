@@ -9,8 +9,19 @@ import apiV1Router from './routes/index.js';
 
 const app = express();
 
-// Security headers (contentSecurityPolicy disabled to permit Swagger UI documentation rendering)
-app.use(helmet({ contentSecurityPolicy: false }));
+// Disable Express fingerprinting header
+app.disable('x-powered-by');
+
+// Hardened Security Headers (contentSecurityPolicy disabled to permit Swagger UI documentation rendering)
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    frameguard: { action: 'sameorigin' },
+    hsts: { maxAge: 31536000, includeSubDomains: true },
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+    noSniff: true
+  })
+);
 
 // Cross-Origin Resource Sharing
 app.use(cors(corsOptions));

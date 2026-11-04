@@ -7,6 +7,7 @@ import customersRoutes from './customers.routes.js';
 import storageRoutes from './storage.routes.js';
 import adminRoutes from './admin.routes.js';
 import customerRoutes from './customer.routes.js';
+import auditRoutes from './audit.routes.js';
 import docsRoutes from './docs.routes.js';
 
 const router = Router();
@@ -20,6 +21,7 @@ router.use('/auth', authRoutes);
 router.use('/organizations', organizationRoutes);
 router.use('/workforce', workforceRoutes);
 router.use('/customers', customersRoutes);
+router.use('/audit', auditRoutes);
 router.use('/storage', storageRoutes);
 router.use('/admin', adminRoutes);
 router.use('/customer', customerRoutes);

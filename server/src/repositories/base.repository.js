@@ -305,10 +305,12 @@ export class BaseRepository {
   async update(id, organizationId, updates, userToken = null) {
     this.assertTenantContext(organizationId);
 
-    // Guard against organization reassignment tampering
+    // Guard against organization reassignment tampering and mass assignment of protected fields
     const sanitizedUpdates = { ...updates };
     delete sanitizedUpdates.organization_id;
     delete sanitizedUpdates.id;
+    delete sanitizedUpdates.created_at;
+    delete sanitizedUpdates.is_superadmin;
 
     if (env.isMockMode || !supabaseAdmin) {
       const list = mockDatabase[this.mockKey] || [];

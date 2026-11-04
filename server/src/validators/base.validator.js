@@ -4,8 +4,16 @@ import { z } from 'zod';
  * Standard pagination and query options schema
  */
 export const paginationQuerySchema = z.object({
-  page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(20),
+  page: z.coerce
+    .number()
+    .int()
+    .default(1)
+    .transform((val) => (val < 1 ? 1 : val)),
+  limit: z.coerce
+    .number()
+    .int()
+    .default(20)
+    .transform((val) => (val > 100 ? 100 : val < 1 ? 20 : val)),
   sortBy: z.string().trim().default('created_at'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
   search: z.string().trim().optional(),

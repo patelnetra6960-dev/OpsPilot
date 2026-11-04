@@ -214,11 +214,22 @@ export const validateStorageUpload = ({ bucket, fileName, fileSize, mimeType }) 
     };
   }
 
+  const DANGEROUS_EXTENSIONS =
+    /\.(exe|bat|cmd|sh|php|phtml|jsp|asp|aspx|cgi|pl|py|ps1|vbs|jar|war|scr)$/i;
+  if (DANGEROUS_EXTENSIONS.test(fileName)) {
+    return {
+      isValid: false,
+      error: 'Executable and script file uploads are strictly forbidden for security reasons',
+      code: 'FORBIDDEN_FILE_EXTENSION'
+    };
+  }
+
   if (
     !fileName ||
     typeof fileName !== 'string' ||
     fileName.includes('..') ||
-    fileName.startsWith('/')
+    fileName.startsWith('/') ||
+    fileName.includes('\\')
   ) {
     return {
       isValid: false,

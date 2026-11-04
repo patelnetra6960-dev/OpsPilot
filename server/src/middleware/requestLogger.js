@@ -3,14 +3,20 @@ import logger from '../utils/logger.js';
 import env from '../config/env.js';
 
 /**
- * Structured Request Tracing & Logging Middleware
- * Injects a unique X-Request-Id header for end-to-end distributed tracing
- * and measures request latency.
+ * Structured Request Tracing & Correlation Middleware
+ * Injects and propagates unique correlation IDs (X-Request-Id & X-Correlation-Id)
+ * for end-to-end distributed tracing across microservices, gateways, and logs.
  */
 export const requestLogger = (req, res, next) => {
-  const requestId = req.headers['x-request-id'] || crypto.randomUUID();
-  req.id = requestId;
-  res.setHeader('X-Request-Id', requestId);
+  const correlationId =
+    req.headers['x-correlation-id'] || req.headers['x-request-id'] || crypto.randomUUID();
+
+  req.id = correlationId;
+  req.correlationId = correlationId;
+
+  // Echo correlation IDs back in response headers
+  res.setHeader('X-Request-Id', correlationId);
+  res.setHeader('X-Correlation-Id', correlationId);
 
   const start = Date.now();
 
@@ -20,13 +26,25 @@ export const requestLogger = (req, res, next) => {
     const method = req.method;
     const url = req.originalUrl || req.url;
 
+    const logMeta = {
+      requestId: correlationId,
+      correlationId,
+      method,
+      url,
+      statusCode,
+      durationMs: duration,
+      ip: req.ip || req.socket?.remoteAddress,
+      tenantId: req.tenant?.id || req.headers['x-tenant-id'] || undefined,
+      userId: req.user?.id || undefined
+    };
+
     if (!env.isTest) {
       if (statusCode >= 500) {
-        logger.error(`[${requestId}] ${method} ${url} ${statusCode} - ${duration}ms`);
+        logger.error(`HTTP ${method} ${url} ${statusCode} - ${duration}ms`, null, logMeta);
       } else if (statusCode >= 400) {
-        logger.warn(`[${requestId}] ${method} ${url} ${statusCode} - ${duration}ms`);
+        logger.warn(`HTTP ${method} ${url} ${statusCode} - ${duration}ms`, logMeta);
       } else {
-        logger.info(`[${requestId}] ${method} ${url} ${statusCode} - ${duration}ms`);
+        logger.info(`HTTP ${method} ${url} ${statusCode} - ${duration}ms`, logMeta);
       }
     }
   });
