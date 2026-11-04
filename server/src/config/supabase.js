@@ -153,10 +153,51 @@ export const mockDatabase = {
       status: 'active'
     }
   ],
+  departments: [
+    {
+      id: 'dept-acme-1',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      name: 'Fleet Operations',
+      code: 'FLEET',
+      description: 'Fleet dispatch and logistics',
+      manager_id: 'dddddddd-dddd-dddd-dddd-dddddddddddd'
+    },
+    {
+      id: 'dept-acme-2',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      name: 'Warehouse Logistics',
+      code: 'WAREHOUSE',
+      description: 'Warehouse inventory and handling',
+      manager_id: null
+    },
+    {
+      id: 'dept-acme-3',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      name: 'Field Operations',
+      code: 'FIELD_OPS',
+      description: 'Mobile on-site technician deployment',
+      manager_id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+    }
+  ],
+  invitations: [
+    {
+      id: 'inv-acme-1',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      email: 'candidate.engineer@test.com',
+      role: 'employee',
+      token: 'mock-inv-token-acme-1',
+      status: 'pending',
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      created_at: new Date().toISOString()
+    }
+  ],
   workforce: [
     {
       id: 'w1',
       organization_id: '11111111-1111-1111-1111-111111111111',
+      user_id: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
+      department_id: 'dept-acme-1',
+      manager_id: null,
       employee_code: 'EMP-ACME-001',
       first_name: 'David',
       last_name: 'Miller',
@@ -170,6 +211,8 @@ export const mockDatabase = {
     {
       id: 'w2',
       organization_id: '11111111-1111-1111-1111-111111111111',
+      department_id: 'dept-acme-2',
+      manager_id: 'w1',
       employee_code: 'EMP-ACME-002',
       first_name: 'Elena',
       last_name: 'Rostova',
@@ -183,6 +226,8 @@ export const mockDatabase = {
     {
       id: 'w3',
       organization_id: '11111111-1111-1111-1111-111111111111',
+      department_id: 'dept-acme-3',
+      manager_id: 'w1',
       employee_code: 'EMP-ACME-003',
       first_name: 'Liam',
       last_name: 'Patel',

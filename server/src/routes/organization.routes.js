@@ -7,27 +7,61 @@ import {
 } from '../middleware/authMiddleware.js';
 import { requireTenant } from '../middleware/tenantMiddleware.js';
 import { validate } from '../middleware/validateMiddleware.js';
-import { createOrganizationSchema } from '../validators/organization.validator.js';
+import {
+  createOrganizationSchema,
+  updateOrganizationSchema,
+  updateSettingsSchema,
+  createInvitationSchema,
+  acceptInvitationSchema,
+  updateMembershipStatusSchema,
+  addMemberSchema,
+  updateMemberRoleSchema
+} from '../validators/organization.validator.js';
 
 const router = Router();
 
 // All organization routes require authentication
 router.use(requireAuth);
 
-// Cross-tenant user-level discovery
+// Cross-tenant user-level discovery & creation
 router.get('/my', organizationController.getMyOrganizations);
 router.post('/', validate(createOrganizationSchema), organizationController.createOrganization);
 
+// Accept invitation (User-scoped, joins organization)
+router.post(
+  '/invitations/:token/accept',
+  validate(acceptInvitationSchema),
+  organizationController.acceptInvitation
+);
+
 // Tenant-scoped endpoints (Enforces X-Tenant-Id header and active membership)
 router.get('/current', requireTenant, organizationController.getCurrentOrganization);
-router.get('/members', requireTenant, organizationController.getMembers);
+router.patch(
+  '/current',
+  requireTenant,
+  requireTenantRole(['owner', 'admin']),
+  validate(updateOrganizationSchema),
+  organizationController.updateCurrentOrganization
+);
 
-// Member management protected by RBAC and anti-privilege escalation
+// Organization Settings Management
+router.get('/current/settings', requireTenant, organizationController.getSettings);
+router.patch(
+  '/current/settings',
+  requireTenant,
+  requireTenantRole(['owner', 'admin']),
+  validate(updateSettingsSchema),
+  organizationController.updateSettings
+);
+
+// Member management
+router.get('/members', requireTenant, organizationController.getMembers);
 router.post(
   '/members',
   requireTenant,
   requireTenantRole(['owner', 'admin']),
   protectPrivilegeEscalation,
+  validate(addMemberSchema),
   organizationController.addMember
 );
 router.patch(
@@ -35,7 +69,36 @@ router.patch(
   requireTenant,
   requireTenantRole(['owner', 'admin']),
   protectPrivilegeEscalation,
+  validate(updateMemberRoleSchema),
   organizationController.updateMemberRole
+);
+router.patch(
+  '/members/:memberId/status',
+  requireTenant,
+  requireTenantRole(['owner', 'admin']),
+  validate(updateMembershipStatusSchema),
+  organizationController.updateMembershipStatus
+);
+
+// Membership Invitations Management
+router.get(
+  '/invitations',
+  requireTenant,
+  requireTenantRole(['owner', 'admin', 'manager']),
+  organizationController.getInvitations
+);
+router.post(
+  '/invitations',
+  requireTenant,
+  requireTenantRole(['owner', 'admin']),
+  validate(createInvitationSchema),
+  organizationController.createInvitation
+);
+router.delete(
+  '/invitations/:invitationId',
+  requireTenant,
+  requireTenantRole(['owner', 'admin']),
+  organizationController.revokeInvitation
 );
 
 export default router;
