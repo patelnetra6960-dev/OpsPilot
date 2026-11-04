@@ -1,5 +1,6 @@
 import { supabaseAdmin, mockDatabase } from '../config/supabase.js';
 import organizationService from './organization.service.js';
+import { revokeToken } from '../middleware/authMiddleware.js';
 import env from '../config/env.js';
 import logger from '../utils/logger.js';
 
@@ -220,6 +221,10 @@ export const authService = {
    * 3. Terminate Session / Logout
    */
   async logout(token) {
+    if (token) {
+      revokeToken(token);
+    }
+
     if (env.isMockMode || !supabaseAdmin) {
       return { success: true, message: 'Logged out successfully' };
     }
@@ -365,6 +370,94 @@ export const authService = {
       token_type: data.session.token_type,
       expires_in: data.session.expires_in
     };
+  },
+
+  /**
+   * 8. Retrieve User Profile by ID
+   */
+  async getProfile(userId) {
+    if (env.isMockMode || !supabaseAdmin) {
+      const user = (mockDatabase.users || []).find((u) => u.id === userId);
+      if (!user) {
+        const err = new Error('User profile not found');
+        err.status = 404;
+        err.code = 'NOT_FOUND';
+        throw err;
+      }
+      return user;
+    }
+
+    const { data: profile, error } = await supabaseAdmin
+      .from('user_profiles')
+      .select('id, email, full_name, avatar_url, phone, is_superadmin, created_at')
+      .eq('id', userId)
+      .single();
+
+    if (error) {
+      const err = new Error('User profile not found');
+      err.status = 404;
+      err.code = 'NOT_FOUND';
+      throw err;
+    }
+
+    return profile;
+  },
+
+  /**
+   * 9. Update User Profile with Anti-Privilege Escalation Guard
+   */
+  async updateProfile(userId, updates, isSuperAdmin = false) {
+    if (updates.is_superadmin !== undefined && !isSuperAdmin) {
+      const err = new Error(
+        'Privilege Escalation Blocked: Non-superadmin cannot alter superadmin status'
+      );
+      err.status = 403;
+      err.code = 'FORBIDDEN_PRIVILEGE_ESCALATION';
+      throw err;
+    }
+
+    const allowedFields = ['full_name', 'avatar_url', 'phone'];
+    if (isSuperAdmin) {
+      allowedFields.push('is_superadmin');
+    }
+
+    const sanitizedUpdates = {};
+    for (const key of allowedFields) {
+      if (updates[key] !== undefined) {
+        sanitizedUpdates[key] = updates[key];
+      }
+    }
+
+    if (env.isMockMode || !supabaseAdmin) {
+      const userIndex = (mockDatabase.users || []).findIndex((u) => u.id === userId);
+      if (userIndex === -1) {
+        const err = new Error('User profile not found');
+        err.status = 404;
+        err.code = 'NOT_FOUND';
+        throw err;
+      }
+
+      mockDatabase.users[userIndex] = {
+        ...mockDatabase.users[userIndex],
+        ...sanitizedUpdates,
+        updated_at: new Date().toISOString()
+      };
+
+      return mockDatabase.users[userIndex];
+    }
+
+    const { data: updatedProfile, error } = await supabaseAdmin
+      .from('user_profiles')
+      .update({
+        ...sanitizedUpdates,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return updatedProfile;
   }
 };
 

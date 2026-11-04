@@ -78,6 +78,18 @@ export const authController = {
       },
       'Authenticated user profile loaded'
     );
+  }),
+
+  /**
+   * 9. Update current authenticated user profile
+   */
+  updateProfile: asyncHandler(async (req, res) => {
+    const updated = await authService.updateProfile(
+      req.user.id,
+      req.body,
+      Boolean(req.user.is_superadmin)
+    );
+    return sendSuccess(res, updated, 'Profile updated successfully');
   })
 };
 

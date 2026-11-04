@@ -39,6 +39,33 @@ export const organizationController = {
   getMembers: asyncHandler(async (req, res) => {
     const members = await organizationService.getOrganizationMembers(req.tenant.id);
     return sendSuccess(res, members, 'Organization members fetched');
+  }),
+
+  /**
+   * Add / Invite Member to Organization
+   */
+  addMember: asyncHandler(async (req, res) => {
+    const member = await organizationService.addMember({
+      organizationId: req.tenant.id,
+      userId: req.body.user_id,
+      role: req.body.role || 'employee',
+      requesterRole: req.membership.role
+    });
+    return sendSuccess(res, member, 'Member added to organization successfully', 201);
+  }),
+
+  /**
+   * Update Member Role with Anti-Privilege Escalation
+   */
+  updateMemberRole: asyncHandler(async (req, res) => {
+    const updated = await organizationService.updateMemberRole({
+      organizationId: req.tenant.id,
+      memberId: req.params.memberId,
+      newRole: req.body.role,
+      requesterRole: req.membership.role,
+      requesterUserId: req.user.id
+    });
+    return sendSuccess(res, updated, 'Member role updated successfully');
   })
 };
 

@@ -258,6 +258,15 @@ export const mockDatabase = {
       title: 'Substation Transformer Overheating',
       status: 'new',
       urgency: 'high'
+    },
+    {
+      id: 'sr-3',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      customer_id: 'cust-acme-2', // Different customer in Acme
+      request_code: 'SR-2026-003',
+      title: 'Ventilation Fan Sensor Offline',
+      status: 'pending',
+      urgency: 'medium'
     }
   ],
   invoices: [

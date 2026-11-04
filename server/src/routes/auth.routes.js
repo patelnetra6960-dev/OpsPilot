@@ -27,5 +27,6 @@ router.post('/refresh-token', validate(refreshTokenSchema), authController.refre
 
 // Protected Authentication Endpoints
 router.get('/me', requireAuth, authController.getMe);
+router.patch('/profile', requireAuth, authController.updateProfile);
 
 export default router;

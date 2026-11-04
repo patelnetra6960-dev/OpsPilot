@@ -2,11 +2,12 @@ import { supabaseAdmin, mockDatabase } from '../config/supabase.js';
 import { sendError } from '../utils/responseHandler.js';
 import env from '../config/env.js';
 import logger from '../utils/logger.js';
+export { requireRole, requireTenantRole, requirePermission } from './authMiddleware.js';
 
 /**
  * Multi-Tenant Isolation Middleware
- * Enforces strict organization-level isolation at the backend application layer.
- * Blocks any attempt to access data from an organization the user does not belong to.
+ * Enforces strict organization-level boundary enforcement at the backend application layer.
+ * Blocks any attempt to access data from an organization the user does not have active membership in.
  */
 export const requireTenant = async (req, res, next) => {
   try {
@@ -33,7 +34,7 @@ export const requireTenant = async (req, res, next) => {
 
     // Handle Mock / Local dev mode
     if (env.isMockMode) {
-      const organization = mockDatabase.organizations.find(
+      const organization = (mockDatabase.organizations || []).find(
         (org) => (org.id === tenantId || org.slug === tenantId) && org.is_active
       );
 
@@ -47,7 +48,7 @@ export const requireTenant = async (req, res, next) => {
       }
 
       // Check membership
-      const membership = mockDatabase.memberships.find(
+      const membership = (mockDatabase.memberships || []).find(
         (m) =>
           m.organization_id === organization.id &&
           m.user_id === req.user.id &&
@@ -67,7 +68,15 @@ export const requireTenant = async (req, res, next) => {
       }
 
       req.tenant = organization;
-      req.membership = membership || { role: 'superadmin', status: 'active' };
+      req.membership = membership || {
+        id: 'superadmin-membership',
+        organization_id: organization.id,
+        user_id: req.user.id,
+        role: 'superadmin',
+        status: 'active'
+      };
+      req.organizationId = organization.id;
+      req.userRole = req.membership.role;
       return next();
     }
 
@@ -86,7 +95,7 @@ export const requireTenant = async (req, res, next) => {
       .from('organizations')
       .select('id, name, slug, subscription_tier, is_active, settings')
       .eq('id', tenantId)
-      .single();
+      .maybeSingle();
 
     if (orgError || !organization || !organization.is_active) {
       return sendError(res, 'Organization not found or inactive', 404, 'TENANT_NOT_FOUND');
@@ -115,7 +124,15 @@ export const requireTenant = async (req, res, next) => {
 
     // Attach validated tenant context to request
     req.tenant = organization;
-    req.membership = membership || { role: 'superadmin', status: 'active' };
+    req.membership = membership || {
+      id: 'superadmin-membership',
+      organization_id: organization.id,
+      user_id: req.user.id,
+      role: 'superadmin',
+      status: 'active'
+    };
+    req.organizationId = organization.id;
+    req.userRole = req.membership.role;
 
     next();
   } catch (error) {
@@ -124,34 +141,6 @@ export const requireTenant = async (req, res, next) => {
   }
 };
 
-/**
- * Granular RBAC Middleware inside the validated Tenant
- * Ensures user has one of the allowed roles ('owner', 'admin', 'manager', 'member')
- */
-export const requireTenantRole = (allowedRoles = []) => {
-  return (req, res, next) => {
-    if (!req.membership) {
-      return sendError(
-        res,
-        'Tenant membership context not loaded',
-        500,
-        'MEMBERSHIP_CONTEXT_MISSING'
-      );
-    }
-
-    if (req.user?.is_superadmin) {
-      return next();
-    }
-
-    if (!allowedRoles.includes(req.membership.role)) {
-      return sendError(
-        res,
-        `Forbidden: Action requires one of roles [${allowedRoles.join(', ')}]. Current role: ${req.membership.role}`,
-        403,
-        'INSUFFICIENT_ROLE_PERMISSIONS'
-      );
-    }
-
-    next();
-  };
+export default {
+  requireTenant
 };
