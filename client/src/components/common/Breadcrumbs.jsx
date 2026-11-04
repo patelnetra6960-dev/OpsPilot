@@ -31,7 +31,12 @@ const ROUTE_LABELS = {
   organization: 'Organization Settings',
   billing: 'Billing & Plans',
   security: 'Security & Audit',
-  organizations: 'Organization Directory'
+  organizations: 'Organization Directory',
+  projects: 'Projects & Milestones',
+  workorders: 'Work Order Lifecycle',
+  inventory: 'Inventory & Parts',
+  expenses: 'Operational Expenses',
+  analytics: 'Analytics & Reporting'
 };
 
 export const Breadcrumbs = () => {

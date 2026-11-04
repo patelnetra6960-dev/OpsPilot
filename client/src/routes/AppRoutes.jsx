@@ -27,7 +27,7 @@ import CustomerPortalPage from '../pages/customer/CustomerPortalPage.jsx';
 import CustomerServicesPage from '../pages/customer/CustomerServicesPage.jsx';
 import CustomerRequestServicePage from '../pages/customer/CustomerRequestServicePage.jsx';
 
-// Common Operational Module Pages
+// Core Operations & Prototyping Modules
 import WorkforcePage from '../pages/WorkforcePage.jsx';
 import ShiftsPage from '../pages/shifts/ShiftsPage.jsx';
 import DispatchPage from '../pages/dispatch/DispatchPage.jsx';
@@ -37,6 +37,16 @@ import InvoicesPage from '../pages/invoices/InvoicesPage.jsx';
 import AuditPage from '../pages/audit/AuditPage.jsx';
 import OrganizationsPage from '../pages/OrganizationsPage.jsx';
 import SettingsPage from '../pages/settings/SettingsPage.jsx';
+
+// Newly Implemented Prototype Modules (Prompt 07)
+import ProjectsPage from '../pages/projects/ProjectsPage.jsx';
+import ProjectDetailPage from '../pages/projects/ProjectDetailPage.jsx';
+import TasksKanbanPage from '../pages/tasks/TasksKanbanPage.jsx';
+import ServiceRequestsPage from '../pages/services/ServiceRequestsPage.jsx';
+import WorkOrdersPage from '../pages/workorders/WorkOrdersPage.jsx';
+import InventoryPage from '../pages/inventory/InventoryPage.jsx';
+import ExpensesPage from '../pages/expenses/ExpensesPage.jsx';
+import AnalyticsPage from '../pages/analytics/AnalyticsPage.jsx';
 
 // Dynamic Role Home Component for root path ("/")
 const DynamicRoleHome = () => {
@@ -113,9 +123,17 @@ export const AppRoutes = () => {
           <Route path="/workforce" element={<WorkforcePage />} />
           <Route path="/shifts" element={<ShiftsPage />} />
           <Route path="/dispatch" element={<DispatchPage />} />
+          <Route path="/projects" element={<ProjectsPage />} />
+          <Route path="/projects/:id" element={<ProjectDetailPage />} />
+          <Route path="/tasks" element={<TasksKanbanPage />} />
+          <Route path="/services" element={<ServiceRequestsPage />} />
+          <Route path="/workorders" element={<WorkOrdersPage />} />
+          <Route path="/inventory" element={<InventoryPage />} />
+          <Route path="/expenses" element={<ExpensesPage />} />
+          <Route path="/invoices" element={<InvoicesPage />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/clients" element={<ClientsPage />} />
           <Route path="/documents" element={<DocumentsPage />} />
-          <Route path="/invoices" element={<InvoicesPage />} />
           <Route path="/audit" element={<AuditPage />} />
           <Route path="/organizations" element={<OrganizationsPage />} />
           <Route path="/settings" element={<SettingsPage />} />

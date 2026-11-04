@@ -14,7 +14,14 @@ import {
   CreditCard,
   Clock,
   Server,
-  X
+  X,
+  Briefcase,
+  Boxes,
+  Receipt,
+  BarChart3,
+  Inbox,
+  Wrench,
+  Activity
 } from 'lucide-react';
 import { setSidebarOpen } from '../store/uiSlice.js';
 
@@ -57,14 +64,19 @@ export const Sidebar = () => {
         items: [
           { label: 'Dispatch Center', path: '/manager', icon: LayoutDashboard },
           { label: 'Team Shift Rota', path: '/shifts', icon: CalendarCheck },
-          { label: 'Field Dispatches', path: '/dispatch', icon: Send }
+          { label: 'Work Orders', path: '/workorders', icon: Wrench },
+          { label: 'Field Dispatches', path: '/dispatch', icon: Send },
+          { label: 'Tasks & Kanban', path: '/tasks', icon: Activity }
         ]
       },
       {
-        title: 'Team Management',
+        title: 'Team & Logistics',
         items: [
           { label: 'Timesheet Approvals', path: '/manager/timesheets', icon: Clock },
-          { label: 'Team Live Attendance', path: '/manager/attendance', icon: Users },
+          { label: 'Team Attendance', path: '/manager/attendance', icon: Users },
+          { label: 'Service Requests', path: '/services', icon: Inbox },
+          { label: 'Inventory & Parts', path: '/inventory', icon: Boxes },
+          { label: 'Expenses', path: '/expenses', icon: Receipt },
           { label: 'Document Vault', path: '/documents', icon: FolderLock }
         ]
       },
@@ -119,22 +131,34 @@ export const Sidebar = () => {
         title: 'Operations Management',
         items: [
           { label: 'Operations Dashboard', path: '/', icon: LayoutDashboard },
-          { label: 'Workforce Directory', path: '/workforce', icon: Users },
+          { label: 'Employee Directory', path: '/workforce', icon: Users },
           { label: 'Shift Scheduling', path: '/shifts', icon: CalendarCheck },
-          { label: 'Field Dispatch & Assets', path: '/dispatch', icon: Send }
+          { label: 'Work Orders', path: '/workorders', icon: Wrench },
+          { label: 'Field Dispatch', path: '/dispatch', icon: Send },
+          { label: 'Tasks & Kanban', path: '/tasks', icon: Activity },
+          { label: 'Client Projects', path: '/projects', icon: Briefcase }
         ]
       },
       {
-        title: 'Tenant Management',
+        title: 'Logistics & Resources',
         items: [
+          { label: 'Service Requests', path: '/services', icon: Inbox },
+          { label: 'Inventory & Parts', path: '/inventory', icon: Boxes },
+          { label: 'Expenses', path: '/expenses', icon: Receipt },
+          { label: 'Document Vault', path: '/documents', icon: FolderLock }
+        ]
+      },
+      {
+        title: 'Business & Analytics',
+        items: [
+          { label: 'Analytics & KPIs', path: '/analytics', icon: BarChart3 },
           { label: 'Clients & Accounts', path: '/clients', icon: Building2 },
-          { label: 'Document Vault', path: '/documents', icon: FolderLock },
           { label: 'Invoices & Billing', path: '/invoices', icon: CreditCard },
           { label: 'Audit Trail', path: '/audit', icon: History }
         ]
       },
       {
-        title: 'Tenant Configuration',
+        title: 'Configuration',
         items: [
           { label: 'Organization & Tenants', path: '/organizations', icon: Building2 },
           { label: 'Settings & Security', path: '/settings', icon: Settings }
@@ -144,7 +168,6 @@ export const Sidebar = () => {
   }
 
   const handleLinkClick = () => {
-    // On mobile screens, auto-close sidebar when clicking navigation
     if (window.innerWidth < 1024) {
       dispatch(setSidebarOpen(false));
     }
@@ -218,7 +241,7 @@ export const Sidebar = () => {
                       }
                       onClick={handleLinkClick}
                       className={({ isActive }) =>
-                        `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition group ${
+                        `flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-semibold transition group ${
                           isActive
                             ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20 font-bold'
                             : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900'

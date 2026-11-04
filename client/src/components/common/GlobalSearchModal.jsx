@@ -17,7 +17,14 @@ import {
   ArrowRight,
   Sun,
   Moon,
-  Clock
+  Clock,
+  Briefcase,
+  Boxes,
+  Receipt,
+  BarChart3,
+  Inbox,
+  Wrench,
+  Activity
 } from 'lucide-react';
 import { closeSearchModal, toggleTheme, addToast } from '../../store/uiSlice.js';
 
@@ -98,6 +105,62 @@ export const GlobalSearchModal = () => {
       category: 'Navigation',
       icon: History,
       action: () => navigate('/audit')
+    },
+    {
+      id: 'page-projects',
+      title: 'Projects & Milestones',
+      subtitle: 'Client project delivery, burndown, and milestones',
+      category: 'Navigation',
+      icon: Briefcase,
+      action: () => navigate('/projects')
+    },
+    {
+      id: 'page-tasks',
+      title: 'Task Management & Kanban',
+      subtitle: 'Field maintenance tasks and 4-column kanban board',
+      category: 'Navigation',
+      icon: Activity,
+      action: () => navigate('/tasks')
+    },
+    {
+      id: 'page-services',
+      title: 'Service Request Management',
+      subtitle: 'Customer request intake and work order conversion',
+      category: 'Navigation',
+      icon: Inbox,
+      action: () => navigate('/services')
+    },
+    {
+      id: 'page-workorders',
+      title: 'Work Order Management',
+      subtitle: 'Field work orders, cost estimates, and checklists',
+      category: 'Navigation',
+      icon: Wrench,
+      action: () => navigate('/workorders')
+    },
+    {
+      id: 'page-inventory',
+      title: 'Inventory & Spare Parts',
+      subtitle: 'Warehouse inventory, stock levels, and part registry',
+      category: 'Navigation',
+      icon: Boxes,
+      action: () => navigate('/inventory')
+    },
+    {
+      id: 'page-expenses',
+      title: 'Operational Expenses',
+      subtitle: 'Field expense claims, fuel costs, and approvals',
+      category: 'Navigation',
+      icon: Receipt,
+      action: () => navigate('/expenses')
+    },
+    {
+      id: 'page-analytics',
+      title: 'Operations Analytics & KPIs',
+      subtitle: 'Executive metrics, revenue vs costs, and SLA compliance',
+      category: 'Navigation',
+      icon: BarChart3,
+      action: () => navigate('/analytics')
     },
     {
       id: 'page-settings',
