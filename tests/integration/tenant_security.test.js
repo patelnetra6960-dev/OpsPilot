@@ -10,6 +10,10 @@ test('Integration Test: Multi-Tenant Boundary Enforcement & Operations', async (
 
   const ALEX_TOKEN = 'Bearer mock-token-alex'; // Acme Owner
   const MARCUS_TOKEN = 'Bearer mock-token-marcus'; // Apex Owner
+  const SARAH_TOKEN = 'Bearer mock-token-sarah'; // Acme Manager
+  const DAVID_TOKEN = 'Bearer mock-token-david'; // Acme Employee
+  const RACHEL_TOKEN = 'Bearer mock-token-rachel'; // Acme Customer
+  const SUPERADMIN_TOKEN = 'Bearer mock-token-superadmin'; // Platform Super Admin
 
   await t.test('Prevents cross-tenant access with 403 Forbidden', async () => {
     const res = await request(app)
@@ -135,6 +139,105 @@ test('Integration Test: Multi-Tenant Boundary Enforcement & Operations', async (
       assert.equal(res.status, 200);
       const hasGhost = res.body.data.some((m) => m.employee_code === 'EMP-ACME-DEL');
       assert.equal(hasGhost, false, 'Soft-deleted worker leaked into active workforce view!');
+    }
+  );
+
+  await t.test('Super Admin Oversight: Can access any organization tenant', async () => {
+    // Superadmin accessing Acme without being in memberships list
+    const resAcme = await request(app)
+      .get('/api/workforce')
+      .set('Authorization', SUPERADMIN_TOKEN)
+      .set('X-Tenant-Id', ACME_TENANT_ID);
+
+    assert.equal(resAcme.status, 200);
+    assert.ok(Array.isArray(resAcme.body.data));
+
+    // Superadmin accessing Apex
+    const resApex = await request(app)
+      .get('/api/workforce')
+      .set('Authorization', SUPERADMIN_TOKEN)
+      .set('X-Tenant-Id', APEX_TENANT_ID);
+
+    assert.equal(resApex.status, 200);
+    assert.ok(Array.isArray(resApex.body.data));
+  });
+
+  await t.test(
+    'Manager Permitted Action: Manager can create workforce member in own tenant',
+    async () => {
+      const payload = {
+        employee_code: 'EMP-ACME-MGR-ADD',
+        first_name: 'Casey',
+        last_name: 'Stoner',
+        email: 'casey.s@acme.com',
+        department: 'Fleet Operations',
+        designation: 'Route Specialist',
+        employment_type: 'contract'
+      };
+
+      const res = await request(app)
+        .post('/api/workforce')
+        .set('Authorization', SARAH_TOKEN)
+        .set('X-Tenant-Id', ACME_TENANT_ID)
+        .send(payload);
+
+      assert.equal(res.status, 201);
+      assert.equal(res.body.success, true);
+      assert.equal(res.body.data.employee_code, 'EMP-ACME-MGR-ADD');
+    }
+  );
+
+  await t.test(
+    'Employee Role Boundary: Employee can view workforce directory but CANNOT create members',
+    async () => {
+      // 1. Employee reading directory -> 200 OK
+      const resRead = await request(app)
+        .get('/api/workforce')
+        .set('Authorization', DAVID_TOKEN)
+        .set('X-Tenant-Id', ACME_TENANT_ID);
+
+      assert.equal(resRead.status, 200);
+
+      // 2. Employee attempting to create a member -> 403 Forbidden
+      const resCreate = await request(app)
+        .post('/api/workforce')
+        .set('Authorization', DAVID_TOKEN)
+        .set('X-Tenant-Id', ACME_TENANT_ID)
+        .send({
+          employee_code: 'EMP-ACME-HACK',
+          first_name: 'Hacker',
+          last_name: 'Guy',
+          email: 'hacker@acme.com'
+        });
+
+      assert.equal(resCreate.status, 403);
+      assert.equal(resCreate.body.error.code, 'INSUFFICIENT_ROLE_PERMISSIONS');
+    }
+  );
+
+  await t.test(
+    'Customer Account Isolation: Customer CANNOT access internal workforce directory',
+    async () => {
+      const res = await request(app)
+        .get('/api/workforce')
+        .set('Authorization', RACHEL_TOKEN)
+        .set('X-Tenant-Id', ACME_TENANT_ID);
+
+      assert.equal(res.status, 403);
+      assert.equal(res.body.error.code, 'INSUFFICIENT_ROLE_PERMISSIONS');
+    }
+  );
+
+  await t.test(
+    'Customer Cross-Tenant Boundary: Customer CANNOT access another organization',
+    async () => {
+      const res = await request(app)
+        .get('/api/workforce')
+        .set('Authorization', RACHEL_TOKEN)
+        .set('X-Tenant-Id', APEX_TENANT_ID);
+
+      assert.equal(res.status, 403);
+      assert.equal(res.body.error.code, 'FORBIDDEN_CROSS_TENANT_ACCESS');
     }
   );
 });

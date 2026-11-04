@@ -29,6 +29,16 @@ export const requireAuth = async (req, res, next) => {
         matchedUser = mockDatabase.users[1]; // Sarah Chen (Acme Manager)
       } else if (token.includes('marcus')) {
         matchedUser = mockDatabase.users[2]; // Marcus Vance (Apex Owner)
+      } else if (token.includes('david') || token === 'mock-token-employee') {
+        matchedUser = mockDatabase.users[3]; // David Miller (Acme Employee)
+      } else if (token.includes('rachel') || token === 'mock-token-customer') {
+        matchedUser = mockDatabase.users[4]; // Rachel Green (Acme Customer)
+      } else if (
+        token.includes('victoria') ||
+        token.includes('superadmin') ||
+        token === 'mock-token-superadmin'
+      ) {
+        matchedUser = mockDatabase.users[5]; // Victoria Root (Platform Super Admin)
       } else {
         // Default to first user for dev convenience
         matchedUser = mockDatabase.users[0];

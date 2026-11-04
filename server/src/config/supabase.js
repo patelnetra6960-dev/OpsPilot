@@ -93,6 +93,27 @@ export const mockDatabase = {
       full_name: 'Marcus Vance',
       avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
       is_superadmin: false
+    },
+    {
+      id: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
+      email: 'david.m@acme.com',
+      full_name: 'David Miller',
+      avatar_url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150',
+      is_superadmin: false
+    },
+    {
+      id: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
+      email: 'rachel.green@metrohealth.com',
+      full_name: 'Rachel Green',
+      avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
+      is_superadmin: false
+    },
+    {
+      id: 'ffffffff-ffff-ffff-ffff-ffffffffffff',
+      email: 'victoria.root@opspilot.io',
+      full_name: 'Victoria Root',
+      avatar_url: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150',
+      is_superadmin: true
     }
   ],
   memberships: [
@@ -115,6 +136,20 @@ export const mockDatabase = {
       organization_id: '22222222-2222-2222-2222-222222222222',
       user_id: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
       role: 'owner',
+      status: 'active'
+    },
+    {
+      id: 'm4',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      user_id: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
+      role: 'employee',
+      status: 'active'
+    },
+    {
+      id: 'm5',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      user_id: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
+      role: 'customer',
       status: 'active'
     }
   ],
@@ -183,6 +218,74 @@ export const mockDatabase = {
       employment_type: 'full_time',
       status: 'active',
       hourly_rate: 32.0
+    }
+  ],
+  customers: [
+    {
+      id: 'cust-acme-1',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      name: 'Metro Health System',
+      email: 'rachel.green@metrohealth.com',
+      user_id: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
+      sla_tier: 'critical',
+      status: 'active'
+    },
+    {
+      id: 'cust-apex-1',
+      organization_id: '22222222-2222-2222-2222-222222222222',
+      name: 'Pinnacle Energy Corp',
+      email: 'contact@pinnacle.com',
+      user_id: null,
+      sla_tier: 'premium',
+      status: 'active'
+    }
+  ],
+  serviceRequests: [
+    {
+      id: 'sr-1',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      customer_id: 'cust-acme-1',
+      request_code: 'SR-2026-001',
+      title: 'MRI Cooling Loop Flow Failure',
+      status: 'assigned',
+      urgency: 'critical'
+    },
+    {
+      id: 'sr-2',
+      organization_id: '22222222-2222-2222-2222-222222222222',
+      customer_id: 'cust-apex-1',
+      request_code: 'SR-APEX-001',
+      title: 'Substation Transformer Overheating',
+      status: 'new',
+      urgency: 'high'
+    }
+  ],
+  invoices: [
+    {
+      id: 'inv-1',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      customer_id: 'cust-acme-1',
+      invoice_number: 'INV-2026-001',
+      total: 3200.0,
+      status: 'pending'
+    },
+    {
+      id: 'inv-2',
+      organization_id: '22222222-2222-2222-2222-222222222222',
+      customer_id: 'cust-apex-1',
+      invoice_number: 'INV-APEX-001',
+      total: 7500.0,
+      status: 'paid'
+    }
+  ],
+  expenses: [
+    {
+      id: 'exp-1',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      workforce_member_id: 'w1', // David Miller
+      claim_code: 'EXP-001',
+      amount: 145.5,
+      status: 'pending'
     }
   ],
   auditLogs: []

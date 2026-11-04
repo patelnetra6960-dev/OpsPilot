@@ -593,3 +593,190 @@ CREATE TABLE IF NOT EXISTS public.audit_logs (
     user_agent TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
+
+-- Immutable Tamper-Proof Audit Log Rules
+CREATE OR REPLACE RULE no_update_audit_logs AS ON UPDATE TO public.audit_logs DO INSTEAD NOTHING;
+CREATE OR REPLACE RULE no_delete_audit_logs AS ON DELETE TO public.audit_logs DO INSTEAD NOTHING;
+
+-- =====================================================================
+-- 15. Comprehensive Multi-Tenant Row Level Security & Triggers
+-- =====================================================================
+
+-- 15.1 Helper Security Definer Functions with Safe Search Paths
+CREATE OR REPLACE FUNCTION public.is_superadmin()
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1 
+        FROM public.user_profiles 
+        WHERE id = auth.uid() 
+          AND is_superadmin = true
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER STABLE
+SET search_path = public, pg_temp;
+
+REVOKE ALL ON FUNCTION public.is_superadmin() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.is_superadmin() TO authenticated, service_role;
+
+CREATE OR REPLACE FUNCTION public.is_member_of(org_id UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1 
+        FROM public.organization_memberships 
+        WHERE organization_id = org_id 
+          AND user_id = auth.uid() 
+          AND status = 'active'
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER STABLE
+SET search_path = public, pg_temp;
+
+REVOKE ALL ON FUNCTION public.is_member_of(UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.is_member_of(UUID) TO authenticated, service_role;
+
+CREATE OR REPLACE FUNCTION public.get_org_role(org_id UUID)
+RETURNS TEXT AS $$
+DECLARE
+    found_role TEXT;
+BEGIN
+    SELECT role INTO found_role
+    FROM public.organization_memberships 
+    WHERE organization_id = org_id 
+      AND user_id = auth.uid() 
+      AND status = 'active'
+    LIMIT 1;
+    RETURN found_role;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER STABLE
+SET search_path = public, pg_temp;
+
+REVOKE ALL ON FUNCTION public.get_org_role(UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_org_role(UUID) TO authenticated, service_role;
+
+CREATE OR REPLACE FUNCTION public.has_org_role(org_id UUID, allowed_roles TEXT[])
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1 
+        FROM public.organization_memberships 
+        WHERE organization_id = org_id 
+          AND user_id = auth.uid() 
+          AND status = 'active'
+          AND role = ANY(allowed_roles)
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER STABLE
+SET search_path = public, pg_temp;
+
+REVOKE ALL ON FUNCTION public.has_org_role(UUID, TEXT[]) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.has_org_role(UUID, TEXT[]) TO authenticated, service_role;
+
+CREATE OR REPLACE FUNCTION public.get_customer_id(org_id UUID)
+RETURNS UUID AS $$
+DECLARE
+    cust_id UUID;
+BEGIN
+    SELECT c.id INTO cust_id
+    FROM public.customers c
+    WHERE c.organization_id = org_id
+      AND (
+          c.user_id = auth.uid() 
+          OR c.email = (SELECT email FROM public.user_profiles WHERE id = auth.uid())
+      )
+      AND c.deleted_at IS NULL
+    LIMIT 1;
+
+    RETURN cust_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER STABLE
+SET search_path = public, pg_temp;
+
+REVOKE ALL ON FUNCTION public.get_customer_id(UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_customer_id(UUID) TO authenticated, service_role;
+
+CREATE OR REPLACE FUNCTION public.get_workforce_member_id(org_id UUID)
+RETURNS UUID AS $$
+DECLARE
+    wf_id UUID;
+BEGIN
+    SELECT wm.id INTO wf_id
+    FROM public.workforce_members wm
+    WHERE wm.organization_id = org_id
+      AND (
+          wm.user_id = auth.uid()
+          OR wm.email = (SELECT email FROM public.user_profiles WHERE id = auth.uid())
+      )
+      AND wm.deleted_at IS NULL
+    LIMIT 1;
+
+    RETURN wf_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER STABLE
+SET search_path = public, pg_temp;
+
+REVOKE ALL ON FUNCTION public.get_workforce_member_id(UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_workforce_member_id(UUID) TO authenticated, service_role;
+
+-- 15.2 Anti-Tamper & Anti-Privilege-Escalation Triggers
+CREATE OR REPLACE FUNCTION public.prevent_superadmin_escalation()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.is_superadmin != OLD.is_superadmin THEN
+        IF NOT public.is_superadmin() THEN
+            RAISE EXCEPTION 'Privilege Escalation Blocked: Only superadmins can alter is_superadmin status.'
+                USING ERRCODE = '42501';
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public, pg_temp;
+
+DROP TRIGGER IF EXISTS trg_prevent_superadmin_escalation ON public.user_profiles;
+CREATE TRIGGER trg_prevent_superadmin_escalation
+    BEFORE UPDATE ON public.user_profiles
+    FOR EACH ROW
+    EXECUTE FUNCTION public.prevent_superadmin_escalation();
+
+CREATE OR REPLACE FUNCTION public.prevent_self_role_escalation()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF (auth.uid() = OLD.user_id OR auth.uid() = NEW.user_id) AND NEW.role != OLD.role THEN
+        IF NOT public.is_superadmin() THEN
+            RAISE EXCEPTION 'Privilege Escalation Blocked: Users cannot modify their own organization role.'
+                USING ERRCODE = '42501';
+        END IF;
+    END IF;
+
+    IF NEW.role IN ('owner', 'admin') AND OLD.role != NEW.role THEN
+        IF NOT (public.has_org_role(OLD.organization_id, ARRAY['owner']) OR public.is_superadmin()) THEN
+            RAISE EXCEPTION 'Authorization Blocked: Only existing organization owners can grant owner or admin roles.'
+                USING ERRCODE = '42501';
+        END IF;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public, pg_temp;
+
+DROP TRIGGER IF EXISTS trg_prevent_self_role_escalation ON public.organization_memberships;
+CREATE TRIGGER trg_prevent_self_role_escalation
+    BEFORE UPDATE ON public.organization_memberships
+    FOR EACH ROW
+    EXECUTE FUNCTION public.prevent_self_role_escalation();
+
+CREATE OR REPLACE FUNCTION public.prevent_organization_reassignment()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.organization_id IS DISTINCT FROM OLD.organization_id THEN
+        RAISE EXCEPTION 'Cross-Tenant Violation: Reassigning organization_id across tenant boundaries is strictly prohibited.'
+            USING ERRCODE = '42501';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public, pg_temp;
+
