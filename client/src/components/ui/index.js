@@ -17,5 +17,6 @@ export { Modal } from './Modal.jsx';
 export { Drawer } from './Drawer.jsx';
 export { ToastItem, ToastContainer } from './Toast.jsx';
 export { Skeleton, SkeletonText, SkeletonCard, SkeletonTable } from './Skeleton.jsx';
+export { LoadingSpinner, LoadingOverlay } from './LoadingSpinner.jsx';
 export { EmptyState, ErrorState } from './EmptyState.jsx';
 export { ThemeToggle } from './ThemeToggle.jsx';

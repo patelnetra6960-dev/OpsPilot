@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import apiClient from '../services/apiClient.js';
+import { DEMO_PERSONAS } from '../utils/demoPersonas.js';
 
 export const fetchCurrentUser = createAsyncThunk(
   'auth/fetchCurrentUser',
@@ -43,16 +44,50 @@ const authSlice = createSlice({
       state.token = token;
       state.isAuthenticated = true;
       state.error = null;
-      if (token) {
+      if (token && typeof window !== 'undefined') {
         localStorage.setItem('opspilot_auth_token', token);
+      }
+    },
+    loginSuccess: (state, action) => {
+      const { user, token } = action.payload;
+      state.user = user;
+      state.token = token;
+      state.isAuthenticated = true;
+      state.error = null;
+      if (token && typeof window !== 'undefined') {
+        localStorage.setItem('opspilot_auth_token', token);
+      }
+    },
+    switchDemoPersona: (state, action) => {
+      const personaKey = action.payload;
+      const matched =
+        DEMO_PERSONAS.find(
+          (p) =>
+            p.roleId === personaKey ||
+            p.user.role === personaKey ||
+            p.user.email.toLowerCase() === String(personaKey).toLowerCase()
+        ) || DEMO_PERSONAS[0];
+
+      state.user = matched.user;
+      state.token = matched.token;
+      state.isAuthenticated = true;
+      state.error = null;
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('opspilot_auth_token', matched.token);
+        if (matched.tenant?.id) {
+          localStorage.setItem('opspilot_active_tenant_id', matched.tenant.id);
+        }
       }
     },
     logout: (state) => {
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
-      localStorage.removeItem('opspilot_auth_token');
-      localStorage.removeItem('opspilot_active_tenant_id');
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('opspilot_auth_token');
+        localStorage.removeItem('opspilot_active_tenant_id');
+      }
     },
     clearAuthError: (state) => {
       state.error = null;
@@ -66,7 +101,7 @@ const authSlice = createSlice({
       })
       .addCase(fetchCurrentUser.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.user = action.payload.user;
+        state.user = action.payload?.user || action.payload;
         state.isAuthenticated = true;
       })
       .addCase(fetchCurrentUser.rejected, (state, action) => {
@@ -76,5 +111,7 @@ const authSlice = createSlice({
   }
 });
 
-export const { setCredentials, logout, clearAuthError } = authSlice.actions;
+export const { setCredentials, loginSuccess, switchDemoPersona, logout, clearAuthError } =
+  authSlice.actions;
+
 export default authSlice.reducer;
