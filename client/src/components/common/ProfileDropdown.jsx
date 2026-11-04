@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { User, Building2, LogOut, ChevronDown, ShieldCheck, Sun, Moon } from 'lucide-react';
 import { logout } from '../../store/authSlice.js';
 import { toggleTheme, addToast } from '../../store/uiSlice.js';
+import authService from '../../services/authService.js';
 import TenantBadge from './TenantBadge.jsx';
 
 export const ProfileDropdown = () => {
@@ -26,7 +27,8 @@ export const ProfileDropdown = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await authService.logout();
     dispatch(logout());
     dispatch(
       addToast({

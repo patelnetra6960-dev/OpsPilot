@@ -50,3 +50,8 @@ export const resetPasswordSchema = z
     message: 'Passwords do not match',
     path: ['confirmPassword']
   });
+
+export const verifyEmailSchema = z.object({
+  email: z.string().email('Please enter a valid email address').optional(),
+  token: z.string().min(1, 'Verification token or OTP code is required')
+});

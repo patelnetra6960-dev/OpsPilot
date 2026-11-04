@@ -4,11 +4,14 @@ import { useSelector } from 'react-redux';
 import ProtectedRoute from './ProtectedRoute.jsx';
 import AppLayout from '../layouts/AppLayout.jsx';
 
-// Public Pages
+// Public Authentication Pages
 import LandingPage from '../pages/LandingPage.jsx';
 import LoginPage from '../pages/LoginPage.jsx';
 import RegisterPage from '../pages/RegisterPage.jsx';
 import ForgotPasswordPage from '../pages/ForgotPasswordPage.jsx';
+import ResetPasswordPage from '../pages/ResetPasswordPage.jsx';
+import VerifyEmailPage from '../pages/VerifyEmailPage.jsx';
+import UnauthorizedPage from '../pages/UnauthorizedPage.jsx';
 import NotFoundPage from '../pages/NotFoundPage.jsx';
 
 // Dashboards
@@ -76,11 +79,14 @@ export const AppRoutes = () => {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
       {/* Protected Multi-Tenant App Layout */}
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
-          {/* Dynamic Root Route */}
+          {/* Dynamic Root Route based on verified role */}
           <Route path="/" element={<DynamicRoleHome />} />
 
           {/* Super Admin Routes */}

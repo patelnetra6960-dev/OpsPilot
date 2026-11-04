@@ -58,6 +58,9 @@ const authSlice = createSlice({
         localStorage.setItem('opspilot_auth_token', token);
       }
     },
+    setAuthLoading: (state, action) => {
+      state.isLoading = action.payload;
+    },
     switchDemoPersona: (state, action) => {
       const personaKey = action.payload;
       const matched =
@@ -111,7 +114,13 @@ const authSlice = createSlice({
   }
 });
 
-export const { setCredentials, loginSuccess, switchDemoPersona, logout, clearAuthError } =
-  authSlice.actions;
+export const {
+  setCredentials,
+  loginSuccess,
+  setAuthLoading,
+  switchDemoPersona,
+  logout,
+  clearAuthError
+} = authSlice.actions;
 
 export default authSlice.reducer;

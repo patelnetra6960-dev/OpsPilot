@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Building2, ChevronDown, Check, ShieldCheck, UserCheck, Menu, Search } from 'lucide-react';
 import { setCurrentTenant } from '../store/tenantSlice.js';
-import { setCredentials } from '../store/authSlice.js';
+import { switchDemoPersona } from '../store/authSlice.js';
 import { toggleSidebar, openSearchModal, addToast } from '../store/uiSlice.js';
 import TenantBadge from '../components/common/TenantBadge.jsx';
 import { ThemeToggle } from '../components/ui/index.js';
@@ -14,6 +15,7 @@ import { DEMO_PERSONAS, getDefaultRouteForRole } from '../utils/demoPersonas.js'
 export const Navbar = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useSelector((state) => state.auth);
   const { currentTenant, availableTenants } = useSelector((state) => state.tenant);
   const [tenantDropdownOpen, setTenantDropdownOpen] = useState(false);
@@ -21,6 +23,7 @@ export const Navbar = () => {
 
   const handleSelectTenant = (tenant) => {
     dispatch(setCurrentTenant(tenant));
+    queryClient.invalidateQueries();
     setTenantDropdownOpen(false);
     dispatch(
       addToast({
@@ -32,8 +35,9 @@ export const Navbar = () => {
   };
 
   const handleSelectPersona = (persona) => {
-    dispatch(setCredentials({ user: persona.user, token: persona.token }));
+    dispatch(switchDemoPersona(persona.roleId));
     dispatch(setCurrentTenant(persona.tenant));
+    queryClient.invalidateQueries();
     setPersonaDropdownOpen(false);
 
     dispatch(

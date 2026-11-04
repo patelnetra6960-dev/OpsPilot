@@ -1,8 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useDispatch } from 'react-redux';
 import apiClient from '../../../services/apiClient.js';
+import authService from '../../../services/authService.js';
 import { queryKeys } from '../../../services/queryClient.js';
 import { loginSuccess, logout } from '../../../store/authSlice.js';
+import { setCurrentTenant, setAvailableTenants } from '../../../store/tenantSlice.js';
 import { useToast } from '../../../hooks/useToast.js';
 
 /**
@@ -41,20 +43,29 @@ export const useLoginMutation = () => {
 
   return useMutation({
     mutationFn: async (credentials) => {
-      const response = await apiClient.post('/auth/login', credentials);
-      return response.data?.data || response.data;
+      return await authService.login(credentials);
     },
     onSuccess: (data) => {
-      const { user, token } = data;
+      const user = data.user;
+      const token = data.session?.access_token || data.token;
       if (token) {
         localStorage.setItem('opspilot_auth_token', token);
       }
       dispatch(loginSuccess({ user, token }));
+      if (data.organizations && data.organizations.length > 0) {
+        dispatch(setAvailableTenants(data.organizations));
+      }
+      if (data.activeOrganization) {
+        dispatch(setCurrentTenant(data.activeOrganization));
+      }
       queryClient.setQueryData(queryKeys.auth.currentUser(), user);
-      toast.success('Welcome back', `Signed in as ${user?.name || user?.email || 'User'}`);
+      toast.success('Welcome back', `Signed in as ${user?.full_name || user?.email || 'User'}`);
     },
     onError: (error) => {
-      toast.error('Authentication Failed', error.apiMessage || 'Invalid email or password');
+      toast.error(
+        'Authentication Failed',
+        error.apiMessage || error.message || 'Invalid email or password'
+      );
     }
   });
 };
@@ -68,19 +79,92 @@ export const useRegisterMutation = () => {
 
   return useMutation({
     mutationFn: async (registrationData) => {
-      const response = await apiClient.post('/auth/register', registrationData);
-      return response.data?.data || response.data;
+      return await authService.register(registrationData);
     },
     onSuccess: (data) => {
-      const { user, token } = data;
-      if (token) {
+      const user = data.user;
+      const token = data.session?.access_token || data.token;
+      if (token && user) {
         localStorage.setItem('opspilot_auth_token', token);
         dispatch(loginSuccess({ user, token }));
+      }
+      if (data.organization) {
+        dispatch(setAvailableTenants([data.organization]));
+        dispatch(setCurrentTenant(data.organization));
       }
       toast.success('Registration Complete', 'Your organization account has been created.');
     },
     onError: (error) => {
-      toast.error('Registration Failed', error.apiMessage || 'Could not complete registration');
+      toast.error(
+        'Registration Failed',
+        error.apiMessage || error.message || 'Could not complete registration'
+      );
+    }
+  });
+};
+
+/**
+ * Mutation for verifying email address
+ */
+export const useVerifyEmailMutation = () => {
+  const toast = useToast();
+
+  return useMutation({
+    mutationFn: async (payload) => {
+      return await authService.verifyEmail(payload);
+    },
+    onSuccess: (data) => {
+      toast.success('Email Verified', data.message || 'Your email has been confirmed.');
+    },
+    onError: (error) => {
+      toast.error(
+        'Verification Failed',
+        error.apiMessage || error.message || 'Could not verify email'
+      );
+    }
+  });
+};
+
+/**
+ * Mutation for initiating password recovery email
+ */
+export const useRecoverPasswordMutation = () => {
+  const toast = useToast();
+
+  return useMutation({
+    mutationFn: async (payload) => {
+      return await authService.recoverPassword(payload);
+    },
+    onSuccess: (data) => {
+      toast.success('Recovery Dispatched', data.message || 'Check your email for instructions.');
+    },
+    onError: (error) => {
+      toast.error(
+        'Recovery Failed',
+        error.apiMessage || error.message || 'Could not request recovery'
+      );
+    }
+  });
+};
+
+/**
+ * Mutation for resetting password with new credentials
+ */
+export const useResetPasswordMutation = () => {
+  const toast = useToast();
+
+  return useMutation({
+    mutationFn: async (payload) => {
+      return await authService.resetPassword(payload);
+    },
+    onSuccess: (data) => {
+      toast.success('Password Updated', data.message || 'Your password has been changed.');
+    },
+    onError: (error) => {
+      toast.error(
+        'Password Reset Failed',
+        error.apiMessage || error.message || 'Could not reset password'
+      );
     }
   });
 };
@@ -95,12 +179,7 @@ export const useLogoutMutation = () => {
 
   return useMutation({
     mutationFn: async () => {
-      try {
-        await apiClient.post('/auth/logout');
-      } catch (err) {
-        // Even if server request fails, clean up client session
-        console.warn('Logout server notification failed:', err.message);
-      }
+      return await authService.logout();
     },
     onSettled: () => {
       localStorage.removeItem('opspilot_auth_token');

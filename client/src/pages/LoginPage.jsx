@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Layers,
   ShieldCheck,
@@ -15,19 +17,40 @@ import {
   CalendarCheck,
   Send
 } from 'lucide-react';
+import { loginSchema } from '../features/auth/schemas/authSchemas.js';
+import { useLoginMutation } from '../features/auth/api/authApi.js';
 import { setCredentials } from '../store/authSlice.js';
 import { setCurrentTenant, setAvailableTenants } from '../store/tenantSlice.js';
 import { addToast } from '../store/uiSlice.js';
-import { Button, Input, Card, ThemeToggle } from '../components/ui/index.js';
+import { Button, Card, ThemeToggle } from '../components/ui/index.js';
+import { FormInput, FormCheckbox } from '../components/form/index.js';
 import { DEMO_PERSONAS, getDefaultRouteForRole } from '../utils/demoPersonas.js';
 
 export const LoginPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const location = useLocation();
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
+
+  const loginMutation = useLoginMutation();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors }
+  } = useForm({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+      rememberMe: true
+    }
+  });
+
+  const redirectAfterLogin = (role) => {
+    const from = location.state?.from?.pathname || getDefaultRouteForRole(role);
+    navigate(from, { replace: true });
+  };
 
   const handleQuickLogin = (demo) => {
     dispatch(setCredentials({ user: demo.user, token: demo.token }));
@@ -40,28 +63,25 @@ export const LoginPage = () => {
         message: `Signed in as ${demo.user.full_name} (${demo.roleLabel})`
       })
     );
-    navigate(demo.defaultRoute || getDefaultRouteForRole(demo.user.role));
+    redirectAfterLogin(demo.user.role);
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!email.trim()) {
-      dispatch(
-        addToast({
-          type: 'error',
-          title: 'Validation Error',
-          message: 'Please provide your work email address'
-        })
+  const onSubmit = async (values) => {
+    try {
+      const data = await loginMutation.mutateAsync({
+        email: values.email,
+        password: values.password
+      });
+      redirectAfterLogin(data.user?.role || 'owner');
+    } catch {
+      // Fallback: check if matches any demo persona email in development mode
+      const matched = DEMO_PERSONAS.find(
+        (p) => p.user.email.toLowerCase() === values.email.trim().toLowerCase()
       );
-      return;
+      if (matched) {
+        handleQuickLogin(matched);
+      }
     }
-
-    // Match with existing demo or default to Alex
-    const matched =
-      DEMO_PERSONAS.find((p) => p.user.email.toLowerCase() === email.trim().toLowerCase()) ||
-      DEMO_PERSONAS[0];
-
-    handleQuickLogin(matched);
   };
 
   return (
@@ -100,48 +120,50 @@ export const LoginPage = () => {
 
         {/* Login Card */}
         <Card variant="elevated" className="p-6 sm:p-8 space-y-5">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <FormInput
+              id="email"
+              name="email"
               label="Work Email"
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              register={register}
+              error={errors.email}
               placeholder="name@company.com"
-              leftIcon={<Mail className="w-4 h-4 text-slate-400" />}
+              icon={Mail}
               autoComplete="email"
               required
             />
 
             <div className="relative">
-              <Input
+              <FormInput
+                id="password"
+                name="password"
                 label="Password"
                 type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                register={register}
+                error={errors.password}
                 placeholder="••••••••••••"
-                leftIcon={<Lock className="w-4 h-4 text-slate-400" />}
+                icon={Lock}
                 autoComplete="current-password"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-8 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                className="absolute right-3.5 top-8 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                tabIndex={-1}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
 
             <div className="flex items-center justify-between text-xs pt-1">
-              <label className="flex items-center gap-2 cursor-pointer text-slate-600 dark:text-slate-400">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500"
-                />
-                <span>Remember me</span>
-              </label>
+              <FormCheckbox
+                id="rememberMe"
+                name="rememberMe"
+                label="Remember me"
+                register={register}
+              />
 
               <Link
                 to="/forgot-password"
@@ -151,8 +173,16 @@ export const LoginPage = () => {
               </Link>
             </div>
 
-            <Button type="submit" variant="primary" className="w-full mt-2" size="md">
-              <span>Sign In to Workspace</span>
+            <Button
+              type="submit"
+              variant="primary"
+              className="w-full mt-2"
+              size="md"
+              disabled={loginMutation.isPending}
+            >
+              <span>
+                {loginMutation.isPending ? 'Verifying Session...' : 'Sign In to Workspace'}
+              </span>
               <ArrowRight className="w-4 h-4 ml-1.5" />
             </Button>
           </form>

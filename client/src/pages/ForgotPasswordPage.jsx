@@ -1,16 +1,37 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Layers, ArrowLeft, Mail, CheckCircle2 } from 'lucide-react';
-import { Button, Input, Card, ThemeToggle } from '../components/ui/index.js';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Layers, ArrowLeft, Mail, CheckCircle2, Send } from 'lucide-react';
+import { forgotPasswordSchema } from '../features/auth/schemas/authSchemas.js';
+import { useRecoverPasswordMutation } from '../features/auth/api/authApi.js';
+import { Button, Card, ThemeToggle } from '../components/ui/index.js';
+import { FormInput } from '../components/form/index.js';
 
 export const ForgotPasswordPage = () => {
-  const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState('');
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (email.trim()) {
+  const recoverMutation = useRecoverPasswordMutation();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors }
+  } = useForm({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: {
+      email: ''
+    }
+  });
+
+  const onSubmit = async (values) => {
+    try {
+      await recoverMutation.mutateAsync({ email: values.email });
+      setSubmittedEmail(values.email);
       setSubmitted(true);
+    } catch {
+      // Handled by mutation toast
     }
   };
 
@@ -21,7 +42,6 @@ export const ForgotPasswordPage = () => {
       </div>
 
       <div className="w-full max-w-md relative z-10 space-y-6">
-        {/* Brand Header */}
         <div className="text-center space-y-2">
           <div className="inline-flex w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-indigo-400 items-center justify-center shadow-lg shadow-indigo-600/30">
             <Layers className="w-6 h-6 text-white" />
@@ -30,7 +50,7 @@ export const ForgotPasswordPage = () => {
             Reset Your Password
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            We will send a secure password reset link to your work email
+            We will dispatch a secure recovery link to your registered work email
           </p>
         </div>
 
@@ -42,12 +62,12 @@ export const ForgotPasswordPage = () => {
               </div>
               <div className="space-y-1">
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                  Reset link dispatched
+                  Reset Link Dispatched
                 </h3>
                 <p className="text-xs text-slate-500 leading-relaxed">
                   If an account exists for{' '}
-                  <strong className="text-slate-800 dark:text-slate-200">{email}</strong>, you will
-                  receive an email shortly with recovery instructions.
+                  <strong className="text-slate-800 dark:text-slate-200">{submittedEmail}</strong>,
+                  you will receive an email shortly with recovery instructions.
                 </p>
               </div>
 
@@ -62,19 +82,30 @@ export const ForgotPasswordPage = () => {
               </div>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <Input
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <FormInput
+                id="email"
+                name="email"
                 label="Registered Work Email"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                register={register}
+                error={errors.email}
                 placeholder="name@company.com"
-                leftIcon={<Mail className="w-4 h-4 text-slate-400" />}
+                icon={Mail}
                 required
               />
 
-              <Button type="submit" variant="primary" className="w-full mt-2" size="md">
-                <span>Send Password Reset Link</span>
+              <Button
+                type="submit"
+                variant="primary"
+                className="w-full mt-2"
+                size="md"
+                disabled={recoverMutation.isPending}
+              >
+                <span>
+                  {recoverMutation.isPending ? 'Sending Recovery Link...' : 'Send Recovery Link'}
+                </span>
+                <Send className="w-4 h-4 ml-1.5" />
               </Button>
 
               <div className="text-center pt-2">
