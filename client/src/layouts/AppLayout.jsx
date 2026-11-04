@@ -3,6 +3,8 @@ import { Outlet } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import Sidebar from './Sidebar.jsx';
 import Navbar from './Navbar.jsx';
+import Breadcrumbs from '../components/common/Breadcrumbs.jsx';
+import GlobalSearchModal from '../components/common/GlobalSearchModal.jsx';
 import { ToastContainer } from '../components/ui/index.js';
 
 export const AppLayout = () => {
@@ -21,7 +23,10 @@ export const AppLayout = () => {
       {/* Toast Notification Mount */}
       <ToastContainer />
 
-      {/* Primary Sidebar */}
+      {/* Global Command Palette / Search Modal (⌘K) */}
+      <GlobalSearchModal />
+
+      {/* Primary Sidebar (Role-aware & Mobile drawer ready) */}
       <Sidebar />
 
       {/* Main Content Area */}
@@ -29,7 +34,11 @@ export const AppLayout = () => {
         <Navbar />
 
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <div className="max-w-7xl mx-auto space-y-6">
+          <div className="max-w-7xl mx-auto space-y-4">
+            {/* Context-aware Breadcrumbs Navigation */}
+            <Breadcrumbs />
+
+            {/* Active Route Content */}
             <Outlet />
           </div>
         </main>

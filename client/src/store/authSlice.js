@@ -28,6 +28,7 @@ const authSlice = createSlice({
       id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
       email: 'alex.director@acme.com',
       full_name: 'Alex Rivera',
+      role: 'owner',
       avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'
     },
     token: initialToken,

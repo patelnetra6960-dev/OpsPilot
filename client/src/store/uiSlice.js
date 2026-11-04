@@ -13,6 +13,7 @@ const uiSlice = createSlice({
   name: 'ui',
   initialState: {
     sidebarOpen: true,
+    searchModalOpen: false,
     activeModal: null,
     drawerOpen: false,
     drawerContent: null,
@@ -25,6 +26,15 @@ const uiSlice = createSlice({
     },
     setSidebarOpen: (state, action) => {
       state.sidebarOpen = action.payload;
+    },
+    openSearchModal: (state) => {
+      state.searchModalOpen = true;
+    },
+    closeSearchModal: (state) => {
+      state.searchModalOpen = false;
+    },
+    toggleSearchModal: (state) => {
+      state.searchModalOpen = !state.searchModalOpen;
     },
     openModal: (state, action) => {
       state.activeModal = action.payload;
@@ -85,6 +95,9 @@ const uiSlice = createSlice({
 export const {
   toggleSidebar,
   setSidebarOpen,
+  openSearchModal,
+  closeSearchModal,
+  toggleSearchModal,
   openModal,
   closeModal,
   openDrawer,
