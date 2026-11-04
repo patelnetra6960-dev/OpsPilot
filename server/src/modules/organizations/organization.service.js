@@ -13,7 +13,7 @@ export const organizationService = {
       const orgIds = userMemberships.map((m) => m.organization_id);
 
       const orgs = mockDatabase.organizations
-        .filter((org) => orgIds.includes(org.id))
+        .filter((org) => orgIds.includes(org.id) && !org.deleted_at)
         .map((org) => {
           const membership = userMemberships.find((m) => m.organization_id === org.id);
           return {

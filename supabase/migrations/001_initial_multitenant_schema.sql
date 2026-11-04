@@ -14,7 +14,8 @@ CREATE TABLE IF NOT EXISTS public.organizations (
     is_active BOOLEAN DEFAULT true NOT NULL,
     settings JSONB DEFAULT '{"theme": "system", "timezone": "UTC", "currency": "USD"}'::jsonb,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    deleted_at TIMESTAMPTZ DEFAULT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_organizations_slug ON public.organizations(slug);
@@ -29,7 +30,8 @@ CREATE TABLE IF NOT EXISTS public.users_profiles (
     phone VARCHAR(50),
     is_superadmin BOOLEAN DEFAULT false NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    deleted_at TIMESTAMPTZ DEFAULT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_users_profiles_email ON public.users_profiles(email);
@@ -39,9 +41,10 @@ CREATE TABLE IF NOT EXISTS public.organization_members (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES public.users_profiles(id) ON DELETE CASCADE,
-    role VARCHAR(50) NOT NULL DEFAULT 'member' CHECK (role IN ('owner', 'admin', 'manager', 'member')),
+    role VARCHAR(50) NOT NULL DEFAULT 'employee' CHECK (role IN ('owner', 'admin', 'manager', 'employee', 'customer', 'member')),
     status VARCHAR(50) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'invited', 'suspended')),
     invited_by UUID REFERENCES public.users_profiles(id) ON DELETE SET NULL,
+    joined_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     CONSTRAINT uq_org_member UNIQUE (organization_id, user_id)
@@ -70,6 +73,7 @@ CREATE TABLE IF NOT EXISTS public.workforce_members (
     metadata JSONB DEFAULT '{}'::jsonb,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    deleted_at TIMESTAMPTZ DEFAULT NULL,
     CONSTRAINT uq_org_employee_code UNIQUE (organization_id, employee_code)
 );
 

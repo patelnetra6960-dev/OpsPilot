@@ -15,8 +15,9 @@ export const fetchMyOrganizations = createAsyncThunk(
   }
 );
 
-const savedTenantId =
-  localStorage.getItem('opspilot_active_tenant_id') || '11111111-1111-1111-1111-111111111111';
+if (typeof window !== 'undefined' && !localStorage.getItem('opspilot_active_tenant_id')) {
+  localStorage.setItem('opspilot_active_tenant_id', '11111111-1111-1111-1111-111111111111');
+}
 
 const defaultInitialTenant = {
   id: '11111111-1111-1111-1111-111111111111',
@@ -66,10 +67,15 @@ const tenantSlice = createSlice({
         state.isLoading = false;
         state.availableTenants = action.payload;
         // Keep active selection or match saved
-        const matched = action.payload.find((t) => t.id === savedTenantId) || action.payload[0];
+        const activeId =
+          (typeof window !== 'undefined' && localStorage.getItem('opspilot_active_tenant_id')) ||
+          state.currentTenant?.id;
+        const matched = action.payload.find((t) => t.id === activeId) || action.payload[0];
         if (matched) {
           state.currentTenant = matched;
-          localStorage.setItem('opspilot_active_tenant_id', matched.id);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('opspilot_active_tenant_id', matched.id);
+          }
         }
       })
       .addCase(fetchMyOrganizations.rejected, (state, action) => {

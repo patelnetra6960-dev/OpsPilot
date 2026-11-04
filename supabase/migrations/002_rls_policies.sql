@@ -12,7 +12,7 @@ ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 -- Helper Functions for Security Checks
 -- ---------------------------------------------------------------------
 
--- Check if current authenticated user is a member of an organization
+-- Check if current authenticated user is an active member of an organization
 CREATE OR REPLACE FUNCTION public.is_member_of(org_id UUID)
 RETURNS BOOLEAN AS $$
 BEGIN
@@ -92,11 +92,11 @@ DROP POLICY IF EXISTS "Members can view their organizations" ON public.organizat
 CREATE POLICY "Members can view their organizations"
     ON public.organizations FOR SELECT
     USING (
-        id IN (
+        (id IN (
             SELECT organization_id 
             FROM public.organization_members 
             WHERE user_id = auth.uid() AND status = 'active'
-        ) 
+        ) AND deleted_at IS NULL)
         OR public.is_superadmin()
     );
 
@@ -144,7 +144,7 @@ CREATE POLICY "Owners and Admins can remove members"
     ON public.organization_members FOR DELETE
     USING (
         public.has_org_role(organization_id, ARRAY['owner', 'admin']) 
-        OR user_id = auth.uid() -- Allow self-removal (leaving org)
+        OR user_id = auth.uid()
         OR public.is_superadmin()
     );
 
@@ -155,7 +155,7 @@ DROP POLICY IF EXISTS "Members can view workforce in their organization" ON publ
 CREATE POLICY "Members can view workforce in their organization"
     ON public.workforce_members FOR SELECT
     USING (
-        public.is_member_of(organization_id) OR public.is_superadmin()
+        (public.is_member_of(organization_id) AND deleted_at IS NULL) OR public.is_superadmin()
     );
 
 DROP POLICY IF EXISTS "Admins and Managers can insert workforce members" ON public.workforce_members;
@@ -171,14 +171,6 @@ CREATE POLICY "Admins and Managers can update workforce members"
     ON public.workforce_members FOR UPDATE
     USING (
         public.has_org_role(organization_id, ARRAY['owner', 'admin', 'manager']) 
-        OR public.is_superadmin()
-    );
-
-DROP POLICY IF EXISTS "Only Admins and Owners can delete workforce members" ON public.workforce_members;
-CREATE POLICY "Only Admins and Owners can delete workforce members"
-    ON public.workforce_members FOR DELETE
-    USING (
-        public.has_org_role(organization_id, ARRAY['owner', 'admin']) 
         OR public.is_superadmin()
     );
 
@@ -199,4 +191,3 @@ CREATE POLICY "Authenticated users and services can insert audit logs"
     WITH CHECK (
         public.is_member_of(organization_id) OR public.is_superadmin()
     );
--- Notice: No UPDATE or DELETE policy is defined on audit_logs to guarantee immutability!

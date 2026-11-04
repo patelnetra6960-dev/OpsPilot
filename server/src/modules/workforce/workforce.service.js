@@ -8,7 +8,9 @@ export const workforceService = {
    */
   async getWorkforce(tenantId, { department, status, search } = {}) {
     if (env.isMockMode) {
-      let members = mockDatabase.workforce.filter((w) => w.organization_id === tenantId);
+      let members = mockDatabase.workforce.filter(
+        (w) => w.organization_id === tenantId && !w.deleted_at
+      );
 
       if (department) {
         members = members.filter((m) => m.department.toLowerCase() === department.toLowerCase());
@@ -30,7 +32,11 @@ export const workforceService = {
       return members;
     }
 
-    let query = supabaseAdmin.from('workforce_members').select('*').eq('organization_id', tenantId);
+    let query = supabaseAdmin
+      .from('workforce_members')
+      .select('*')
+      .eq('organization_id', tenantId)
+      .is('deleted_at', null);
 
     if (department) query = query.eq('department', department);
     if (status) query = query.eq('status', status);
@@ -80,7 +86,9 @@ export const workforceService = {
    */
   async getWorkforceStats(tenantId) {
     if (env.isMockMode) {
-      const members = mockDatabase.workforce.filter((w) => w.organization_id === tenantId);
+      const members = mockDatabase.workforce.filter(
+        (w) => w.organization_id === tenantId && !w.deleted_at
+      );
       const activeCount = members.filter((m) => m.status === 'active').length;
       const onLeaveCount = members.filter((m) => m.status === 'on_leave').length;
       const departments = [...new Set(members.map((m) => m.department))];
@@ -97,7 +105,8 @@ export const workforceService = {
     const { data, error } = await supabaseAdmin
       .from('workforce_members')
       .select('status, department')
-      .eq('organization_id', tenantId);
+      .eq('organization_id', tenantId)
+      .is('deleted_at', null);
 
     if (error) throw error;
 

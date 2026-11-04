@@ -13,16 +13,20 @@ export const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     // Read auth token from localStorage / Redux store
-    const token = localStorage.getItem('opspilot_auth_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    let token = localStorage.getItem('opspilot_auth_token');
+    if (!token) {
+      token = 'mock-token-alex';
+      localStorage.setItem('opspilot_auth_token', token);
     }
+    config.headers.Authorization = `Bearer ${token}`;
 
     // Read active organization ID from localStorage / Redux store
-    const activeTenantId = localStorage.getItem('opspilot_active_tenant_id');
-    if (activeTenantId) {
-      config.headers['X-Tenant-Id'] = activeTenantId;
+    let activeTenantId = localStorage.getItem('opspilot_active_tenant_id');
+    if (!activeTenantId) {
+      activeTenantId = '11111111-1111-1111-1111-111111111111';
+      localStorage.setItem('opspilot_active_tenant_id', activeTenantId);
     }
+    config.headers['X-Tenant-Id'] = activeTenantId;
 
     return config;
   },

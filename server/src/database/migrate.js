@@ -16,7 +16,12 @@ async function runMigrations() {
     logger.info(
       'Database migration runner: No live DATABASE_URL provided. Checking SQL files syntax integrity.'
     );
-    const migrationsDir = path.resolve(__dirname, '../../../supabase/migrations');
+    const primaryMigrationsDir = path.resolve(__dirname, '../../../database/migrations');
+    const fallbackMigrationsDir = path.resolve(__dirname, '../../../supabase/migrations');
+    const migrationsDir = fs.existsSync(primaryMigrationsDir)
+      ? primaryMigrationsDir
+      : fallbackMigrationsDir;
+
     const files = fs
       .readdirSync(migrationsDir)
       .filter((f) => f.endsWith('.sql'))
@@ -42,7 +47,12 @@ async function runMigrations() {
     const client = await pool.connect();
     logger.info('Connected. Executing migrations...');
 
-    const migrationsDir = path.resolve(__dirname, '../../../supabase/migrations');
+    const primaryMigrationsDir = path.resolve(__dirname, '../../../database/migrations');
+    const fallbackMigrationsDir = path.resolve(__dirname, '../../../supabase/migrations');
+    const migrationsDir = fs.existsSync(primaryMigrationsDir)
+      ? primaryMigrationsDir
+      : fallbackMigrationsDir;
+
     const files = fs
       .readdirSync(migrationsDir)
       .filter((f) => f.endsWith('.sql'))

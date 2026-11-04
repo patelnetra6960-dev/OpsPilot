@@ -13,7 +13,13 @@ export const fetchCurrentUser = createAsyncThunk(
   }
 );
 
-const initialToken = localStorage.getItem('opspilot_auth_token') || 'mock-token-alex';
+if (typeof window !== 'undefined' && !localStorage.getItem('opspilot_auth_token')) {
+  localStorage.setItem('opspilot_auth_token', 'mock-token-alex');
+}
+
+const initialToken =
+  (typeof window !== 'undefined' && localStorage.getItem('opspilot_auth_token')) ||
+  'mock-token-alex';
 
 const authSlice = createSlice({
   name: 'auth',
