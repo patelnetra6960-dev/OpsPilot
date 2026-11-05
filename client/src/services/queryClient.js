@@ -39,6 +39,21 @@ export const queryKeys = {
     list: (filters = {}) => ['customers', 'list', filters],
     detail: (id) => ['customers', 'detail', id]
   },
+  projects: {
+    all: ['projects'],
+    list: (filters = {}) => ['projects', 'list', filters],
+    detail: (id) => ['projects', 'detail', id],
+    members: (projectId) => ['projects', projectId, 'members'],
+    milestones: (projectId) => ['projects', projectId, 'milestones']
+  },
+  tasks: {
+    all: ['tasks'],
+    list: (filters = {}) => ['tasks', 'list', filters],
+    detail: (id) => ['tasks', 'detail', id],
+    assignments: (taskId) => ['tasks', taskId, 'assignments'],
+    comments: (taskId) => ['tasks', taskId, 'comments'],
+    attachments: (taskId) => ['tasks', taskId, 'attachments']
+  },
   audit: {
     all: ['audit'],
     list: (filters = {}) => ['audit', 'list', filters]

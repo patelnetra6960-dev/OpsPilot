@@ -1,81 +1,123 @@
-import { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Briefcase, Plus, Search, ArrowRight } from 'lucide-react';
-import { useSelector, useDispatch } from 'react-redux';
-import { Card, Badge, Button, Input, Select, Modal } from '../../components/ui/index.js';
-import { addToast } from '../../store/uiSlice.js';
-import { PROTOTYPE_PROJECTS } from '../../data/prototypeData.js';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  Briefcase,
+  Plus,
+  Search,
+  ArrowRight,
+  TrendingUp,
+  DollarSign,
+  User,
+  Building2,
+  CheckCircle2
+} from 'lucide-react';
+import { useTenant } from '../../hooks/useTenant.js';
+import { useAuth } from '../../hooks/useAuth.js';
+import { useDebounce } from '../../hooks/useDebounce.js';
+import {
+  useProjectsQuery,
+  useCreateProjectMutation,
+  projectCreateSchema
+} from '../../features/projects/index.js';
+import { useEmployeesQuery } from '../../features/workforce/index.js';
+import {
+  Card,
+  Badge,
+  Button,
+  Modal,
+  SkeletonTable,
+  EmptyState,
+  ErrorState
+} from '../../components/ui/index.js';
+import { FormInput, FormSelect, FormTextarea } from '../../components/form/index.js';
 
 export const ProjectsPage = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const { currentTenant } = useSelector((state) => state.tenant);
+  const { currentTenant } = useTenant();
+  const { isOwner, isAdmin, isManager } = useAuth();
 
-  const [projects, setProjects] = useState(PROTOTYPE_PROJECTS);
-  const [search, setSearch] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [healthFilter, setHealthFilter] = useState('all');
   const [modalOpen, setModalOpen] = useState(false);
 
-  // New Project Form State
-  const [projectName, setProjectName] = useState('');
-  const [client, setClient] = useState('Metro Retail Distribution Co.');
-  const [budget, setBudget] = useState('75000');
-  const [targetDate, setTargetDate] = useState('2026-12-31');
+  const debouncedSearch = useDebounce(searchTerm, 300);
 
-  const handleCreateProject = (e) => {
-    e.preventDefault();
-    if (!projectName.trim()) return;
+  // Queries
+  const queryFilters = useMemo(
+    () => ({
+      search: debouncedSearch || undefined,
+      status: statusFilter !== 'all' ? statusFilter : undefined,
+      health: healthFilter !== 'all' ? healthFilter : undefined
+    }),
+    [debouncedSearch, statusFilter, healthFilter]
+  );
 
-    const newProject = {
-      id: `PRJ-2026-0${projects.length + 1}`,
-      name: projectName,
-      client: client,
-      status: 'in_progress',
+  const {
+    data: projects = [],
+    isLoading: projectsLoading,
+    error: projectsError,
+    refetch: refetchProjects
+  } = useProjectsQuery(queryFilters);
+
+  const { data: employees = [] } = useEmployeesQuery();
+  const createProjectMutation = useCreateProjectMutation();
+
+  // Create Project Form
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors }
+  } = useForm({
+    resolver: zodResolver(projectCreateSchema),
+    defaultValues: {
+      name: '',
+      client: '',
+      description: '',
+      status: 'planning',
       health: 'on_track',
-      progress: 10,
-      budget: `$${Number(budget).toLocaleString()}`,
-      spent: '$0',
-      startDate: new Date().toISOString().split('T')[0],
-      targetDate: targetDate,
-      lead: 'Sarah Chen',
-      team: [
-        {
-          name: 'David Kim',
-          role: 'Field Tech',
-          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150'
-        }
-      ],
-      description: 'Operations field project provisioned via OpsPilot Project Manager.',
-      milestones: [
-        {
-          id: 'm1',
-          title: 'Phase 1: Initial Discovery & Permitting',
-          status: 'in_progress',
-          date: targetDate
-        }
-      ]
+      budget: 50000,
+      spent: 0,
+      progress: 0,
+      start_date: new Date().toISOString().split('T')[0],
+      target_date: '',
+      lead_id: '',
+      lead: ''
+    }
+  });
+
+  const onSubmitCreate = (data) => {
+    const selectedEmp = employees.find((e) => e.id === data.lead_id);
+    const payload = {
+      ...data,
+      lead: selectedEmp
+        ? selectedEmp.name || `${selectedEmp.first_name} ${selectedEmp.last_name}`
+        : data.lead || 'Alex Rivera'
     };
 
-    setProjects([newProject, ...projects]);
-    setModalOpen(false);
-    setProjectName('');
-
-    dispatch(
-      addToast({
-        type: 'success',
-        title: 'Project Created',
-        message: `${newProject.name} initiated for ${client}`
-      })
-    );
+    createProjectMutation.mutate(payload, {
+      onSuccess: () => {
+        setModalOpen(false);
+        reset();
+      }
+    });
   };
 
-  const filteredProjects = projects.filter((p) => {
-    const matchSearch =
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.client.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === 'all' || p.status === statusFilter;
-    return matchSearch && matchStatus;
-  });
+  // Metrics
+  const metrics = useMemo(() => {
+    const list = Array.isArray(projects) ? projects : [];
+    const total = list.length;
+    const inProgress = list.filter((p) => p.status === 'in_progress').length;
+    const onTrack = list.filter((p) => p.health === 'on_track').length;
+    const totalBudget = list.reduce((acc, p) => acc + (Number(p.budget) || 0), 0);
+
+    return { total, inProgress, onTrack, totalBudget };
+  }, [projects]);
+
+  const canManageProjects = isOwner || isAdmin || isManager;
 
   return (
     <div className="space-y-6">
@@ -95,205 +137,296 @@ export const ProjectsPage = () => {
           </p>
         </div>
 
-        <Button variant="primary" size="sm" onClick={() => setModalOpen(true)}>
-          <Plus className="w-3.5 h-3.5 mr-1.5" />
-          <span>New Project</span>
-        </Button>
+        {canManageProjects && (
+          <Button variant="primary" size="sm" onClick={() => setModalOpen(true)}>
+            <Plus className="w-3.5 h-3.5 mr-1.5" />
+            <span>New Project</span>
+          </Button>
+        )}
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div className="w-full sm:w-72">
-          <Input
-            placeholder="Search projects or clients..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            leftIcon={<Search className="w-3.5 h-3.5 text-slate-400" />}
-            className="text-xs"
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card hover className="p-4 space-y-2">
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-xs font-semibold uppercase tracking-wider">Active Projects</span>
+            <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+              <Briefcase className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-2xl font-black text-slate-900 dark:text-white">{metrics.total}</div>
+          <div className="text-[11px] text-slate-400 font-medium">Enterprise operations</div>
+        </Card>
+
+        <Card hover className="p-4 space-y-2">
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-xs font-semibold uppercase tracking-wider">In Progress</span>
+            <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
+              <TrendingUp className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-2xl font-black text-blue-600 dark:text-blue-400">
+            {metrics.inProgress}
+          </div>
+          <div className="text-[11px] text-slate-400 font-medium">Active installations</div>
+        </Card>
+
+        <Card hover className="p-4 space-y-2">
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-xs font-semibold uppercase tracking-wider">On-Track Health</span>
+            <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+            {metrics.onTrack}
+          </div>
+          <div className="text-[11px] text-slate-400 font-medium">Within SLA delivery</div>
+        </Card>
+
+        <Card hover className="p-4 space-y-2">
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-xs font-semibold uppercase tracking-wider">Total Allocated</span>
+            <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400">
+              <DollarSign className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-2xl font-black text-slate-900 dark:text-white">
+            ${(metrics.totalBudget / 1000).toFixed(0)}k
+          </div>
+          <div className="text-[11px] text-slate-400 font-medium">Budget commitment</div>
+        </Card>
+      </div>
+
+      {/* Search & Filter Bar */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+        <div className="md:col-span-6 relative">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search projects by name, code or client..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-850 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
           />
         </div>
 
-        <div className="w-full sm:w-48">
-          <Select
+        <div className="md:col-span-3">
+          <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            options={[
-              { value: 'all', label: 'All Projects' },
-              { value: 'in_progress', label: 'In Progress' },
-              { value: 'on_hold', label: 'On Hold' },
-              { value: 'completed', label: 'Completed' }
-            ]}
-          />
+            className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none"
+          >
+            <option value="all">All Statuses</option>
+            <option value="planning">Planning</option>
+            <option value="in_progress">In Progress</option>
+            <option value="on_hold">On Hold</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+
+        <div className="md:col-span-3">
+          <select
+            value={healthFilter}
+            onChange={(e) => setHealthFilter(e.target.value)}
+            className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none"
+          >
+            <option value="all">All Health Signals</option>
+            <option value="on_track">On Track</option>
+            <option value="at_risk">At Risk</option>
+            <option value="delayed">Delayed</option>
+          </select>
         </div>
       </div>
 
-      {/* Projects Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {filteredProjects.map((project) => (
-          <Card
-            key={project.id}
-            variant="default"
-            className="p-6 space-y-5 hover:border-indigo-500/50 hover:shadow-xl transition flex flex-col justify-between"
-          >
-            <div className="space-y-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <span className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">
-                    {project.id}
-                  </span>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white mt-0.5 leading-snug">
-                    {project.name}
-                  </h3>
-                  <div className="text-xs text-slate-500 mt-1">{project.client}</div>
-                </div>
+      {/* Projects Grid / List */}
+      {projectsLoading ? (
+        <SkeletonTable rows={4} cols={5} />
+      ) : projectsError ? (
+        <ErrorState
+          message={projectsError.apiMessage || 'Could not load projects.'}
+          onRetry={refetchProjects}
+        />
+      ) : projects.length === 0 ? (
+        <EmptyState
+          title="No projects found"
+          description="Adjust your search criteria or create an operations project."
+          actionLabel={canManageProjects ? 'Create Project' : undefined}
+          onAction={() => setModalOpen(true)}
+        />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {projects.map((project) => {
+            const healthColor =
+              project.health === 'on_track'
+                ? 'success'
+                : project.health === 'at_risk'
+                  ? 'warning'
+                  : 'danger';
 
-                <Badge
-                  variant={
-                    project.health === 'on_track'
-                      ? 'success'
-                      : project.health === 'at_risk'
-                        ? 'warning'
-                        : 'danger'
-                  }
-                  size="sm"
-                  className="capitalize shrink-0"
-                >
-                  {project.health.replace('_', ' ')}
-                </Badge>
-              </div>
-
-              <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
-                {project.description}
-              </p>
-
-              {/* Progress Bar */}
-              <div className="space-y-1.5">
-                <div className="flex justify-between text-xs">
-                  <span className="text-slate-400">Completion:</span>
-                  <span className="font-mono font-bold text-slate-900 dark:text-white">
-                    {project.progress}%
-                  </span>
-                </div>
-                <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
-                  <div
-                    style={{ width: `${project.progress}%` }}
-                    className="bg-indigo-600 h-full rounded-full transition-all duration-500"
-                  />
-                </div>
-              </div>
-
-              {/* Financial & Schedule Highlights */}
-              <div className="grid grid-cols-2 gap-3 pt-2 text-xs">
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-850">
-                  <span className="text-slate-400 block text-[10px]">Budget Allocated</span>
-                  <span className="font-mono font-bold text-slate-900 dark:text-white text-sm">
-                    {project.budget}
-                  </span>
-                  <span className="text-[10px] text-slate-500 block">Spent: {project.spent}</span>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-850">
-                  <span className="text-slate-400 block text-[10px]">Target Deadline</span>
-                  <span className="font-mono font-bold text-slate-900 dark:text-white text-sm">
-                    {project.targetDate}
-                  </span>
-                  <span className="text-[10px] text-emerald-500 block">
-                    {project.milestones.filter((m) => m.status === 'completed').length} /{' '}
-                    {project.milestones.length} Milestones
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer with Team & View Action */}
-            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <div className="flex items-center -space-x-2">
-                {project.team.map((member, i) => (
-                  <img
-                    key={i}
-                    src={member.avatar}
-                    alt={member.name}
-                    title={`${member.name} (${member.role})`}
-                    className="w-7 h-7 rounded-full object-cover ring-2 ring-white dark:ring-slate-900"
-                  />
-                ))}
-              </div>
-
-              <button
-                type="button"
+            return (
+              <div
+                key={project.id}
                 onClick={() => navigate(`/projects/${project.id}`)}
-                className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+                className="p-5 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 hover:border-indigo-500/50 hover:shadow-lg transition-all duration-200 cursor-pointer space-y-4 group"
               >
-                <span>Project Workspace</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </Card>
-        ))}
-      </div>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <span className="font-mono text-[10px] font-bold text-indigo-600 dark:text-indigo-400">
+                      {project.project_code || project.id}
+                    </span>
+                    <h3 className="font-bold text-sm text-slate-900 dark:text-white line-clamp-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                      {project.name}
+                    </h3>
+                  </div>
+                  <Badge variant={healthColor} size="sm" dot>
+                    {(project.health || 'on_track').replace('_', ' ')}
+                  </Badge>
+                </div>
 
-      {/* New Project Modal */}
+                <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 truncate">
+                  <Building2 className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">{project.client || 'Enterprise Client'}</span>
+                </div>
+
+                {/* Progress bar */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-400 font-medium">Milestone Progress</span>
+                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
+                      {project.progress || 0}%
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                    <div
+                      style={{ width: `${project.progress || 0}%` }}
+                      className="bg-indigo-600 h-full rounded-full transition-all duration-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Financial and Schedule details */}
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px]">
+                  <div>
+                    <span className="text-slate-400 block">Budget:</span>
+                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
+                      ${Number(project.budget || 0).toLocaleString()}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block">Target Delivery:</span>
+                    <span className="font-mono text-slate-600 dark:text-slate-300">
+                      {project.target_date || 'Q4 2026'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Lead and Action footer */}
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1.5 text-slate-500 text-[11px]">
+                    <User className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Lead: {project.lead || 'Sarah Chen'}</span>
+                  </div>
+
+                  <span className="text-indigo-600 dark:text-indigo-400 font-bold flex items-center gap-1 text-[11px] group-hover:translate-x-1 transition-transform">
+                    <span>Inspect</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Create Project Modal */}
       <Modal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        title="Create Client Project"
-        size="md"
-        footer={
-          <div className="flex justify-end gap-2">
-            <Button variant="secondary" onClick={() => setModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="primary" onClick={handleCreateProject}>
-              Initialize Project
-            </Button>
-          </div>
-        }
+        title="Initiate Operations Project"
+        description="Provision a new enterprise deployment project, set budget milestones, and allocate crew."
       >
-        <form onSubmit={handleCreateProject} className="space-y-4 text-xs">
-          <Input
-            label="Project Name"
-            placeholder="e.g. Automated Sorter Installation Bay 4"
-            value={projectName}
-            onChange={(e) => setProjectName(e.target.value)}
+        <form onSubmit={handleSubmit(onSubmitCreate)} className="space-y-4">
+          <FormInput
+            label="Project Title"
+            placeholder="e.g. Metro Distribution Center Automation"
+            {...register('name')}
+            error={errors.name?.message}
             required
           />
 
-          <div>
-            <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-              Client Account
-            </label>
-            <select
-              value={client}
-              onChange={(e) => setClient(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-            >
-              <option>Metro Retail Distribution Co.</option>
-              <option>Pacific Freight Express</option>
-              <option>Harbor Cold Chain Logistics</option>
-            </select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              label="Budget ($ USD)"
-              type="number"
-              value={budget}
-              onChange={(e) => setBudget(e.target.value)}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <FormInput
+              label="Client Partner"
+              placeholder="e.g. Metro Retail Co."
+              {...register('client')}
+              error={errors.client?.message}
               required
             />
 
-            <div>
-              <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                Target Completion Date
-              </label>
-              <input
-                type="date"
-                value={targetDate}
-                onChange={(e) => setTargetDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-800 bg-transparent text-slate-900 dark:text-white"
-                required
-              />
-            </div>
+            <FormSelect
+              label="Delivery Lead"
+              {...register('lead_id')}
+              options={[
+                { value: '', label: 'Select Project Lead...' },
+                ...employees.map((emp) => ({
+                  value: emp.id,
+                  label: `${emp.name || `${emp.first_name} ${emp.last_name}`} (${emp.department || 'Operations'})`
+                }))
+              ]}
+              error={errors.lead_id?.message}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <FormInput
+              label="Budget Allocation ($)"
+              type="number"
+              placeholder="75000"
+              {...register('budget')}
+              error={errors.budget?.message}
+              required
+            />
+
+            <FormSelect
+              label="Initial Status"
+              {...register('status')}
+              options={[
+                { value: 'planning', label: 'Planning' },
+                { value: 'in_progress', label: 'In Progress' },
+                { value: 'on_hold', label: 'On Hold' }
+              ]}
+            />
+
+            <FormInput
+              label="Target Completion"
+              type="date"
+              {...register('target_date')}
+              error={errors.target_date?.message}
+              required
+            />
+          </div>
+
+          <FormTextarea
+            label="Scope & Technical Specifications"
+            rows={3}
+            placeholder="Outline installation phases, sensor hardware, and regulatory deliverables..."
+            {...register('description')}
+          />
+
+          <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800">
+            <Button variant="secondary" size="sm" type="button" onClick={() => setModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              type="submit"
+              loading={createProjectMutation.isPending}
+              disabled={createProjectMutation.isPending}
+            >
+              Initiate Project
+            </Button>
           </div>
         </form>
       </Modal>

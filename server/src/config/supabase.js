@@ -342,6 +342,271 @@ export const mockDatabase = {
       status: 'pending'
     }
   ],
+  projects: [
+    {
+      id: 'prj-acme-1',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      project_code: 'PRJ-2026-001',
+      name: 'Metro Logistics Distribution Center Automation',
+      client: 'Metro Retail Distribution Co.',
+      customer_id: 'cust-acme-1',
+      status: 'in_progress',
+      health: 'on_track',
+      progress: 68,
+      budget: 145000,
+      spent: 98600,
+      start_date: '2026-09-01',
+      target_date: '2026-12-15',
+      lead_id: 'w1',
+      lead: 'Alex Rivera',
+      description:
+        'Installation, sensor telemetry integration, and safety certification of automated sorter loading bays.',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'prj-acme-2',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      project_code: 'PRJ-2026-002',
+      name: 'Pacific Freight Express Fleet Electrification',
+      client: 'Pacific Freight Express',
+      status: 'in_progress',
+      health: 'at_risk',
+      progress: 42,
+      budget: 280000,
+      spent: 142000,
+      start_date: '2026-08-15',
+      target_date: '2027-02-28',
+      lead_id: 'w1',
+      lead: 'Sarah Chen',
+      description:
+        'Deploying high-output DC fast chargers, power load-balancing transformers, and battery health telemetry.',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+  ],
+  project_members: [
+    {
+      id: 'pm-1',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      project_id: 'prj-acme-1',
+      workforce_member_id: 'w1',
+      project_role: 'Lead Technician',
+      assigned_at: new Date().toISOString()
+    },
+    {
+      id: 'pm-2',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      project_id: 'prj-acme-1',
+      workforce_member_id: 'w2',
+      project_role: 'Automation Specialist',
+      assigned_at: new Date().toISOString()
+    },
+    {
+      id: 'pm-3',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      project_id: 'prj-acme-1',
+      workforce_member_id: 'w3',
+      project_role: 'Maintenance Lead',
+      assigned_at: new Date().toISOString()
+    }
+  ],
+  project_milestones: [
+    {
+      id: 'ms-1',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      project_id: 'prj-acme-1',
+      title: 'Phase 1: Structural Bay Prep & Electrical Conduit',
+      status: 'completed',
+      target_date: '2026-09-20',
+      completed_at: '2026-09-20T00:00:00Z',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'ms-2',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      project_id: 'prj-acme-1',
+      title: 'Phase 2: Conveyor Installation & Hydraulic Test',
+      status: 'completed',
+      target_date: '2026-10-18',
+      completed_at: '2026-10-18T00:00:00Z',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'ms-3',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      project_id: 'prj-acme-1',
+      title: 'Phase 3: Sensor Calibration & Edge Gateway Link',
+      status: 'in_progress',
+      target_date: '2026-11-20',
+      completed_at: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'ms-4',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      project_id: 'prj-acme-1',
+      title: 'Phase 4: Regulatory Safety Audit & Signoff',
+      status: 'pending',
+      target_date: '2026-12-15',
+      completed_at: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+  ],
+  tasks: [
+    {
+      id: 'tsk-1',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      task_code: 'TSK-101',
+      title: 'Inspect hydraulic lift valve pressure on Bay 4',
+      category: 'Maintenance',
+      priority: 'urgent',
+      column_name: 'in_progress',
+      column: 'in_progress',
+      assigned_to: 'w1',
+      project_id: 'prj-acme-1',
+      due_date: '2026-11-06',
+      checklist_total: 4,
+      checklist_completed: 3,
+      description: 'Verify hydraulic line safety seals and relief pressure valve tolerance.',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'tsk-2',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      task_code: 'TSK-102',
+      title: 'Calibrate ambient temperature sensors for cold storage',
+      category: 'Inspection',
+      priority: 'high',
+      column_name: 'in_progress',
+      column: 'in_progress',
+      assigned_to: 'w2',
+      project_id: 'prj-acme-1',
+      due_date: '2026-11-07',
+      checklist_total: 5,
+      checklist_completed: 2,
+      description: 'Calibrate all wireless sensor probes to +/- 0.1 degree C.',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'tsk-3',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      task_code: 'TSK-103',
+      title: 'Review emergency transformer trenching depth',
+      category: 'Compliance',
+      priority: 'high',
+      column_name: 'todo',
+      column: 'todo',
+      assigned_to: 'w3',
+      project_id: 'prj-acme-2',
+      due_date: '2026-11-08',
+      checklist_total: 3,
+      checklist_completed: 0,
+      description: 'Check city municipal utility safety setbacks and cable depths.',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'tsk-4',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      task_code: 'TSK-104',
+      title: 'Quarterly forklift oil filter replacement',
+      category: 'Fleet',
+      priority: 'normal',
+      column_name: 'todo',
+      column: 'todo',
+      assigned_to: 'w1',
+      project_id: 'prj-acme-1',
+      due_date: '2026-11-12',
+      checklist_total: 2,
+      checklist_completed: 0,
+      description: 'Perform preventive oil and hydraulic fluid change on Unit 04.',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'tsk-5',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      task_code: 'TSK-105',
+      title: 'Sign off emergency power cutoff switch installation',
+      category: 'Safety',
+      priority: 'urgent',
+      column_name: 'review',
+      column: 'review',
+      assigned_to: 'w2',
+      project_id: 'prj-acme-1',
+      due_date: '2026-11-09',
+      checklist_total: 3,
+      checklist_completed: 3,
+      description: 'OSHA compliance review of main red kill switch lockout-tagout.',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'tsk-6',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      task_code: 'TSK-106',
+      title: 'Conveyor roller alignment certification',
+      category: 'Maintenance',
+      priority: 'normal',
+      column_name: 'completed',
+      column: 'completed',
+      assigned_to: 'w3',
+      project_id: 'prj-acme-1',
+      due_date: '2026-11-04',
+      checklist_total: 4,
+      checklist_completed: 4,
+      description: 'Completed laser alignment test across 40 meters of conveyor.',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+  ],
+  task_assignments: [
+    {
+      id: 'ta-1',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      task_id: 'tsk-1',
+      workforce_member_id: 'w1',
+      assigned_at: new Date().toISOString()
+    },
+    {
+      id: 'ta-2',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      task_id: 'tsk-2',
+      workforce_member_id: 'w2',
+      assigned_at: new Date().toISOString()
+    }
+  ],
+  task_comments: [
+    {
+      id: 'tc-1',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      task_id: 'tsk-1',
+      user_id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      comment_text: 'Valve pressure verified to 2400 PSI. Ready for final field load test.',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+  ],
+  task_attachments: [
+    {
+      id: 'ta-1',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      task_id: 'tsk-1',
+      file_name: 'Hydraulic_Inspection_Cert_2026.pdf',
+      file_url: '/storage/sample-cert.pdf',
+      file_size: 428000,
+      mime_type: 'application/pdf',
+      uploaded_by: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      created_at: new Date().toISOString()
+    }
+  ],
   auditLogs: []
 };
 
