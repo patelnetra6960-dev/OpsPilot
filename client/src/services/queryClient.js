@@ -66,6 +66,19 @@ export const queryKeys = {
     comments: (taskId) => ['tasks', taskId, 'comments'],
     attachments: (taskId) => ['tasks', taskId, 'attachments']
   },
+  serviceRequests: {
+    all: ['serviceRequests'],
+    list: (filters = {}) => ['serviceRequests', 'list', filters],
+    detail: (id) => ['serviceRequests', 'detail', id]
+  },
+  workOrders: {
+    all: ['workOrders'],
+    list: (filters = {}) => ['workOrders', 'list', filters],
+    detail: (id) => ['workOrders', 'detail', id],
+    checklists: (woId) => ['workOrders', woId, 'checklists'],
+    notes: (woId) => ['workOrders', woId, 'notes'],
+    photos: (woId) => ['workOrders', woId, 'photos']
+  },
   audit: {
     all: ['audit'],
     list: (filters = {}) => ['audit', 'list', filters]

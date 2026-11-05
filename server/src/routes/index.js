@@ -11,6 +11,8 @@ import adminRoutes from './admin.routes.js';
 import customerRoutes from './customer.routes.js';
 import auditRoutes from './audit.routes.js';
 import docsRoutes from './docs.routes.js';
+import serviceRequestsRoutes from './serviceRequests.routes.js';
+import workOrdersRoutes from './workOrders.routes.js';
 
 const router = Router();
 
@@ -25,6 +27,10 @@ router.use('/workforce', workforceRoutes);
 router.use('/customers', customersRoutes);
 router.use('/projects', projectsRoutes);
 router.use('/tasks', tasksRoutes);
+router.use('/service-requests', serviceRequestsRoutes);
+router.use('/services', serviceRequestsRoutes);
+router.use('/work-orders', workOrdersRoutes);
+router.use('/workorders', workOrdersRoutes);
 router.use('/audit', auditRoutes);
 router.use('/storage', storageRoutes);
 router.use('/admin', adminRoutes);

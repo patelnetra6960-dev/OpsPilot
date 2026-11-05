@@ -40,70 +40,144 @@
       "StandardMeta": {
         "type": "object",
         "properties": {
-          "timestamp": { "type": "string", "format": "date-time" },
-          "requestId": { "type": "string" }
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "requestId": {
+            "type": "string"
+          }
         }
       },
       "PaginationMeta": {
         "type": "object",
         "properties": {
-          "page": { "type": "integer", "example": 1 },
-          "limit": { "type": "integer", "example": 20 },
-          "total": { "type": "integer", "example": 45 },
-          "totalPages": { "type": "integer", "example": 3 },
-          "hasNextPage": { "type": "boolean", "example": true },
-          "hasPrevPage": { "type": "boolean", "example": false }
+          "page": {
+            "type": "integer",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "example": 20
+          },
+          "total": {
+            "type": "integer",
+            "example": 45
+          },
+          "totalPages": {
+            "type": "integer",
+            "example": 3
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "example": true
+          },
+          "hasPrevPage": {
+            "type": "boolean",
+            "example": false
+          }
         }
       },
       "StandardError": {
         "type": "object",
         "properties": {
-          "success": { "type": "boolean", "example": false },
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
           "error": {
             "type": "object",
             "properties": {
-              "code": { "type": "string", "example": "INSUFFICIENT_ROLE_PERMISSIONS" },
+              "code": {
+                "type": "string",
+                "example": "INSUFFICIENT_ROLE_PERMISSIONS"
+              },
               "message": {
                 "type": "string",
                 "example": "Forbidden: Requires one of [owner, admin] roles"
               },
-              "details": { "type": "object", "nullable": true }
+              "details": {
+                "type": "object",
+                "nullable": true
+              }
             }
           },
-          "meta": { "$ref": "#/components/schemas/StandardMeta" }
+          "meta": {
+            "$ref": "#/components/schemas/StandardMeta"
+          }
         }
       },
       "Customer": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "example": "cust-acme-1" },
-          "organization_id": { "type": "string", "format": "uuid" },
-          "name": { "type": "string", "example": "Metro Health System" },
-          "company_name": { "type": "string", "example": "Metro Health Inc." },
+          "id": {
+            "type": "string",
+            "example": "cust-acme-1"
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Metro Health System"
+          },
+          "company_name": {
+            "type": "string",
+            "example": "Metro Health Inc."
+          },
           "email": {
             "type": "string",
             "format": "email",
             "example": "rachel.green@metrohealth.com"
           },
-          "phone": { "type": "string", "example": "+1 555-0199" },
-          "customer_code": { "type": "string", "example": "CUST-1001" },
+          "phone": {
+            "type": "string",
+            "example": "+1 555-0199"
+          },
+          "customer_code": {
+            "type": "string",
+            "example": "CUST-1001"
+          },
           "sla_tier": {
             "type": "string",
             "enum": ["standard", "silver", "gold", "platinum", "critical", "premium"]
           },
-          "status": { "type": "string", "enum": ["active", "inactive", "suspended"] },
-          "created_at": { "type": "string", "format": "date-time" },
-          "updated_at": { "type": "string", "format": "date-time" }
+          "status": {
+            "type": "string",
+            "enum": ["active", "inactive", "suspended"]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "CreateCustomerRequest": {
         "type": "object",
         "required": ["name", "email"],
         "properties": {
-          "name": { "type": "string", "example": "Pinnacle Energy Corp" },
-          "company_name": { "type": "string", "example": "Pinnacle Inc" },
-          "email": { "type": "string", "format": "email", "example": "contact@pinnacle.com" },
-          "phone": { "type": "string", "example": "+1 (555) 345-6789" },
+          "name": {
+            "type": "string",
+            "example": "Pinnacle Energy Corp"
+          },
+          "company_name": {
+            "type": "string",
+            "example": "Pinnacle Inc"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "contact@pinnacle.com"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+1 (555) 345-6789"
+          },
           "sla_tier": {
             "type": "string",
             "enum": ["standard", "silver", "gold", "platinum", "critical", "premium"],
@@ -119,57 +193,147 @@
       "WorkforceMember": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "example": "w1" },
-          "organization_id": { "type": "string", "format": "uuid" },
-          "first_name": { "type": "string", "example": "Marcus" },
-          "last_name": { "type": "string", "example": "Vance" },
-          "email": { "type": "string", "format": "email" },
-          "designation": { "type": "string", "example": "Lead Field Supervisor" },
-          "department": { "type": "string", "example": "Field Operations" },
-          "status": { "type": "string", "enum": ["active", "on_leave", "suspended", "terminated"] },
-          "hourly_rate": { "type": "number", "example": 55.0 }
+          "id": {
+            "type": "string",
+            "example": "w1"
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "first_name": {
+            "type": "string",
+            "example": "Marcus"
+          },
+          "last_name": {
+            "type": "string",
+            "example": "Vance"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "designation": {
+            "type": "string",
+            "example": "Lead Field Supervisor"
+          },
+          "department": {
+            "type": "string",
+            "example": "Field Operations"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["active", "on_leave", "suspended", "terminated"]
+          },
+          "hourly_rate": {
+            "type": "number",
+            "example": 55
+          }
         }
       },
       "AuditLog": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "example": "audit-179382" },
-          "organization_id": { "type": "string", "format": "uuid" },
-          "user_id": { "type": "string", "format": "uuid", "nullable": true },
-          "action": { "type": "string", "example": "AUTH_LOGIN_SUCCESS" },
-          "entity_type": { "type": "string", "example": "AUTH" },
-          "entity_id": { "type": "string", "nullable": true },
-          "ip_address": { "type": "string", "nullable": true },
-          "created_at": { "type": "string", "format": "date-time" }
+          "id": {
+            "type": "string",
+            "example": "audit-179382"
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "action": {
+            "type": "string",
+            "example": "AUTH_LOGIN_SUCCESS"
+          },
+          "entity_type": {
+            "type": "string",
+            "example": "AUTH"
+          },
+          "entity_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "ip_address": {
+            "type": "string",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "CustomerNote": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "example": "cn-1" },
-          "organization_id": { "type": "string", "format": "uuid" },
-          "customer_id": { "type": "string", "example": "cust-acme-1" },
-          "author_id": { "type": "string", "nullable": true },
-          "author_name": { "type": "string", "example": "Sarah Connor" },
-          "note": { "type": "string", "example": "Client requested quarterly SLA review" },
-          "created_at": { "type": "string", "format": "date-time" }
+          "id": {
+            "type": "string",
+            "example": "cn-1"
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "customer_id": {
+            "type": "string",
+            "example": "cust-acme-1"
+          },
+          "author_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "author_name": {
+            "type": "string",
+            "example": "Sarah Connor"
+          },
+          "note": {
+            "type": "string",
+            "example": "Client requested quarterly SLA review"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "CustomerFeedback": {
         "type": "object",
         "required": ["rating"],
         "properties": {
-          "rating": { "type": "integer", "minimum": 1, "maximum": 5, "example": 5 },
-          "comments": { "type": "string", "example": "Prompt emergency technician dispatch" }
+          "rating": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "example": 5
+          },
+          "comments": {
+            "type": "string",
+            "example": "Prompt emergency technician dispatch"
+          }
         }
       },
       "CustomerServiceRequestInput": {
         "type": "object",
         "required": ["title"],
         "properties": {
-          "title": { "type": "string", "example": "Hydraulic Ramp Inspection" },
-          "description": { "type": "string", "example": "Inspect hydraulic cylinders in Bay 4" },
-          "location": { "type": "string", "example": "Distribution Bay 4" },
+          "title": {
+            "type": "string",
+            "example": "Hydraulic Ramp Inspection"
+          },
+          "description": {
+            "type": "string",
+            "example": "Inspect hydraulic cylinders in Bay 4"
+          },
+          "location": {
+            "type": "string",
+            "example": "Distribution Bay 4"
+          },
           "urgency": {
             "type": "string",
             "enum": ["low", "normal", "high", "urgent", "critical"],
@@ -181,6 +345,399 @@
             "default": "repair"
           }
         }
+      },
+      "ServiceRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "sr-1"
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "customer_id": {
+            "type": "string",
+            "example": "cust-acme-1"
+          },
+          "title": {
+            "type": "string",
+            "example": "Hydraulic Lift Seal Replacement"
+          },
+          "description": {
+            "type": "string",
+            "example": "Main cargo bay hydraulic piston is weeping fluid."
+          },
+          "category": {
+            "type": "string",
+            "enum": ["repair", "maintenance", "safety", "installation", "inspection", "emergency"]
+          },
+          "urgency": {
+            "type": "string",
+            "enum": ["low", "normal", "high", "urgent", "critical"]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "submitted",
+              "under_review",
+              "approved",
+              "rejected",
+              "in_progress",
+              "completed",
+              "closed",
+              "cancelled"
+            ]
+          },
+          "location": {
+            "type": "string",
+            "example": "Facility Alpha, Bay 4"
+          },
+          "manager_notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "rejection_reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "file_name": {
+                  "type": "string"
+                },
+                "file_url": {
+                  "type": "string"
+                },
+                "file_size": {
+                  "type": "integer"
+                },
+                "mime_type": {
+                  "type": "string"
+                },
+                "uploaded_at": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          },
+          "status_history": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "from_status": {
+                  "type": "string"
+                },
+                "to_status": {
+                  "type": "string"
+                },
+                "changed_by": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "changed_at": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          },
+          "converted_work_order_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateServiceRequestInput": {
+        "type": "object",
+        "required": ["title"],
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Emergency Generator Fluctuations"
+          },
+          "description": {
+            "type": "string",
+            "example": "Backup generator failing load transfer test."
+          },
+          "category": {
+            "type": "string",
+            "enum": ["repair", "maintenance", "safety", "installation", "inspection", "emergency"],
+            "default": "repair"
+          },
+          "urgency": {
+            "type": "string",
+            "enum": ["low", "normal", "high", "urgent", "critical"],
+            "default": "normal"
+          },
+          "customer_id": {
+            "type": "string",
+            "example": "cust-acme-1"
+          },
+          "location": {
+            "type": "string",
+            "example": "Central Power Substation B"
+          }
+        }
+      },
+      "WorkOrder": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "wo-1"
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "work_order_number": {
+            "type": "string",
+            "example": "WO-2026-001"
+          },
+          "service_request_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "customer_id": {
+            "type": "string",
+            "example": "cust-acme-1"
+          },
+          "title": {
+            "type": "string",
+            "example": "Replace Hydraulic Seals on Bay 4 Ramp"
+          },
+          "description": {
+            "type": "string",
+            "example": "Isolate hydraulic pressure, disassemble piston cylinder, replace O-rings."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "scheduled",
+              "assigned",
+              "in_progress",
+              "on_hold",
+              "completed",
+              "confirmed",
+              "closed",
+              "cancelled"
+            ]
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["low", "normal", "high", "critical"]
+          },
+          "assigned_to": {
+            "type": "string",
+            "nullable": true
+          },
+          "scheduled_start": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "scheduled_end": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "checklists": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "completed": {
+                  "type": "boolean"
+                },
+                "completed_by": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "completed_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "nullable": true
+                }
+              }
+            }
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "content": {
+                  "type": "string"
+                },
+                "author_id": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "author_name": {
+                  "type": "string"
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          },
+          "photos": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                },
+                "caption": {
+                  "type": "string"
+                },
+                "phase": {
+                  "type": "string",
+                  "enum": ["before", "after", "progress"]
+                },
+                "uploaded_at": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          },
+          "completion": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "notes": {
+                "type": "string"
+              },
+              "actual_cost": {
+                "type": "number"
+              },
+              "labor_hours": {
+                "type": "number"
+              },
+              "parts_used": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "completed_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "completed_by": {
+                "type": "string"
+              }
+            }
+          },
+          "customer_confirmation": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "confirmed": {
+                "type": "boolean"
+              },
+              "signature": {
+                "type": "string"
+              },
+              "rating": {
+                "type": "integer"
+              },
+              "feedback": {
+                "type": "string"
+              },
+              "confirmed_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateWorkOrderInput": {
+        "type": "object",
+        "required": ["title", "customer_id"],
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Replace Hydraulic Seals on Bay 4 Ramp"
+          },
+          "description": {
+            "type": "string"
+          },
+          "customer_id": {
+            "type": "string",
+            "example": "cust-acme-1"
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["low", "normal", "high", "critical"],
+            "default": "normal"
+          },
+          "service_request_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "assigned_to": {
+            "type": "string",
+            "nullable": true
+          },
+          "scheduled_start": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "scheduled_end": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
       }
     }
   },
@@ -190,17 +747,61 @@
         "summary": "Retrieve organization audit logs (Owners & Administrators only)",
         "tags": ["Audit"],
         "parameters": [
-          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
-          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20 } },
-          { "name": "action", "in": "query", "schema": { "type": "string" } },
-          { "name": "entity_type", "in": "query", "schema": { "type": "string" } },
-          { "name": "from_date", "in": "query", "schema": { "type": "string" } },
-          { "name": "to_date", "in": "query", "schema": { "type": "string" } }
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entity_type",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from_date",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to_date",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
-          "200": { "description": "Paginated audit logs" },
-          "401": { "description": "Unauthorized" },
-          "403": { "description": "Forbidden: Requires Owner or Administrator role" }
+          "200": {
+            "description": "Paginated audit logs"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden: Requires Owner or Administrator role"
+          }
         }
       }
     },
@@ -210,7 +811,9 @@
         "tags": ["Health"],
         "security": [],
         "responses": {
-          "200": { "description": "Backend is operational" }
+          "200": {
+            "description": "Backend is operational"
+          }
         }
       }
     },
@@ -219,26 +822,71 @@
         "summary": "List customers with pagination, sorting, search and filtering",
         "tags": ["Customers"],
         "parameters": [
-          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
-          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20 } },
-          { "name": "search", "in": "query", "schema": { "type": "string" } },
-          { "name": "status", "in": "query", "schema": { "type": "string" } },
-          { "name": "sla_tier", "in": "query", "schema": { "type": "string" } },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sla_tier",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "sortBy",
             "in": "query",
-            "schema": { "type": "string", "default": "created_at" }
+            "schema": {
+              "type": "string",
+              "default": "created_at"
+            }
           },
           {
             "name": "sortOrder",
             "in": "query",
-            "schema": { "type": "string", "enum": ["asc", "desc"], "default": "desc" }
+            "schema": {
+              "type": "string",
+              "enum": ["asc", "desc"],
+              "default": "desc"
+            }
           }
         ],
         "responses": {
-          "200": { "description": "Paginated customer list" },
-          "401": { "description": "Unauthorized" },
-          "403": { "description": "Forbidden cross-tenant or role violation" }
+          "200": {
+            "description": "Paginated customer list"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden cross-tenant or role violation"
+          }
         }
       },
       "post": {
@@ -248,14 +896,22 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/CreateCustomerRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/CreateCustomerRequest"
+              }
             }
           }
         },
         "responses": {
-          "201": { "description": "Customer successfully created" },
-          "400": { "description": "Validation error" },
-          "409": { "description": "Duplicate customer email conflict" }
+          "201": {
+            "description": "Customer successfully created"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "409": {
+            "description": "Duplicate customer email conflict"
+          }
         }
       }
     },
@@ -264,40 +920,73 @@
         "summary": "Retrieve customer by ID",
         "tags": ["Customers"],
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
-          "200": { "description": "Customer details retrieved" },
-          "404": { "description": "Customer not found in organization" }
+          "200": {
+            "description": "Customer details retrieved"
+          },
+          "404": {
+            "description": "Customer not found in organization"
+          }
         }
       },
       "patch": {
         "summary": "Partial update of customer record",
         "tags": ["Customers"],
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/CreateCustomerRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/CreateCustomerRequest"
+              }
             }
           }
         },
         "responses": {
-          "200": { "description": "Customer updated successfully" },
-          "404": { "description": "Customer not found" }
+          "200": {
+            "description": "Customer updated successfully"
+          },
+          "404": {
+            "description": "Customer not found"
+          }
         }
       },
       "delete": {
         "summary": "Soft-delete customer record",
         "tags": ["Customers"],
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
-          "200": { "description": "Customer soft-deleted successfully" }
+          "200": {
+            "description": "Customer soft-deleted successfully"
+          }
         }
       }
     },
@@ -306,12 +995,22 @@
         "summary": "Execute business workflow action on customer (e.g. suspend, activate)",
         "tags": ["Customers"],
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "action",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "enum": ["suspend", "activate"] }
+            "schema": {
+              "type": "string",
+              "enum": ["suspend", "activate"]
+            }
           }
         ],
         "requestBody": {
@@ -320,15 +1019,21 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "notes": { "type": "string" }
+                  "notes": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Action executed successfully" },
-          "422": { "description": "Unsupported business action" }
+          "200": {
+            "description": "Action executed successfully"
+          },
+          "422": {
+            "description": "Unsupported business action"
+          }
         }
       }
     },
@@ -337,18 +1042,36 @@
         "summary": "Retrieve internal staff notes thread for customer",
         "tags": ["Customers"],
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
-          "200": { "description": "Customer notes retrieved" },
-          "403": { "description": "Forbidden for customer role" }
+          "200": {
+            "description": "Customer notes retrieved"
+          },
+          "403": {
+            "description": "Forbidden for customer role"
+          }
         }
       },
       "post": {
         "summary": "Add an internal note to customer profile",
         "tags": ["Customers"],
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -358,15 +1081,21 @@
                 "type": "object",
                 "required": ["note"],
                 "properties": {
-                  "note": { "type": "string" }
+                  "note": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
         },
         "responses": {
-          "201": { "description": "Note added successfully" },
-          "400": { "description": "Validation error" }
+          "201": {
+            "description": "Note added successfully"
+          },
+          "400": {
+            "description": "Validation error"
+          }
         }
       }
     },
@@ -375,10 +1104,19 @@
         "summary": "Retrieve unified timeline of tickets, work orders and invoices",
         "tags": ["Customers"],
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
-          "200": { "description": "Customer history retrieved" }
+          "200": {
+            "description": "Customer history retrieved"
+          }
         }
       }
     },
@@ -387,7 +1125,14 @@
         "summary": "Update CRM lead stage and follow-up timeline",
         "tags": ["Customers"],
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -400,15 +1145,22 @@
                     "type": "string",
                     "enum": ["lead", "prospect", "active", "churned"]
                   },
-                  "follow_up_date": { "type": "string", "format": "date-time" },
-                  "follow_up_notes": { "type": "string" }
+                  "follow_up_date": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "follow_up_notes": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Follow-up updated" }
+          "200": {
+            "description": "Follow-up updated"
+          }
         }
       }
     },
@@ -417,8 +1169,12 @@
         "summary": "Customer portal dashboard overview and operational telemetry",
         "tags": ["Customer Portal"],
         "responses": {
-          "200": { "description": "Customer portal data" },
-          "403": { "description": "Forbidden for non-customer roles or cross-tenant" }
+          "200": {
+            "description": "Customer portal data"
+          },
+          "403": {
+            "description": "Forbidden for non-customer roles or cross-tenant"
+          }
         }
       }
     },
@@ -427,7 +1183,9 @@
         "summary": "Retrieve authenticated customer profile and facility details",
         "tags": ["Customer Portal"],
         "responses": {
-          "200": { "description": "Customer profile retrieved" }
+          "200": {
+            "description": "Customer profile retrieved"
+          }
         }
       },
       "patch": {
@@ -440,16 +1198,24 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "name": { "type": "string" },
-                  "phone": { "type": "string" },
-                  "address": { "type": "string" }
+                  "name": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "address": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Profile updated" }
+          "200": {
+            "description": "Profile updated"
+          }
         }
       }
     },
@@ -458,12 +1224,32 @@
         "summary": "List customer's own service requests with filters",
         "tags": ["Customer Portal"],
         "parameters": [
-          { "name": "status", "in": "query", "schema": { "type": "string" } },
-          { "name": "urgency", "in": "query", "schema": { "type": "string" } },
-          { "name": "search", "in": "query", "schema": { "type": "string" } }
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "urgency",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
-          "200": { "description": "Customer service requests" }
+          "200": {
+            "description": "Customer service requests"
+          }
         }
       },
       "post": {
@@ -473,12 +1259,16 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/CustomerServiceRequestInput" }
+              "schema": {
+                "$ref": "#/components/schemas/CustomerServiceRequestInput"
+              }
             }
           }
         },
         "responses": {
-          "201": { "description": "Service request submitted" }
+          "201": {
+            "description": "Service request submitted"
+          }
         }
       }
     },
@@ -487,12 +1277,25 @@
         "summary": "Track service request detail and 5-step milestone timeline (Anti-IDOR protected)",
         "tags": ["Customer Portal"],
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
-          "200": { "description": "Service request detail with timeline" },
-          "403": { "description": "IDOR rejection: Request belongs to another customer" },
-          "404": { "description": "Not found" }
+          "200": {
+            "description": "Service request detail with timeline"
+          },
+          "403": {
+            "description": "IDOR rejection: Request belongs to another customer"
+          },
+          "404": {
+            "description": "Not found"
+          }
         }
       }
     },
@@ -501,19 +1304,32 @@
         "summary": "Submit satisfaction rating and review for service request",
         "tags": ["Customer Portal"],
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/CustomerFeedback" }
+              "schema": {
+                "$ref": "#/components/schemas/CustomerFeedback"
+              }
             }
           }
         },
         "responses": {
-          "201": { "description": "Feedback submitted successfully" },
-          "403": { "description": "IDOR rejection: Cannot review other customer tickets" }
+          "201": {
+            "description": "Feedback submitted successfully"
+          },
+          "403": {
+            "description": "IDOR rejection: Cannot review other customer tickets"
+          }
         }
       }
     },
@@ -522,7 +1338,9 @@
         "summary": "View permitted client project progress updates (budget redacted)",
         "tags": ["Customer Portal"],
         "responses": {
-          "200": { "description": "Permitted project updates" }
+          "200": {
+            "description": "Permitted project updates"
+          }
         }
       }
     },
@@ -531,7 +1349,9 @@
         "summary": "View customer billing invoices",
         "tags": ["Customer Portal"],
         "responses": {
-          "200": { "description": "Customer invoices" }
+          "200": {
+            "description": "Customer invoices"
+          }
         }
       }
     },
@@ -540,12 +1360,25 @@
         "summary": "View itemized invoice with line items breakdown (Anti-IDOR protected)",
         "tags": ["Customer Portal"],
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
-          "200": { "description": "Itemized invoice detail" },
-          "403": { "description": "IDOR rejection: Invoice belongs to another customer" },
-          "404": { "description": "Not found" }
+          "200": {
+            "description": "Itemized invoice detail"
+          },
+          "403": {
+            "description": "IDOR rejection: Invoice belongs to another customer"
+          },
+          "404": {
+            "description": "Not found"
+          }
         }
       }
     },
@@ -554,14 +1387,18 @@
         "summary": "List employees with directory filters and pagination",
         "tags": ["Workforce"],
         "responses": {
-          "200": { "description": "Workforce directory list" }
+          "200": {
+            "description": "Workforce directory list"
+          }
         }
       },
       "post": {
         "summary": "Create new workforce member",
         "tags": ["Workforce"],
         "responses": {
-          "201": { "description": "Workforce member created" }
+          "201": {
+            "description": "Workforce member created"
+          }
         }
       }
     },
@@ -570,7 +1407,9 @@
         "summary": "Workforce headcount and operational stats",
         "tags": ["Workforce"],
         "responses": {
-          "200": { "description": "Operational workforce metrics" }
+          "200": {
+            "description": "Operational workforce metrics"
+          }
         }
       }
     },
@@ -579,7 +1418,9 @@
         "summary": "List organizations affiliated with the current user",
         "tags": ["Organizations"],
         "responses": {
-          "200": { "description": "Affiliated organizations list" }
+          "200": {
+            "description": "Affiliated organizations list"
+          }
         }
       }
     },
@@ -588,7 +1429,9 @@
         "summary": "Provision new organization tenant",
         "tags": ["Organizations"],
         "responses": {
-          "201": { "description": "Organization created" }
+          "201": {
+            "description": "Organization created"
+          }
         }
       }
     },
@@ -597,14 +1440,18 @@
         "summary": "View current active organization metadata",
         "tags": ["Organizations"],
         "responses": {
-          "200": { "description": "Current organization metadata" }
+          "200": {
+            "description": "Current organization metadata"
+          }
         }
       },
       "patch": {
         "summary": "Update current active organization",
         "tags": ["Organizations"],
         "responses": {
-          "200": { "description": "Organization updated" }
+          "200": {
+            "description": "Organization updated"
+          }
         }
       }
     },
@@ -613,14 +1460,18 @@
         "summary": "View active organization operational settings",
         "tags": ["Organizations"],
         "responses": {
-          "200": { "description": "Organization settings" }
+          "200": {
+            "description": "Organization settings"
+          }
         }
       },
       "patch": {
         "summary": "Update organization operational settings",
         "tags": ["Organizations"],
         "responses": {
-          "200": { "description": "Organization settings updated" }
+          "200": {
+            "description": "Organization settings updated"
+          }
         }
       }
     },
@@ -629,14 +1480,18 @@
         "summary": "List pending and accepted membership invitations",
         "tags": ["Organizations"],
         "responses": {
-          "200": { "description": "Invitations list" }
+          "200": {
+            "description": "Invitations list"
+          }
         }
       },
       "post": {
         "summary": "Create cryptographic membership invitation",
         "tags": ["Organizations"],
         "responses": {
-          "201": { "description": "Invitation created" }
+          "201": {
+            "description": "Invitation created"
+          }
         }
       }
     },
@@ -645,10 +1500,967 @@
         "summary": "Accept invitation and join organization tenant",
         "tags": ["Organizations"],
         "parameters": [
-          { "name": "token", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
-          "200": { "description": "Joined organization successfully" }
+          "200": {
+            "description": "Joined organization successfully"
+          }
+        }
+      }
+    },
+    "/service-requests": {
+      "get": {
+        "summary": "List service requests with pagination and filters",
+        "tags": ["Service Requests"],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "urgency",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of service requests"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "summary": "Submit new service request",
+        "tags": ["Service Requests"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "": "#/components/schemas/CreateServiceRequestInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Service request created"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/service-requests/{id}": {
+      "get": {
+        "summary": "Retrieve service request details",
+        "tags": ["Service Requests"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service request retrieved"
+          },
+          "404": {
+            "description": "Service request not found"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update service request",
+        "tags": ["Service Requests"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Service request updated"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Soft-delete service request",
+        "tags": ["Service Requests"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service request deleted"
+          }
+        }
+      }
+    },
+    "/service-requests/{id}/review": {
+      "post": {
+        "summary": "Mark service request as under review by manager",
+        "tags": ["Service Requests"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "notes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Service request moved to under_review"
+          }
+        }
+      }
+    },
+    "/service-requests/{id}/approve": {
+      "post": {
+        "summary": "Approve service request",
+        "tags": ["Service Requests"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "notes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Service request approved"
+          }
+        }
+      }
+    },
+    "/service-requests/{id}/reject": {
+      "post": {
+        "summary": "Reject service request with mandatory reason",
+        "tags": ["Service Requests"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["reason"],
+                "properties": {
+                  "reason": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Service request rejected"
+          }
+        }
+      }
+    },
+    "/service-requests/{id}/attachments": {
+      "post": {
+        "summary": "Attach document or image to service request",
+        "tags": ["Service Requests"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["file_name", "file_url"],
+                "properties": {
+                  "file_name": {
+                    "type": "string"
+                  },
+                  "file_url": {
+                    "type": "string"
+                  },
+                  "file_size": {
+                    "type": "integer"
+                  },
+                  "mime_type": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Attachment added"
+          }
+        }
+      }
+    },
+    "/service-requests/{id}/convert-to-work-order": {
+      "post": {
+        "summary": "Convert approved service request into an active work order",
+        "tags": ["Service Requests"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "assigned_to": {
+                    "type": "string"
+                  },
+                  "priority": {
+                    "type": "string",
+                    "enum": ["low", "normal", "high", "critical"]
+                  },
+                  "scheduled_start": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "scheduled_end": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "initial_notes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Work order created and linked to service request"
+          }
+        }
+      }
+    },
+    "/work-orders": {
+      "get": {
+        "summary": "List work orders with pagination and filters",
+        "tags": ["Work Orders"],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "priority",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "assigned_to",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of work orders"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create new work order",
+        "tags": ["Work Orders"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "": "#/components/schemas/CreateWorkOrderInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Work order created"
+          }
+        }
+      }
+    },
+    "/work-orders/{id}": {
+      "get": {
+        "summary": "Retrieve work order details",
+        "tags": ["Work Orders"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Work order retrieved"
+          },
+          "404": {
+            "description": "Work order not found"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update work order",
+        "tags": ["Work Orders"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Work order updated"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Soft-delete work order",
+        "tags": ["Work Orders"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Work order deleted"
+          }
+        }
+      }
+    },
+    "/work-orders/{id}/status": {
+      "post": {
+        "summary": "Transition work order execution status",
+        "tags": ["Work Orders"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["status"],
+                "properties": {
+                  "status": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status updated"
+          }
+        }
+      }
+    },
+    "/work-orders/{id}/assign": {
+      "post": {
+        "summary": "Assign technician or employee to work order",
+        "tags": ["Work Orders"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["assigned_to"],
+                "properties": {
+                  "assigned_to": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Technician assigned"
+          }
+        }
+      }
+    },
+    "/work-orders/{id}/schedule": {
+      "post": {
+        "summary": "Schedule work execution window",
+        "tags": ["Work Orders"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["scheduled_start", "scheduled_end"],
+                "properties": {
+                  "scheduled_start": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "scheduled_end": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Work order scheduled"
+          }
+        }
+      }
+    },
+    "/work-orders/{id}/checklists": {
+      "post": {
+        "summary": "Add checklist task item to work order",
+        "tags": ["Work Orders"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Checklist item added"
+          }
+        }
+      }
+    },
+    "/work-orders/{id}/checklists/{itemId}": {
+      "patch": {
+        "summary": "Update or toggle checklist item completion state",
+        "tags": ["Work Orders"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "completed": {
+                    "type": "boolean"
+                  },
+                  "title": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Checklist item updated"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove checklist item from work order",
+        "tags": ["Work Orders"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Checklist item removed"
+          }
+        }
+      }
+    },
+    "/work-orders/{id}/notes": {
+      "post": {
+        "summary": "Append job note / field log to work order",
+        "tags": ["Work Orders"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["content"],
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Note added"
+          }
+        }
+      }
+    },
+    "/work-orders/{id}/photos": {
+      "post": {
+        "summary": "Upload before/after work order photograph",
+        "tags": ["Work Orders"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["url"],
+                "properties": {
+                  "url": {
+                    "type": "string"
+                  },
+                  "caption": {
+                    "type": "string"
+                  },
+                  "phase": {
+                    "type": "string",
+                    "enum": ["before", "after", "progress"],
+                    "default": "progress"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Photo uploaded"
+          }
+        }
+      }
+    },
+    "/work-orders/{id}/complete": {
+      "post": {
+        "summary": "Record completion details for work order",
+        "tags": ["Work Orders"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["notes"],
+                "properties": {
+                  "notes": {
+                    "type": "string"
+                  },
+                  "actual_cost": {
+                    "type": "number"
+                  },
+                  "labor_hours": {
+                    "type": "number"
+                  },
+                  "parts_used": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Work order completion recorded"
+          }
+        }
+      }
+    },
+    "/work-orders/{id}/confirm": {
+      "post": {
+        "summary": "Customer confirmation and digital signoff",
+        "tags": ["Work Orders"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "signature": {
+                    "type": "string"
+                  },
+                  "rating": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "feedback": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Customer confirmation recorded"
+          }
+        }
+      }
+    },
+    "/work-orders/{id}/close": {
+      "post": {
+        "summary": "Manager final closeout of work order and linked service request",
+        "tags": ["Work Orders"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "closeout_notes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Work order and linked service request closed"
+          }
         }
       }
     }

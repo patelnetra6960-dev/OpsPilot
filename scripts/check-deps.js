@@ -10,9 +10,10 @@ function getImports(dir) {
         if (!['node_modules', 'dist', '.git'].includes(f)) walk(p);
       } else if (f.endsWith('.js') || f.endsWith('.jsx')) {
         const text = fs.readFileSync(p, 'utf8');
-        const matches = text.matchAll(/from\s+['"]([^'".][^'"]*)['"]/g);
+        const matches = text.matchAll(/(?:import|export)\s+.*?from\s+['"]([^'".][^'"]*)['"]/g);
         for (const m of matches) {
           const raw = m[1];
+          if (raw.includes('${') || raw.includes(' ')) continue;
           const name = raw.startsWith('@')
             ? raw.split('/').slice(0, 2).join('/')
             : raw.split('/')[0];
@@ -21,6 +22,7 @@ function getImports(dir) {
         const reqMatches = text.matchAll(/require\(['"]([^'".][^'"]*)['"]\)/g);
         for (const m of reqMatches) {
           const raw = m[1];
+          if (raw.includes('${') || raw.includes(' ')) continue;
           const name = raw.startsWith('@')
             ? raw.split('/').slice(0, 2).join('/')
             : raw.split('/')[0];

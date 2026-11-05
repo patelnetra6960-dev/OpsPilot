@@ -404,17 +404,60 @@ export const mockDatabase = {
       id: 'sr-1',
       organization_id: '11111111-1111-1111-1111-111111111111',
       customer_id: 'cust-acme-1',
+      customer_name: 'Metro Health System',
       request_code: 'SR-2026-001',
       title: 'MRI Cooling Loop Flow Failure',
       description: 'Chilled water flow in MRI suite Bay 3 dropped below safe operating threshold.',
       location: 'Main Medical Tower - Radiology Bay 3',
       service_type: 'repair',
-      status: 'assigned',
+      status: 'approved',
       urgency: 'critical',
       step: 3,
       eta: 'Today at 02:30 PM',
       assigned_to: 'w1',
       assigned_technician: 'David Miller',
+      converted_work_order_id: 'wo-1',
+      manager_notes: 'Priority medical facility incident. Dispatched David Miller with OEM pump.',
+      rejection_reason: null,
+      reviewed_by: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+      reviewed_at: new Date('2026-11-04T08:40:00Z').toISOString(),
+      approved_at: new Date('2026-11-04T08:45:00Z').toISOString(),
+      attachments: [
+        {
+          id: 'att-1',
+          name: 'radiology_loop_pressure_log.pdf',
+          url: 'https://storage.opspilot.internal/vault/radiology_loop_pressure_log.pdf',
+          file_size: 245760,
+          type: 'application/pdf',
+          uploaded_at: new Date('2026-11-04T08:35:00Z').toISOString()
+        }
+      ],
+      status_history: [
+        {
+          status: 'new',
+          old_status: null,
+          changed_by: 'cust-acme-1',
+          changed_by_name: 'Rachel Green',
+          timestamp: new Date('2026-11-04T08:30:00Z').toISOString(),
+          notes: 'Customer submitted ticket via portal'
+        },
+        {
+          status: 'in_review',
+          old_status: 'new',
+          changed_by: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+          changed_by_name: 'Sarah Connor',
+          timestamp: new Date('2026-11-04T08:40:00Z').toISOString(),
+          notes: 'Triage and review commenced by operations manager'
+        },
+        {
+          status: 'approved',
+          old_status: 'in_review',
+          changed_by: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+          changed_by_name: 'Sarah Connor',
+          timestamp: new Date('2026-11-04T08:45:00Z').toISOString(),
+          notes: 'Approved for emergency dispatch'
+        }
+      ],
       created_at: new Date('2026-11-04T08:30:00Z').toISOString(),
       updated_at: new Date('2026-11-04T09:00:00Z').toISOString()
     },
@@ -422,24 +465,51 @@ export const mockDatabase = {
       id: 'sr-2',
       organization_id: '22222222-2222-2222-2222-222222222222',
       customer_id: 'cust-apex-1',
+      customer_name: 'Pinnacle Energy Corp',
       request_code: 'SR-APEX-001',
       title: 'Substation Transformer Overheating',
       description: 'Transformer 4 thermal sensor reporting 88C under normal load.',
       location: 'Substation Yard East',
       service_type: 'safety',
-      status: 'new',
+      status: 'approved',
       urgency: 'high',
-      step: 1,
+      step: 2,
       eta: 'Awaiting Dispatch',
-      assigned_to: null,
-      assigned_technician: null,
+      assigned_to: 'w2',
+      assigned_technician: 'Elena Rostova',
+      converted_work_order_id: 'wo-3',
+      manager_notes: 'Thermal test approved for Elena Rostova',
+      rejection_reason: null,
+      reviewed_by: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
+      reviewed_at: new Date('2026-11-03T11:15:00Z').toISOString(),
+      approved_at: new Date('2026-11-03T11:20:00Z').toISOString(),
+      attachments: [],
+      status_history: [
+        {
+          status: 'new',
+          old_status: null,
+          changed_by: 'cust-apex-1',
+          changed_by_name: 'Client Contact',
+          timestamp: new Date('2026-11-03T11:00:00Z').toISOString(),
+          notes: 'Intake submitted'
+        },
+        {
+          status: 'approved',
+          old_status: 'new',
+          changed_by: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
+          changed_by_name: 'Marcus Vance',
+          timestamp: new Date('2026-11-03T11:20:00Z').toISOString(),
+          notes: 'High voltage safety scope approved'
+        }
+      ],
       created_at: new Date('2026-11-03T11:00:00Z').toISOString(),
-      updated_at: new Date('2026-11-03T11:00:00Z').toISOString()
+      updated_at: new Date('2026-11-03T11:20:00Z').toISOString()
     },
     {
       id: 'sr-3',
       organization_id: '11111111-1111-1111-1111-111111111111',
       customer_id: 'cust-acme-2',
+      customer_name: 'Pacific Freight Express',
       request_code: 'SR-2026-003',
       title: 'Ventilation Fan Sensor Offline',
       description: 'Fleet garage exhaust sensor communication lost.',
@@ -451,8 +521,432 @@ export const mockDatabase = {
       eta: 'Tomorrow at 10:00 AM',
       assigned_to: 'w3',
       assigned_technician: 'Liam Patel',
+      converted_work_order_id: null,
+      manager_notes: 'Awaiting technician diagnostic report on sensor wiring.',
+      rejection_reason: null,
+      reviewed_by: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+      reviewed_at: new Date('2026-11-04T12:10:00Z').toISOString(),
+      approved_at: null,
+      attachments: [],
+      status_history: [
+        {
+          status: 'new',
+          old_status: null,
+          changed_by: 'cust-acme-2',
+          changed_by_name: 'Depot Manager',
+          timestamp: new Date('2026-11-04T12:00:00Z').toISOString(),
+          notes: 'Reported via client desk'
+        },
+        {
+          status: 'in_review',
+          old_status: 'new',
+          changed_by: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+          changed_by_name: 'Sarah Connor',
+          timestamp: new Date('2026-11-04T12:10:00Z').toISOString(),
+          notes: 'Assigned to Liam for initial scope inspection'
+        }
+      ],
       created_at: new Date('2026-11-04T12:00:00Z').toISOString(),
-      updated_at: new Date('2026-11-04T12:00:00Z').toISOString()
+      updated_at: new Date('2026-11-04T12:10:00Z').toISOString()
+    },
+    {
+      id: 'sr-4',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      customer_id: 'cust-acme-1',
+      customer_name: 'Metro Health System',
+      request_code: 'SR-2026-004',
+      title: 'Elevator Hydraulic Seal Replacement',
+      description: 'Hydraulic pressure drop detected during monthly facility elevator cycle check.',
+      location: 'North Wing Service Elevator 2',
+      service_type: 'maintenance',
+      status: 'approved',
+      urgency: 'high',
+      step: 2,
+      eta: 'Approved for Work Order Generation',
+      assigned_to: null,
+      assigned_technician: null,
+      converted_work_order_id: null,
+      manager_notes: 'Approved for OEM seal replacement kit. Ready for work order dispatch.',
+      rejection_reason: null,
+      reviewed_by: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+      reviewed_at: new Date('2026-11-04T15:00:00Z').toISOString(),
+      approved_at: new Date('2026-11-04T15:10:00Z').toISOString(),
+      attachments: [],
+      status_history: [
+        {
+          status: 'new',
+          old_status: null,
+          changed_by: 'cust-acme-1',
+          changed_by_name: 'Rachel Green',
+          timestamp: new Date('2026-11-04T14:30:00Z').toISOString(),
+          notes: 'Routine service intake'
+        },
+        {
+          status: 'approved',
+          old_status: 'new',
+          changed_by: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+          changed_by_name: 'Sarah Connor',
+          timestamp: new Date('2026-11-04T15:10:00Z').toISOString(),
+          notes: 'Approved'
+        }
+      ],
+      created_at: new Date('2026-11-04T14:30:00Z').toISOString(),
+      updated_at: new Date('2026-11-04T15:10:00Z').toISOString()
+    }
+  ],
+  work_orders: [
+    {
+      id: 'wo-1',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      work_order_code: 'WO-2026-001',
+      title: 'MRI Chilled Water Loop Pump Replacement',
+      description: 'Replace auxiliary secondary coolant circulation pump on Bay 3 chiller unit.',
+      customer_id: 'cust-acme-1',
+      customer_name: 'Metro Health System',
+      service_request_id: 'sr-1',
+      assigned_to: 'w1', // David Miller
+      assigned_technician: 'David Miller',
+      assigned_at: '2026-11-04T09:00:00Z',
+      site: 'Main Medical Tower - Radiology Bay 3',
+      priority: 'critical',
+      status: 'in_progress',
+      scheduled_start: '2026-11-04T13:00:00Z',
+      scheduled_end: '2026-11-04T17:00:00Z',
+      scheduled_window: 'Today 13:00 - 17:00',
+      cost_estimate: 1850.0,
+      actual_cost: 0,
+      labor_hours: 3.5,
+      progress: 60,
+      checklists: [
+        {
+          id: 'ck-1',
+          item_text: 'Lockout-Tagout 480V chiller distribution feed',
+          is_completed: true,
+          completed_at: '2026-11-04T13:15:00Z',
+          completed_by: 'David Miller'
+        },
+        {
+          id: 'ck-2',
+          item_text: 'Drain auxiliary loop and capture glycol mixture',
+          is_completed: true,
+          completed_at: '2026-11-04T13:45:00Z',
+          completed_by: 'David Miller'
+        },
+        {
+          id: 'ck-3',
+          item_text: 'Install OEM pump replacement and torque flange bolts',
+          is_completed: true,
+          completed_at: '2026-11-04T14:30:00Z',
+          completed_by: 'David Miller'
+        },
+        {
+          id: 'ck-4',
+          item_text: 'Pressure test closed loop to 45 PSI for 30 minutes',
+          is_completed: false,
+          completed_at: null,
+          completed_by: null
+        },
+        {
+          id: 'ck-5',
+          item_text: 'Verify flow sensor telemetry in BMS control room',
+          is_completed: false,
+          completed_at: null,
+          completed_by: null
+        }
+      ],
+      notes: [
+        {
+          id: 'wn-1',
+          author_id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+          author_name: 'Sarah Connor',
+          note: 'Priority expedited due to patient MRI scan schedule tomorrow morning.',
+          created_at: '2026-11-04T09:15:00Z',
+          is_internal: true
+        },
+        {
+          id: 'wn-2',
+          author_id: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
+          author_name: 'David Miller',
+          note: 'Arrived on site. Flange gasket arrived with part. Commencing lockout-tagout.',
+          created_at: '2026-11-04T13:10:00Z',
+          is_internal: false
+        }
+      ],
+      before_photos: [
+        {
+          id: 'ph-1',
+          url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
+          caption: 'Initial pump leak and corrosion before teardown',
+          uploaded_at: '2026-11-04T13:20:00Z'
+        }
+      ],
+      after_photos: [],
+      completion_details: null,
+      customer_confirmation: null,
+      status_history: [
+        {
+          status: 'draft',
+          old_status: null,
+          changed_by: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+          changed_by_name: 'Sarah Connor',
+          timestamp: '2026-11-04T08:45:00Z',
+          reason: 'Generated from approved SR-2026-001'
+        },
+        {
+          status: 'scheduled',
+          old_status: 'draft',
+          changed_by: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+          changed_by_name: 'Sarah Connor',
+          timestamp: '2026-11-04T09:00:00Z',
+          reason: 'Assigned to David Miller for 13:00 dispatch'
+        },
+        {
+          status: 'dispatched',
+          old_status: 'scheduled',
+          changed_by: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+          changed_by_name: 'Sarah Connor',
+          timestamp: '2026-11-04T12:30:00Z',
+          reason: 'Technician en route to facility'
+        },
+        {
+          status: 'in_progress',
+          old_status: 'dispatched',
+          changed_by: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
+          changed_by_name: 'David Miller',
+          timestamp: '2026-11-04T13:05:00Z',
+          reason: 'Work commenced on site'
+        }
+      ],
+      created_at: new Date('2026-11-04T08:45:00Z').toISOString(),
+      updated_at: new Date('2026-11-04T14:30:00Z').toISOString()
+    },
+    {
+      id: 'wo-2',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      work_order_code: 'WO-2026-002',
+      title: 'Emergency Exhaust Damper Actuator Overhaul',
+      description: 'Replace burned out electric servo actuator on Fleet Garage emergency damper.',
+      customer_id: 'cust-acme-2',
+      customer_name: 'Pacific Freight Express',
+      service_request_id: null,
+      assigned_to: 'w3', // Liam Patel
+      assigned_technician: 'Liam Patel',
+      assigned_at: '2026-11-03T10:00:00Z',
+      site: 'Fleet Depot Bay 7',
+      priority: 'high',
+      status: 'completed',
+      scheduled_start: '2026-11-03T11:00:00Z',
+      scheduled_end: '2026-11-03T15:00:00Z',
+      scheduled_window: 'Yesterday 11:00 - 15:00',
+      cost_estimate: 950.0,
+      actual_cost: 920.0,
+      labor_hours: 4.0,
+      progress: 100,
+      checklists: [
+        {
+          id: 'ck-201',
+          item_text: 'De-energize damper circuit breaker',
+          is_completed: true,
+          completed_at: '2026-11-03T11:15:00Z',
+          completed_by: 'Liam Patel'
+        },
+        {
+          id: 'ck-202',
+          item_text: 'Unbolt seized actuator arm and inspect linkage',
+          is_completed: true,
+          completed_at: '2026-11-03T12:00:00Z',
+          completed_by: 'Liam Patel'
+        },
+        {
+          id: 'ck-203',
+          item_text: 'Install Belimo 24V servo actuator',
+          is_completed: true,
+          completed_at: '2026-11-03T13:30:00Z',
+          completed_by: 'Liam Patel'
+        },
+        {
+          id: 'ck-204',
+          item_text: 'Calibrate full-stroke open/close limits',
+          is_completed: true,
+          completed_at: '2026-11-03T14:15:00Z',
+          completed_by: 'Liam Patel'
+        }
+      ],
+      notes: [
+        {
+          id: 'wn-201',
+          author_id: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
+          author_name: 'Liam Patel',
+          note: 'Job completed. Damper operating smoothly with zero resistance.',
+          created_at: '2026-11-03T14:30:00Z',
+          is_internal: false
+        }
+      ],
+      before_photos: [
+        {
+          id: 'ph-201',
+          url: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=800&q=80',
+          caption: 'Burned out actuator motor',
+          uploaded_at: '2026-11-03T11:30:00Z'
+        }
+      ],
+      after_photos: [
+        {
+          id: 'ph-202',
+          url: 'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80',
+          caption: 'New Belimo actuator installed and operational',
+          uploaded_at: '2026-11-03T14:20:00Z'
+        }
+      ],
+      completion_details: {
+        completion_notes:
+          'Replaced failed actuator motor with Belimo 24V unit. Limit switches calibrated and certified.',
+        completed_at: '2026-11-03T14:35:00Z',
+        completed_by: 'Liam Patel',
+        actual_cost: 920.0,
+        labor_hours: 4.0,
+        parts_used: [
+          {
+            item_id: 'part-act-01',
+            name: 'Belimo Servo Actuator 24V',
+            quantity: 1,
+            cost: 480.0
+          }
+        ]
+      },
+      customer_confirmation: {
+        customer_signature_url: 'data:image/svg+xml;utf8,<svg>signature</svg>',
+        confirmed_at: '2026-11-03T15:00:00Z',
+        rating: 5,
+        feedback: 'Fast response and fixed before our afternoon shift change.',
+        confirmed_by: 'Pacific Freight Supervisor'
+      },
+      status_history: [
+        {
+          status: 'draft',
+          old_status: null,
+          changed_by: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+          changed_by_name: 'Sarah Connor',
+          timestamp: '2026-11-03T09:30:00Z',
+          reason: 'Direct creation by Dispatch'
+        },
+        {
+          status: 'dispatched',
+          old_status: 'draft',
+          changed_by: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+          changed_by_name: 'Sarah Connor',
+          timestamp: '2026-11-03T10:00:00Z',
+          reason: 'Assigned to Liam Patel'
+        },
+        {
+          status: 'in_progress',
+          old_status: 'dispatched',
+          changed_by: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
+          changed_by_name: 'Liam Patel',
+          timestamp: '2026-11-03T11:00:00Z',
+          reason: 'On site'
+        },
+        {
+          status: 'completed',
+          old_status: 'in_progress',
+          changed_by: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
+          changed_by_name: 'Liam Patel',
+          timestamp: '2026-11-03T14:35:00Z',
+          reason: 'All checklist items verified'
+        }
+      ],
+      created_at: new Date('2026-11-03T09:30:00Z').toISOString(),
+      updated_at: new Date('2026-11-03T15:00:00Z').toISOString()
+    },
+    {
+      id: 'wo-3',
+      organization_id: '22222222-2222-2222-2222-222222222222', // Apex Tenant
+      work_order_code: 'WO-APEX-001',
+      title: 'High-Voltage Transformer Thermal Scan',
+      description: 'Thermal imaging and contact resistance test on substation transformer 4.',
+      customer_id: 'cust-apex-1',
+      customer_name: 'Pinnacle Energy Corp',
+      service_request_id: 'sr-2',
+      assigned_to: 'w2',
+      assigned_technician: 'Elena Rostova',
+      assigned_at: '2026-11-03T12:00:00Z',
+      site: 'Substation Yard East',
+      priority: 'high',
+      status: 'scheduled',
+      scheduled_start: '2026-11-07T08:00:00Z',
+      scheduled_end: '2026-11-07T12:00:00Z',
+      scheduled_window: 'Tomorrow 08:00 - 12:00',
+      cost_estimate: 2100.0,
+      actual_cost: 0,
+      labor_hours: 0,
+      progress: 0,
+      checklists: [
+        {
+          id: 'ck-301',
+          item_text: 'PPE and arc flash boundary setup',
+          is_completed: false,
+          completed_at: null,
+          completed_by: null
+        },
+        {
+          id: 'ck-302',
+          item_text: 'Calibrated FLIR thermal imaging sweep',
+          is_completed: false,
+          completed_at: null,
+          completed_by: null
+        }
+      ],
+      notes: [],
+      before_photos: [],
+      after_photos: [],
+      completion_details: null,
+      customer_confirmation: null,
+      status_history: [
+        {
+          status: 'draft',
+          old_status: null,
+          changed_by: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
+          changed_by_name: 'Marcus Vance',
+          timestamp: '2026-11-03T11:30:00Z',
+          reason: 'Created from SR-APEX-001'
+        },
+        {
+          status: 'scheduled',
+          old_status: 'draft',
+          changed_by: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
+          changed_by_name: 'Marcus Vance',
+          timestamp: '2026-11-03T12:00:00Z',
+          reason: 'Scheduled with Elena'
+        }
+      ],
+      created_at: new Date('2026-11-03T11:30:00Z').toISOString(),
+      updated_at: new Date('2026-11-03T12:00:00Z').toISOString()
+    }
+  ],
+  notifications: [
+    {
+      id: 'notif-1',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      user_id: 'dddddddd-dddd-dddd-dddd-dddddddddddd', // David
+      title: 'New Work Order Assigned',
+      message: 'You have been dispatched to WO-2026-001 (MRI Chilled Water Loop).',
+      type: 'dispatch',
+      action_url: '/workorders',
+      is_read: false,
+      read_at: null,
+      created_at: new Date('2026-11-04T09:00:00Z').toISOString()
+    },
+    {
+      id: 'notif-2',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      user_id: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', // Rachel (Customer)
+      title: 'Service Request Approved',
+      message: 'Your service request SR-2026-001 has been approved and dispatched to operations.',
+      type: 'success',
+      action_url: '/customer/services',
+      is_read: true,
+      read_at: new Date('2026-11-04T09:05:00Z').toISOString(),
+      created_at: new Date('2026-11-04T08:45:00Z').toISOString()
     }
   ],
   invoices: [
