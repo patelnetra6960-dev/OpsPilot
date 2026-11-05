@@ -16,6 +16,8 @@ import workOrdersRoutes from './workOrders.routes.js';
 import inventoryRoutes from './inventory.routes.js';
 import assetsRoutes from './assets.routes.js';
 import suppliersRoutes from './suppliers.routes.js';
+import expensesRoutes from './expenses.routes.js';
+import invoicesRoutes from './invoices.routes.js';
 
 const router = Router();
 
@@ -37,6 +39,8 @@ router.use('/workorders', workOrdersRoutes);
 router.use('/inventory', inventoryRoutes);
 router.use('/assets', assetsRoutes);
 router.use('/suppliers', suppliersRoutes);
+router.use('/expenses', expensesRoutes);
+router.use('/invoices', invoicesRoutes);
 router.use('/audit', auditRoutes);
 router.use('/storage', storageRoutes);
 router.use('/admin', adminRoutes);

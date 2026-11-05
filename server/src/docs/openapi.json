@@ -3339,6 +3339,158 @@
           }
         }
       }
+    },
+    "/expenses": {
+      "get": {
+        "summary": "List paginated expenses with role boundaries",
+        "tags": ["Expenses"],
+        "responses": {
+          "200": { "description": "Expenses retrieved successfully" }
+        }
+      },
+      "post": {
+        "summary": "Submit an employee expense claim with receipt",
+        "tags": ["Expenses"],
+        "responses": {
+          "201": { "description": "Expense claim submitted" }
+        }
+      }
+    },
+    "/expenses/stats": {
+      "get": {
+        "summary": "Get aggregate expense metrics and approval counts",
+        "tags": ["Expenses"],
+        "responses": {
+          "200": { "description": "Expense statistics retrieved" }
+        }
+      }
+    },
+    "/expenses/{id}": {
+      "get": {
+        "summary": "Get single expense claim details and history",
+        "tags": ["Expenses"],
+        "responses": {
+          "200": { "description": "Expense claim retrieved" }
+        }
+      },
+      "put": {
+        "summary": "Update pending expense claim",
+        "tags": ["Expenses"],
+        "responses": {
+          "200": { "description": "Expense claim updated" }
+        }
+      },
+      "delete": {
+        "summary": "Delete pending expense claim",
+        "tags": ["Expenses"],
+        "responses": {
+          "200": { "description": "Expense claim deleted" }
+        }
+      }
+    },
+    "/expenses/{id}/approve": {
+      "post": {
+        "summary": "Manager approval for expense claim",
+        "tags": ["Expenses"],
+        "responses": {
+          "200": { "description": "Expense claim approved" }
+        }
+      }
+    },
+    "/expenses/{id}/reject": {
+      "post": {
+        "summary": "Manager rejection for expense claim (requires mandatory reason)",
+        "tags": ["Expenses"],
+        "responses": {
+          "200": { "description": "Expense claim rejected" }
+        }
+      }
+    },
+    "/expenses/{id}/reimburse": {
+      "post": {
+        "summary": "Mark approved expense claim as reimbursed",
+        "tags": ["Expenses"],
+        "responses": {
+          "200": { "description": "Expense claim reimbursed" }
+        }
+      }
+    },
+    "/expenses/{id}/history": {
+      "get": {
+        "summary": "Get approval audit history trail",
+        "tags": ["Expenses"],
+        "responses": {
+          "200": { "description": "Audit history retrieved" }
+        }
+      }
+    },
+    "/invoices": {
+      "get": {
+        "summary": "List paginated customer billing statements (IDOR protected)",
+        "tags": ["Invoices"],
+        "responses": {
+          "200": { "description": "Invoices retrieved successfully" }
+        }
+      },
+      "post": {
+        "summary": "Create invoice with itemized line items, discount and tax",
+        "tags": ["Invoices"],
+        "responses": {
+          "201": { "description": "Invoice generated successfully" }
+        }
+      }
+    },
+    "/invoices/stats": {
+      "get": {
+        "summary": "Get invoice KPI summary (total invoiced, paid, overdue)",
+        "tags": ["Invoices"],
+        "responses": {
+          "200": { "description": "Invoice statistics retrieved" }
+        }
+      }
+    },
+    "/invoices/{id}": {
+      "get": {
+        "summary": "Get invoice details, line items, and payment reconciliation",
+        "tags": ["Invoices"],
+        "responses": {
+          "200": { "description": "Invoice retrieved successfully" }
+        }
+      }
+    },
+    "/invoices/{id}/payments": {
+      "get": {
+        "summary": "Get payment transactions recorded against invoice",
+        "tags": ["Invoices"],
+        "responses": {
+          "200": { "description": "Payments retrieved successfully" }
+        }
+      },
+      "post": {
+        "summary": "Record verified payment transaction (partial payment supported, PCI-DSS card safety)",
+        "tags": ["Invoices"],
+        "responses": {
+          "201": { "description": "Payment recorded and invoice balance updated" }
+        }
+      }
+    },
+    "/invoices/{id}/pdf": {
+      "get": {
+        "summary": "Render printable HTML / PDF view of invoice",
+        "tags": ["Invoices"],
+        "responses": {
+          "200": { "description": "Printable statement rendered" }
+        }
+      }
+    },
+    "/invoices/{id}/download": {
+      "get": {
+        "summary": "Download printable HTML statement file",
+        "tags": ["Invoices"],
+        "responses": {
+          "200": { "description": "Download invoice file attachment" }
+        }
+      }
     }
   }
 }

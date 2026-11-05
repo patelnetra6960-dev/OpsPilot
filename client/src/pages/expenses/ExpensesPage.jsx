@@ -1,296 +1,655 @@
 import { useState } from 'react';
-import { Receipt, Plus, Search, UploadCloud, Check } from 'lucide-react';
-import { useSelector, useDispatch } from 'react-redux';
+import {
+  Receipt,
+  Plus,
+  Search,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  ExternalLink,
+  History,
+  DollarSign
+} from 'lucide-react';
+import { useSelector } from 'react-redux';
 import { Card, Badge, Button, Input, Select, Modal, Table } from '../../components/ui/index.js';
-import { addToast } from '../../store/uiSlice.js';
-import { PROTOTYPE_EXPENSES } from '../../data/prototypeData.js';
+import {
+  useExpensesQuery,
+  useExpenseStatsQuery,
+  useSubmitExpenseMutation,
+  useApproveExpenseMutation,
+  useRejectExpenseMutation,
+  useReimburseExpenseMutation,
+  EXPENSE_CATEGORIES
+} from '../../features/finances/index.js';
 
 export const ExpensesPage = () => {
-  const dispatch = useDispatch();
-  const { currentTenant } = useSelector((state) => state.tenant);
   const { user } = useSelector((state) => state.auth);
 
-  const [expenses, setExpenses] = useState(PROTOTYPE_EXPENSES);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [modalOpen, setModalOpen] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState('all');
 
-  // New Expense form state
-  const [category, setCategory] = useState('Equipment Maintenance');
-  const [amount, setAmount] = useState('85.00');
-  const [description, setDescription] = useState('');
+  // Modals
+  const [submitModalOpen, setSubmitModalOpen] = useState(false);
+  const [approveModalOpen, setApproveModalOpen] = useState(false);
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [selectedExpense, setSelectedExpense] = useState(null);
 
-  const handleCreateExpense = (e) => {
+  // Submit Expense Form State
+  const [formCategory, setFormCategory] = useState('equipment_maintenance');
+  const [formAmount, setFormAmount] = useState('85.00');
+  const [formDate, setFormDate] = useState(new Date().toISOString().split('T')[0]);
+  const [formDescription, setFormDescription] = useState('');
+  const [formReceiptUrl, setFormReceiptUrl] = useState('');
+  const [formWorkOrderId, setFormWorkOrderId] = useState('');
+
+  // Manager Actions State
+  const [approvalNotes, setApprovalNotes] = useState('');
+  const [rejectionReason, setRejectionReason] = useState('');
+
+  // Query parameters
+  const queryFilters = {
+    search: search.trim() || undefined,
+    status: statusFilter !== 'all' ? statusFilter : undefined,
+    category: categoryFilter !== 'all' ? categoryFilter : undefined
+  };
+
+  const { data: expenses = [], isLoading, refetch } = useExpensesQuery(queryFilters);
+  const { data: stats = {} } = useExpenseStatsQuery();
+
+  const submitMutation = useSubmitExpenseMutation();
+  const approveMutation = useApproveExpenseMutation();
+  const rejectMutation = useRejectExpenseMutation();
+  const reimburseMutation = useReimburseExpenseMutation();
+
+  const isManager = ['owner', 'admin', 'manager', 'superadmin'].includes(
+    String(user?.role || '').toLowerCase()
+  );
+
+  const handleSubmitExpense = async (e) => {
     e.preventDefault();
-    if (!description.trim() || !amount) return;
+    if (!formDescription.trim() || !formAmount || Number(formAmount) <= 0) return;
 
-    const newExp = {
-      id: `EXP-${Math.floor(1000 + Math.random() * 9000)}`,
-      date: new Date().toISOString().split('T')[0],
-      employee: user?.full_name || 'David Kim',
-      category: category,
-      description: description,
-      amount: `$${Number(amount).toFixed(2)}`,
-      receiptAttached: true,
-      status: 'pending',
-      workOrderId: 'WO-8421'
-    };
+    await submitMutation.mutateAsync({
+      category: formCategory,
+      amount: Number(formAmount),
+      claim_date: formDate,
+      description: formDescription.trim(),
+      receipt_url: formReceiptUrl.trim() || null,
+      work_order_id: formWorkOrderId.trim() || null
+    });
 
-    setExpenses([newExp, ...expenses]);
-    setModalOpen(false);
-    setDescription('');
-
-    dispatch(
-      addToast({
-        type: 'success',
-        title: 'Expense Claim Submitted',
-        message: `${newExp.id} submitted for manager review`
-      })
-    );
+    setSubmitModalOpen(false);
+    setFormDescription('');
+    setFormReceiptUrl('');
+    refetch();
   };
 
-  const handleApprove = (expId) => {
-    setExpenses(expenses.map((e) => (e.id === expId ? { ...e, status: 'approved' } : e)));
-    dispatch(
-      addToast({
-        type: 'success',
-        title: 'Expense Approved',
-        message: `${expId} marked for payroll reimbursement`
-      })
-    );
+  const handleApprove = async () => {
+    if (!selectedExpense) return;
+    await approveMutation.mutateAsync({
+      id: selectedExpense.id,
+      notes: approvalNotes.trim() || undefined
+    });
+    setApproveModalOpen(false);
+    setSelectedExpense(null);
+    setApprovalNotes('');
+    refetch();
   };
 
-  const handleReject = (expId) => {
-    setExpenses(expenses.map((e) => (e.id === expId ? { ...e, status: 'rejected' } : e)));
-    dispatch(
-      addToast({
-        type: 'warning',
-        title: 'Expense Flagged',
-        message: `${expId} returned for missing documentation`
-      })
-    );
+  const handleReject = async () => {
+    if (!selectedExpense || !rejectionReason.trim()) return;
+    await rejectMutation.mutateAsync({
+      id: selectedExpense.id,
+      rejection_reason: rejectionReason.trim()
+    });
+    setRejectModalOpen(false);
+    setSelectedExpense(null);
+    setRejectionReason('');
+    refetch();
   };
 
-  const filteredExpenses = expenses.filter((e) => {
-    const matchSearch =
-      e.description.toLowerCase().includes(search.toLowerCase()) ||
-      e.employee.toLowerCase().includes(search.toLowerCase()) ||
-      e.category.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === 'all' || e.status === statusFilter;
-    return matchSearch && matchStatus;
-  });
+  const handleReimburse = async (expense) => {
+    await reimburseMutation.mutateAsync({
+      id: expense.id,
+      notes: 'Reimbursed through standard payroll'
+    });
+    refetch();
+  };
+
+  const getStatusBadgeVariant = (status) => {
+    switch (status) {
+      case 'approved':
+        return 'success';
+      case 'pending':
+        return 'warning';
+      case 'reimbursed':
+        return 'primary';
+      case 'rejected':
+        return 'danger';
+      default:
+        return 'default';
+    }
+  };
 
   const columns = [
     {
-      key: 'id',
+      key: 'claim_code',
       label: 'Claim Code',
       sortable: true,
       render: (val, row) => (
         <div>
           <span className="font-mono font-bold text-xs text-indigo-600 dark:text-indigo-400">
-            {val}
+            {val || row.id}
           </span>
-          <div className="text-[10px] text-slate-400">{row.date}</div>
+          <div className="text-[10px] text-slate-400">{row.claim_date}</div>
         </div>
       )
     },
     {
-      key: 'employee',
+      key: 'workforce_name',
       label: 'Staff Member',
       sortable: true,
-      render: (val) => (
-        <span className="font-semibold text-xs text-slate-800 dark:text-slate-200">{val}</span>
+      render: (val, row) => (
+        <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
+          {val || row.employee || 'Assigned Technician'}
+        </span>
       )
     },
     {
       key: 'category',
       label: 'Category',
-      sortable: true,
-      render: (val) => (
-        <Badge variant="neutral" size="sm" className="text-[10px]">
-          {val}
-        </Badge>
-      )
+      render: (val) => {
+        const found = EXPENSE_CATEGORIES.find((c) => c.value === val);
+        return (
+          <Badge variant="outline" size="sm" className="capitalize text-xs">
+            {found ? found.label : (val || '').replace(/_/g, ' ')}
+          </Badge>
+        );
+      }
     },
     {
       key: 'description',
-      label: 'Expense Purpose',
+      label: 'Description',
       render: (val, row) => (
         <div>
-          <div className="text-xs text-slate-700 dark:text-slate-300 truncate max-w-xs">{val}</div>
-          {row.receiptAttached && (
-            <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
-              <Check className="w-3 h-3" />
-              <span>Receipt Verified</span>
+          <div className="text-sm text-slate-700 dark:text-slate-300 max-w-sm truncate">{val}</div>
+          {row.review_notes && (
+            <div className="text-[11px] text-slate-500 italic mt-0.5">
+              Review: {row.review_notes}
             </div>
           )}
         </div>
       )
     },
     {
+      key: 'receipt_url',
+      label: 'Receipt',
+      render: (val, row) =>
+        val ? (
+          <a
+            href={val}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-700 hover:underline"
+          >
+            <ExternalLink className="w-3.5 h-3.5" /> View
+          </a>
+        ) : row.receipt_attached ? (
+          <span className="text-xs text-slate-400">Attached</span>
+        ) : (
+          <span className="text-xs text-slate-400">None</span>
+        )
+    },
+    {
       key: 'amount',
       label: 'Amount',
       sortable: true,
       render: (val) => (
-        <span className="font-mono font-bold text-xs text-slate-900 dark:text-white">{val}</span>
+        <span className="font-semibold text-slate-900 dark:text-white">
+          ${Number(val || 0).toFixed(2)}
+        </span>
       )
     },
     {
       key: 'status',
       label: 'Status',
       render: (val) => (
-        <Badge
-          variant={val === 'approved' ? 'success' : val === 'rejected' ? 'danger' : 'warning'}
-          size="sm"
-          className="capitalize text-[10px]"
-        >
+        <Badge variant={getStatusBadgeVariant(val)} size="sm" className="capitalize">
           {val}
         </Badge>
       )
     },
     {
       key: 'actions',
-      label: 'Review',
-      render: (_, row) =>
-        row.status === 'pending' ? (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => handleApprove(row.id)}
-              className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline font-bold"
+      label: 'Actions',
+      render: (_, row) => (
+        <div className="flex items-center gap-1.5 justify-end">
+          {isManager && row.status === 'pending' && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-emerald-600 hover:bg-emerald-50 border-emerald-200 h-7 px-2"
+                onClick={() => {
+                  setSelectedExpense(row);
+                  setApproveModalOpen(true);
+                }}
+              >
+                <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Approve
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-rose-600 hover:bg-rose-50 border-rose-200 h-7 px-2"
+                onClick={() => {
+                  setSelectedExpense(row);
+                  setRejectModalOpen(true);
+                }}
+              >
+                <XCircle className="w-3.5 h-3.5 mr-1" /> Reject
+              </Button>
+            </>
+          )}
+
+          {isManager && row.status === 'approved' && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-indigo-600 hover:bg-indigo-50 border-indigo-200 h-7 px-2"
+              onClick={() => handleReimburse(row)}
             >
-              Approve
-            </button>
-            <span className="text-slate-300">|</span>
-            <button
-              type="button"
-              onClick={() => handleReject(row.id)}
-              className="text-xs text-rose-600 dark:text-rose-400 hover:underline font-bold"
-            >
-              Reject
-            </button>
-          </div>
-        ) : (
-          <span className="text-[11px] text-slate-400">Processed</span>
-        )
+              <DollarSign className="w-3.5 h-3.5 mr-1" /> Reimburse
+            </Button>
+          )}
+
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0 text-slate-500 hover:text-slate-700"
+            title="View History"
+            onClick={() => {
+              setSelectedExpense(row);
+              setHistoryModalOpen(true);
+            }}
+          >
+            <History className="w-3.5 h-3.5" />
+          </Button>
+        </div>
+      )
     }
   ];
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold border border-indigo-200 dark:border-indigo-800/80 mb-1">
-            <Receipt className="w-3 h-3" />
-            <span>Field Expenses & Reimbursements</span>
-          </div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-            Operational Expenses
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <Receipt className="w-7 h-7 text-indigo-600" />
+            Field Expenses & Reimbursements
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Submit, review, and approve field technician out-of-pocket expenses and fleet fuel for{' '}
-            {currentTenant?.name}.
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Track technician field expenses, fuel receipts, multi-stage approvals and corporate
+            reimbursements.
           </p>
         </div>
-
-        <Button variant="primary" size="sm" onClick={() => setModalOpen(true)}>
-          <Plus className="w-3.5 h-3.5 mr-1.5" />
-          <span>Submit Expense</span>
+        <Button onClick={() => setSubmitModalOpen(true)} className="inline-flex items-center gap-2">
+          <Plus className="w-4 h-4" /> Submit Expense Claim
         </Button>
       </div>
 
-      {/* Main Table */}
-      <Card variant="default" className="p-5 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="w-48 sm:w-72">
+      {/* KPI Overview Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="p-4 border-l-4 border-l-indigo-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                Total Claimed
+              </p>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+                ${Number(stats.total_amount || 0).toFixed(2)}
+              </h3>
+            </div>
+            <div className="p-2.5 bg-indigo-50 dark:bg-indigo-900/40 rounded-xl text-indigo-600">
+              <DollarSign className="w-5 h-5" />
+            </div>
+          </div>
+          <p className="text-xs text-slate-400 mt-2">{stats.total_count || 0} claims submitted</p>
+        </Card>
+
+        <Card className="p-4 border-l-4 border-l-amber-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                Pending Review
+              </p>
+              <h3 className="text-2xl font-bold text-amber-600 mt-1">
+                ${Number(stats.pending_amount || 0).toFixed(2)}
+              </h3>
+            </div>
+            <div className="p-2.5 bg-amber-50 dark:bg-amber-900/40 rounded-xl text-amber-600">
+              <Clock className="w-5 h-5" />
+            </div>
+          </div>
+          <p className="text-xs text-slate-400 mt-2">
+            {stats.pending_count || 0} awaiting manager decision
+          </p>
+        </Card>
+
+        <Card className="p-4 border-l-4 border-l-emerald-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                Approved
+              </p>
+              <h3 className="text-2xl font-bold text-emerald-600 mt-1">
+                ${Number(stats.approved_amount || 0).toFixed(2)}
+              </h3>
+            </div>
+            <div className="p-2.5 bg-emerald-50 dark:bg-emerald-900/40 rounded-xl text-emerald-600">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+          </div>
+          <p className="text-xs text-slate-400 mt-2">
+            {stats.approved_count || 0} ready for payroll
+          </p>
+        </Card>
+
+        <Card className="p-4 border-l-4 border-l-blue-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                Reimbursed
+              </p>
+              <h3 className="text-2xl font-bold text-blue-600 mt-1">
+                ${Number(stats.reimbursed_amount || 0).toFixed(2)}
+              </h3>
+            </div>
+            <div className="p-2.5 bg-blue-50 dark:bg-blue-900/40 rounded-xl text-blue-600">
+              <Receipt className="w-5 h-5" />
+            </div>
+          </div>
+          <p className="text-xs text-slate-400 mt-2">
+            {stats.reimbursed_count || 0} settled claims
+          </p>
+        </Card>
+      </div>
+
+      {/* Filters Bar */}
+      <Card className="p-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <Input
-              placeholder="Search by description or staff..."
+              placeholder="Search by claim code, description or staff..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              leftIcon={<Search className="w-3.5 h-3.5 text-slate-400" />}
-              className="text-xs"
+              className="pl-9"
             />
           </div>
 
-          <div className="w-48">
-            <Select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              options={[
-                { value: 'all', label: 'All Statuses' },
-                { value: 'approved', label: 'Approved' },
-                { value: 'pending', label: 'Pending Review' },
-                { value: 'rejected', label: 'Rejected' }
-              ]}
-            />
-          </div>
+          <Select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            options={[
+              { value: 'all', label: 'All Claim Statuses' },
+              { value: 'pending', label: 'Pending Review' },
+              { value: 'approved', label: 'Approved' },
+              { value: 'reimbursed', label: 'Reimbursed' },
+              { value: 'rejected', label: 'Rejected' }
+            ]}
+          />
+
+          <Select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            options={[{ value: 'all', label: 'All Expense Categories' }, ...EXPENSE_CATEGORIES]}
+          />
         </div>
+      </Card>
 
-        <Table columns={columns} data={filteredExpenses} emptyMessage="No expense claims found." />
+      {/* Expense Ledger Table */}
+      <Card className="overflow-hidden">
+        <Table
+          columns={columns}
+          data={expenses}
+          isLoading={isLoading}
+          emptyMessage="No expense claims found matching the active criteria."
+        />
       </Card>
 
       {/* Submit Expense Modal */}
       <Modal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title="Submit Field Expense Claim"
-        size="md"
-        footer={
-          <div className="flex justify-end gap-2">
-            <Button variant="secondary" onClick={() => setModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="primary" onClick={handleCreateExpense}>
-              Submit for Approval
-            </Button>
-          </div>
-        }
+        isOpen={submitModalOpen}
+        onClose={() => setSubmitModalOpen(false)}
+        title="Submit Expense Claim"
       >
-        <form onSubmit={handleCreateExpense} className="space-y-4 text-xs">
-          <Select
-            label="Expense Category"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            options={[
-              { value: 'Fleet Fuel', label: 'Fleet Fuel' },
-              { value: 'Equipment Maintenance', label: 'Equipment Maintenance & Parts' },
-              { value: 'Tooling', label: 'Tooling & Safety Hardware' },
-              { value: 'Meals & Travel', label: 'Meals & Per-Diem Travel' }
-            ]}
-          />
+        <form onSubmit={handleSubmitExpense} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Category *
+              </label>
+              <Select
+                value={formCategory}
+                onChange={(e) => setFormCategory(e.target.value)}
+                options={EXPENSE_CATEGORIES}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Amount ($ USD) *
+              </label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0.01"
+                required
+                value={formAmount}
+                onChange={(e) => setFormAmount(e.target.value)}
+                placeholder="0.00"
+              />
+            </div>
+          </div>
 
-          <Input
-            label="Amount ($ USD)"
-            type="number"
-            step="0.01"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            required
-          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Date Incurred *
+              </label>
+              <Input
+                type="date"
+                required
+                value={formDate}
+                onChange={(e) => setFormDate(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Associated Work Order (Optional)
+              </label>
+              <Input
+                placeholder="e.g. wo-1 or WO-2026-001"
+                value={formWorkOrderId}
+                onChange={(e) => setFormWorkOrderId(e.target.value)}
+              />
+            </div>
+          </div>
 
           <div>
-            <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-              Purpose / Description
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Receipt Attachment URL (Cloud / S3 Link)
+            </label>
+            <Input
+              type="url"
+              placeholder="https://storage.opspilot.internal/receipts/..."
+              value={formReceiptUrl}
+              onChange={(e) => setFormReceiptUrl(e.target.value)}
+            />
+            <p className="text-[11px] text-slate-400 mt-1">
+              Provide a valid document link or receipt photograph for validation.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Expense Description & Business Justification *
             </label>
             <textarea
-              rows="3"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Provide merchant name, business justification, or linked work order..."
-              className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-800 bg-transparent text-slate-900 dark:text-white"
               required
+              rows={3}
+              value={formDescription}
+              onChange={(e) => setFormDescription(e.target.value)}
+              placeholder="Explain the necessity of this expense (e.g. emergency generator diesel for offsite repair)"
+              className="w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
-          <div className="p-4 border-2 border-dashed border-slate-300 dark:border-slate-800 rounded-xl text-center space-y-1 hover:border-indigo-500 transition cursor-pointer">
-            <UploadCloud className="w-6 h-6 text-slate-400 mx-auto" />
-            <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Attach Receipt Photo or PDF
-            </div>
-            <div className="text-[10px] text-slate-400">Up to 10MB (JPEG, PNG, PDF)</div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="outline" onClick={() => setSubmitModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={submitMutation.isPending}>
+              {submitMutation.isPending ? 'Submitting...' : 'Submit Claim'}
+            </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Manager Approve Modal */}
+      <Modal
+        isOpen={approveModalOpen}
+        onClose={() => setApproveModalOpen(false)}
+        title="Approve Expense Claim"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            Confirm approval for claim{' '}
+            <strong className="text-slate-900 dark:text-white font-mono">
+              {selectedExpense?.claim_code}
+            </strong>{' '}
+            amounting to{' '}
+            <strong className="text-emerald-600">
+              ${Number(selectedExpense?.amount || 0).toFixed(2)}
+            </strong>
+            .
+          </p>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Approval Notes (Optional)
+            </label>
+            <Input
+              value={approvalNotes}
+              onChange={(e) => setApprovalNotes(e.target.value)}
+              placeholder="e.g. Verified with work order job log"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setApproveModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleApprove}
+              disabled={approveMutation.isPending}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              {approveMutation.isPending ? 'Approving...' : 'Confirm Approval'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Manager Reject Modal */}
+      <Modal
+        isOpen={rejectModalOpen}
+        onClose={() => setRejectModalOpen(false)}
+        title="Reject Expense Claim"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            Provide a mandatory rejection reason for claim{' '}
+            <strong className="text-slate-900 dark:text-white font-mono">
+              {selectedExpense?.claim_code}
+            </strong>
+            .
+          </p>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Rejection Reason *
+            </label>
+            <textarea
+              required
+              rows={3}
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              placeholder="e.g. Missing itemized receipt breakdown or unauthorized per-diem limit"
+              className="w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setRejectModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleReject}
+              disabled={rejectMutation.isPending || rejectionReason.trim().length < 3}
+              className="bg-rose-600 hover:bg-rose-700 text-white"
+            >
+              {rejectMutation.isPending ? 'Rejecting...' : 'Confirm Rejection'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* History Audit Modal */}
+      <Modal
+        isOpen={historyModalOpen}
+        onClose={() => setHistoryModalOpen(false)}
+        title={`Audit Trail - ${selectedExpense?.claim_code || 'Expense Claim'}`}
+      >
+        <div className="space-y-4">
+          <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg text-xs space-y-1">
+            <div>
+              <strong>Claim Date:</strong> {selectedExpense?.claim_date}
+            </div>
+            <div>
+              <strong>Amount:</strong> ${Number(selectedExpense?.amount || 0).toFixed(2)}
+            </div>
+            <div>
+              <strong>Staff Member:</strong>{' '}
+              {selectedExpense?.workforce_name || selectedExpense?.employee || 'Staff'}
+            </div>
+            <div>
+              <strong>Current Status:</strong>{' '}
+              <Badge variant={getStatusBadgeVariant(selectedExpense?.status)} size="sm">
+                {selectedExpense?.status}
+              </Badge>
+            </div>
+            {selectedExpense?.review_notes && (
+              <div>
+                <strong>Review Notes:</strong> {selectedExpense?.review_notes}
+              </div>
+            )}
+            {selectedExpense?.reviewed_at && (
+              <div>
+                <strong>Reviewed At:</strong>{' '}
+                {new Date(selectedExpense.reviewed_at).toLocaleString()}
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={() => setHistoryModalOpen(false)}>
+              Close
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

@@ -138,9 +138,11 @@ export class BaseRepository {
     const includeDeleted = Boolean(options.includeDeleted);
     const filters = { ...(options.filters || {}) };
 
-    // Merge status filter if provided at top level
-    if (options.status && !filters.status) {
-      filters.status = options.status;
+    // Merge allowed filter fields and status if provided at top level
+    for (const field of [...this.allowedFilterFields, 'status']) {
+      if (options[field] !== undefined && filters[field] === undefined) {
+        filters[field] = options[field];
+      }
     }
 
     if (env.isMockMode || !supabaseAdmin) {

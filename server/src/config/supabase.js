@@ -954,70 +954,107 @@ export const mockDatabase = {
       id: 'inv-1',
       organization_id: '11111111-1111-1111-1111-111111111111',
       customer_id: 'cust-acme-1',
+      customer_name: 'Metro Retail Distribution Co.',
       invoice_number: 'INV-2026-001',
+      work_order_id: 'wo-1',
       issue_date: '2026-11-01',
       due_date: '2026-11-30',
       subtotal: 2950.0,
+      discount_amount: 0.0,
+      tax_rate: 8.47,
       tax: 250.0,
       total: 3200.0,
+      paid_amount: 0.0,
+      balance_due: 3200.0,
       status: 'pending',
       desc: 'Monthly Scheduled Chiller & HVAC Facility Maintenance',
+      notes: 'Net 30 payment terms. Please reference INV-2026-001 on transfer.',
       items: [
         {
           id: 'ii-1',
-          description: 'Preventative Chiller Maintenance',
+          invoice_id: 'inv-1',
+          organization_id: '11111111-1111-1111-1111-111111111111',
+          inventory_item_id: null,
+          description: 'Preventative Chiller Maintenance & Calibration',
           quantity: 1,
           unit_price: 2450.0,
           total_price: 2450.0
         },
         {
           id: 'ii-2',
+          invoice_id: 'inv-1',
+          organization_id: '11111111-1111-1111-1111-111111111111',
+          inventory_item_id: 'inv-1',
           description: 'High-Pressure Refrigerant Seal Replacement',
           quantity: 2,
           unit_price: 250.0,
           total_price: 500.0
         }
       ],
-      created_at: new Date('2026-11-01T08:00:00Z').toISOString()
+      created_at: new Date('2026-11-01T08:00:00Z').toISOString(),
+      updated_at: new Date('2026-11-01T08:00:00Z').toISOString()
     },
     {
       id: 'inv-2',
       organization_id: '22222222-2222-2222-2222-222222222222',
       customer_id: 'cust-apex-1',
+      customer_name: 'Apex Industrial Parts Ltd',
       invoice_number: 'INV-APEX-001',
+      work_order_id: null,
       issue_date: '2026-10-15',
       due_date: '2026-11-15',
       subtotal: 6800.0,
+      discount_amount: 0.0,
+      tax_rate: 10.29,
       tax: 700.0,
       total: 7500.0,
+      paid_amount: 7500.0,
+      balance_due: 0.0,
       status: 'paid',
+      paid_at: new Date('2026-10-25T14:30:00Z').toISOString(),
       desc: 'High-Voltage Switchgear Preventive Maintenance',
+      notes: 'Paid in full via wire transfer.',
       items: [
         {
           id: 'ii-3',
+          invoice_id: 'inv-2',
+          organization_id: '22222222-2222-2222-2222-222222222222',
+          inventory_item_id: null,
           description: 'Switchgear Busbar Inspection & Thermal Scan',
           quantity: 1,
           unit_price: 6800.0,
           total_price: 6800.0
         }
       ],
-      created_at: new Date('2026-10-15T09:00:00Z').toISOString()
+      created_at: new Date('2026-10-15T09:00:00Z').toISOString(),
+      updated_at: new Date('2026-10-25T14:30:00Z').toISOString()
     },
     {
       id: 'inv-3',
       organization_id: '11111111-1111-1111-1111-111111111111',
       customer_id: 'cust-acme-1',
+      customer_name: 'Metro Retail Distribution Co.',
       invoice_number: 'INV-2026-092',
+      work_order_id: null,
       issue_date: '2026-10-01',
       due_date: '2026-10-31',
       subtotal: 1650.0,
+      discount_amount: 0.0,
+      tax_rate: 9.09,
       tax: 150.0,
       total: 1800.0,
+      paid_amount: 1800.0,
+      balance_due: 0.0,
       status: 'paid',
+      paid_at: new Date('2026-10-18T10:15:00Z').toISOString(),
       desc: 'Quarterly Sensor Calibration & Safety Certifications',
+      notes: 'Settled via ACH on 10/18/2026.',
       items: [
         {
           id: 'ii-4',
+          invoice_id: 'inv-3',
+          organization_id: '11111111-1111-1111-1111-111111111111',
+          inventory_item_id: 'inv-2',
           description: 'Precision Temperature Sensor Recalibration (x6)',
           quantity: 6,
           unit_price: 200.0,
@@ -1025,46 +1062,264 @@ export const mockDatabase = {
         },
         {
           id: 'ii-5',
+          invoice_id: 'inv-3',
+          organization_id: '11111111-1111-1111-1111-111111111111',
+          inventory_item_id: null,
           description: 'OSHA / Facility Safety Certification Documentation',
           quantity: 1,
           unit_price: 450.0,
           total_price: 450.0
         }
       ],
-      created_at: new Date('2026-10-01T08:00:00Z').toISOString()
+      created_at: new Date('2026-10-01T08:00:00Z').toISOString(),
+      updated_at: new Date('2026-10-18T10:15:00Z').toISOString()
     },
     {
       id: 'inv-4',
       organization_id: '11111111-1111-1111-1111-111111111111',
       customer_id: 'cust-acme-2',
+      customer_name: 'Metro Health Systems',
       invoice_number: 'INV-2026-044',
+      work_order_id: null,
       issue_date: '2026-10-20',
       due_date: '2026-11-20',
       subtotal: 4100.0,
+      discount_amount: 0.0,
+      tax_rate: 9.76,
       tax: 400.0,
       total: 4500.0,
+      paid_amount: 1500.0,
+      balance_due: 3000.0,
       status: 'pending',
       desc: 'EV Fast Charger Installation & High-Voltage Transformers',
+      notes: 'Initial deposit check received. Remaining balance due on final inspection.',
       items: [
         {
           id: 'ii-6',
-          description: 'Transformer Commissioning',
+          invoice_id: 'inv-4',
+          organization_id: '11111111-1111-1111-1111-111111111111',
+          inventory_item_id: null,
+          description: 'Transformer Commissioning & Power Balancing',
           quantity: 1,
           unit_price: 4100.0,
           total_price: 4100.0
         }
       ],
+      created_at: new Date('2026-10-20T08:00:00Z').toISOString(),
+      updated_at: new Date('2026-10-25T11:00:00Z').toISOString()
+    }
+  ],
+  invoice_items: [
+    {
+      id: 'ii-1',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      invoice_id: 'inv-1',
+      inventory_item_id: null,
+      description: 'Preventative Chiller Maintenance & Calibration',
+      quantity: 1,
+      unit_price: 2450.0,
+      total_price: 2450.0,
+      created_at: new Date('2026-11-01T08:00:00Z').toISOString()
+    },
+    {
+      id: 'ii-2',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      invoice_id: 'inv-1',
+      inventory_item_id: 'inv-1',
+      description: 'High-Pressure Refrigerant Seal Replacement',
+      quantity: 2,
+      unit_price: 250.0,
+      total_price: 500.0,
+      created_at: new Date('2026-11-01T08:00:00Z').toISOString()
+    },
+    {
+      id: 'ii-3',
+      organization_id: '22222222-2222-2222-2222-222222222222',
+      invoice_id: 'inv-2',
+      inventory_item_id: null,
+      description: 'Switchgear Busbar Inspection & Thermal Scan',
+      quantity: 1,
+      unit_price: 6800.0,
+      total_price: 6800.0,
+      created_at: new Date('2026-10-15T09:00:00Z').toISOString()
+    },
+    {
+      id: 'ii-4',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      invoice_id: 'inv-3',
+      inventory_item_id: 'inv-2',
+      description: 'Precision Temperature Sensor Recalibration (x6)',
+      quantity: 6,
+      unit_price: 200.0,
+      total_price: 1200.0,
+      created_at: new Date('2026-10-01T08:00:00Z').toISOString()
+    },
+    {
+      id: 'ii-5',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      invoice_id: 'inv-3',
+      inventory_item_id: null,
+      description: 'OSHA / Facility Safety Certification Documentation',
+      quantity: 1,
+      unit_price: 450.0,
+      total_price: 450.0,
+      created_at: new Date('2026-10-01T08:00:00Z').toISOString()
+    },
+    {
+      id: 'ii-6',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      invoice_id: 'inv-4',
+      inventory_item_id: null,
+      description: 'Transformer Commissioning & Power Balancing',
+      quantity: 1,
+      unit_price: 4100.0,
+      total_price: 4100.0,
       created_at: new Date('2026-10-20T08:00:00Z').toISOString()
+    }
+  ],
+  payments: [
+    {
+      id: 'pay-1',
+      organization_id: '22222222-2222-2222-2222-222222222222',
+      invoice_id: 'inv-2',
+      payment_reference: 'WIRE-2026-9041',
+      amount: 7500.0,
+      payment_method: 'bank_transfer',
+      status: 'completed',
+      paid_at: new Date('2026-10-25T14:30:00Z').toISOString(),
+      recorded_by: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+      notes: 'Wire transfer received from Apex commercial account',
+      created_at: new Date('2026-10-25T14:30:00Z').toISOString()
+    },
+    {
+      id: 'pay-2',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      invoice_id: 'inv-3',
+      payment_reference: 'ACH-2026-4421',
+      amount: 1800.0,
+      payment_method: 'ach',
+      status: 'completed',
+      paid_at: new Date('2026-10-18T10:15:00Z').toISOString(),
+      recorded_by: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+      notes: 'Automated Clearing House settlement',
+      created_at: new Date('2026-10-18T10:15:00Z').toISOString()
+    },
+    {
+      id: 'pay-3',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      invoice_id: 'inv-4',
+      payment_reference: 'CHK-8802',
+      amount: 1500.0,
+      payment_method: 'check',
+      status: 'completed',
+      paid_at: new Date('2026-10-25T11:00:00Z').toISOString(),
+      recorded_by: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+      notes: 'Deposit check #8802 received',
+      created_at: new Date('2026-10-25T11:00:00Z').toISOString()
     }
   ],
   expenses: [
     {
       id: 'exp-1',
       organization_id: '11111111-1111-1111-1111-111111111111',
+      claim_code: 'EXP-2026-001',
       workforce_member_id: 'w1', // David Miller
-      claim_code: 'EXP-001',
+      workforce_name: 'David Miller',
+      work_order_id: 'wo-1',
+      claim_date: '2026-10-28',
+      category: 'fuel',
+      description: 'Emergency mobile generator diesel refueling',
       amount: 145.5,
-      status: 'pending'
+      receipt_url: 'https://storage.opspilot.internal/receipts/fuel-oct28.pdf',
+      receipt_attached: true,
+      status: 'pending',
+      reviewed_by: null,
+      reviewed_at: null,
+      review_notes: null,
+      created_at: new Date('2026-10-28T16:00:00Z').toISOString(),
+      updated_at: new Date('2026-10-28T16:00:00Z').toISOString()
+    },
+    {
+      id: 'exp-2',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      claim_code: 'EXP-2026-002',
+      workforce_member_id: 'w2', // Elena Rostova
+      workforce_name: 'Elena Rostova',
+      work_order_id: null,
+      claim_date: '2026-10-22',
+      category: 'equipment_maintenance',
+      description: 'Hydraulic calibration gauge replacement',
+      amount: 380.0,
+      receipt_url: 'https://storage.opspilot.internal/receipts/gauge-oct22.pdf',
+      receipt_attached: true,
+      status: 'approved',
+      reviewed_by: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', // Sarah Connor
+      reviewed_at: new Date('2026-10-23T10:00:00Z').toISOString(),
+      review_notes: 'Approved for urgent tool replacement on-site',
+      created_at: new Date('2026-10-22T11:00:00Z').toISOString(),
+      updated_at: new Date('2026-10-23T10:00:00Z').toISOString()
+    },
+    {
+      id: 'exp-3',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      claim_code: 'EXP-2026-003',
+      workforce_member_id: 'w3', // Liam Patel
+      workforce_name: 'Liam Patel',
+      work_order_id: null,
+      claim_date: '2026-10-15',
+      category: 'travel',
+      description: 'Overnight lodging during substation commissioning',
+      amount: 210.0,
+      receipt_url: 'https://storage.opspilot.internal/receipts/hotel-oct15.pdf',
+      receipt_attached: true,
+      status: 'reimbursed',
+      reviewed_by: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+      reviewed_at: new Date('2026-10-16T09:30:00Z').toISOString(),
+      review_notes: 'Verified per diem travel allowance',
+      created_at: new Date('2026-10-15T19:00:00Z').toISOString(),
+      updated_at: new Date('2026-10-16T09:30:00Z').toISOString()
+    },
+    {
+      id: 'exp-4',
+      organization_id: '22222222-2222-2222-2222-222222222222', // Apex
+      claim_code: 'EXP-APEX-001',
+      workforce_member_id: 'w-apex-1',
+      workforce_name: 'Marcus Brody',
+      work_order_id: null,
+      claim_date: '2026-10-30',
+      category: 'supplies',
+      description: 'Terminal crimping lugs and heatshrink packs',
+      amount: 94.2,
+      receipt_url: 'https://storage.opspilot.internal/receipts/apex-supplies.pdf',
+      receipt_attached: true,
+      status: 'pending',
+      reviewed_by: null,
+      reviewed_at: null,
+      review_notes: null,
+      created_at: new Date('2026-10-30T14:00:00Z').toISOString(),
+      updated_at: new Date('2026-10-30T14:00:00Z').toISOString()
+    }
+  ],
+  expense_approvals: [
+    {
+      id: 'exp-app-1',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      expense_id: 'exp-2',
+      approver_id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+      approver_name: 'Sarah Connor',
+      decision: 'approved',
+      notes: 'Approved for urgent tool replacement on-site',
+      decided_at: new Date('2026-10-23T10:00:00Z').toISOString()
+    },
+    {
+      id: 'exp-app-2',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      expense_id: 'exp-3',
+      approver_id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+      approver_name: 'Sarah Connor',
+      decision: 'approved',
+      notes: 'Verified per diem travel allowance',
+      decided_at: new Date('2026-10-16T09:30:00Z').toISOString()
     }
   ],
   projects: [

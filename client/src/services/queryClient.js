@@ -100,6 +100,21 @@ export const queryKeys = {
     stats: () => ['suppliers', 'stats'],
     purchases: (supplierId) => ['suppliers', supplierId, 'purchases']
   },
+  expenses: {
+    all: ['expenses'],
+    list: (filters = {}) => ['expenses', 'list', filters],
+    detail: (id) => ['expenses', 'detail', id],
+    stats: () => ['expenses', 'stats'],
+    history: (id) => ['expenses', id, 'history']
+  },
+  invoices: {
+    all: ['invoices'],
+    list: (filters = {}) => ['invoices', 'list', filters],
+    detail: (id) => ['invoices', 'detail', id],
+    stats: () => ['invoices', 'stats'],
+    payments: (id) => ['invoices', id, 'payments'],
+    pdf: (id) => ['invoices', id, 'pdf']
+  },
   audit: {
     all: ['audit'],
     list: (filters = {}) => ['audit', 'list', filters]

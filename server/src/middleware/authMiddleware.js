@@ -238,6 +238,8 @@ export const requireRole = (allowedRoles = []) => {
 };
 
 export const requireTenantRole = requireRole;
+export const requireManagerOrAdmin = requireRole(['owner', 'admin', 'manager', 'superadmin']);
+export const requireAdminOnly = requireRole(['owner', 'admin', 'superadmin']);
 
 /**
  * Granular Permission-Based Authorization Middleware
