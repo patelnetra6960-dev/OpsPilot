@@ -1332,6 +1332,301 @@ export const mockDatabase = {
       created_at: new Date().toISOString()
     }
   ],
+  suppliers: [
+    {
+      id: 'sup-1',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      name: 'Grainger Industrial Supply',
+      code: 'SUP-GRAINGER',
+      contact_name: 'Dan Miller',
+      email: 'orders@grainger-supply.com',
+      phone: '+1 800-472-4643',
+      address: '100 Grainger Pkwy, Lake Forest, IL',
+      payment_terms: 'Net 30',
+      category: 'Industrial Hardware & Parts',
+      status: 'preferred',
+      created_at: new Date('2026-01-15T08:00:00Z').toISOString(),
+      updated_at: new Date('2026-01-15T08:00:00Z').toISOString()
+    },
+    {
+      id: 'sup-2',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      name: 'Omega Sensors & Automation',
+      code: 'SUP-OMEGA',
+      contact_name: 'Elena Rostova',
+      email: 'sales@omega-sensors.io',
+      phone: '+1 800-826-6342',
+      address: '800 Connecticut Ave, Norwalk, CT',
+      payment_terms: 'Net 15',
+      category: 'Sensors & Automation',
+      status: 'active',
+      created_at: new Date('2026-02-01T08:00:00Z').toISOString(),
+      updated_at: new Date('2026-02-01T08:00:00Z').toISOString()
+    },
+    {
+      id: 'sup-apex-1',
+      organization_id: '22222222-2222-2222-2222-222222222222',
+      name: 'Apex Precision Hydraulics Ltd',
+      code: 'SUP-APEX-PREC',
+      contact_name: 'Liam Hughes',
+      email: 'liam@apex-hydraulics.co.uk',
+      phone: '+44 20 7946 0991',
+      address: '42 Industrial Park, Manchester, UK',
+      payment_terms: 'Net 30',
+      category: 'Hydraulics & Seals',
+      status: 'active',
+      created_at: new Date('2026-02-10T08:00:00Z').toISOString(),
+      updated_at: new Date('2026-02-10T08:00:00Z').toISOString()
+    }
+  ],
+  inventory_items: [
+    {
+      id: 'inv-1',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      sku: 'HYD-SEAL-044',
+      name: 'Industrial Hydraulic Cylinder Seal Kit',
+      category: 'Hydraulics',
+      supplier_id: 'sup-1',
+      supplier_name: 'Grainger Industrial Supply',
+      location: 'Warehouse Central • Aisle 4, Bin B-12',
+      in_stock: 18,
+      reorder_level: 8,
+      unit_cost: 38.5,
+      status: 'in_stock',
+      version: 1,
+      created_at: new Date('2026-02-01T08:00:00Z').toISOString(),
+      updated_at: new Date('2026-02-01T08:00:00Z').toISOString()
+    },
+    {
+      id: 'inv-2',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      sku: 'SEN-RTD-100',
+      name: 'Platinum RTD Temperature Probe (-50C to +200C)',
+      category: 'IoT & Sensors',
+      supplier_id: 'sup-2',
+      supplier_name: 'Omega Sensors & Automation',
+      location: 'Warehouse Central • Aisle 2, Bin S-03',
+      in_stock: 4,
+      reorder_level: 10,
+      unit_cost: 95.0,
+      status: 'low_stock',
+      version: 1,
+      created_at: new Date('2026-02-05T08:00:00Z').toISOString(),
+      updated_at: new Date('2026-02-05T08:00:00Z').toISOString()
+    },
+    {
+      id: 'inv-3',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      sku: 'PWR-BRK-480',
+      name: '3-Phase 480V 100A Industrial Circuit Breaker',
+      category: 'Electrical',
+      supplier_id: 'sup-1',
+      supplier_name: 'Grainger Industrial Supply',
+      location: 'Warehouse Central • Aisle 6, Bin E-01',
+      in_stock: 0,
+      reorder_level: 3,
+      unit_cost: 240.0,
+      status: 'out_of_stock',
+      version: 1,
+      created_at: new Date('2026-02-10T08:00:00Z').toISOString(),
+      updated_at: new Date('2026-02-10T08:00:00Z').toISOString()
+    },
+    {
+      id: 'inv-4',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      sku: 'FLT-OIL-300',
+      name: 'Heavy Duty Diesel Spin-on Oil Filter',
+      category: 'Fleet & Engine',
+      supplier_id: 'sup-1',
+      supplier_name: 'Grainger Industrial Supply',
+      location: 'Depot Workshop • Shelf 3',
+      in_stock: 32,
+      reorder_level: 12,
+      unit_cost: 22.0,
+      status: 'in_stock',
+      version: 1,
+      created_at: new Date('2026-02-12T08:00:00Z').toISOString(),
+      updated_at: new Date('2026-02-12T08:00:00Z').toISOString()
+    },
+    {
+      id: 'inv-apex-1',
+      organization_id: '22222222-2222-2222-2222-222222222222',
+      sku: 'APX-VALVE-01',
+      name: 'Apex High-Pressure Solenoid Valve',
+      category: 'Hydraulics',
+      supplier_id: 'sup-apex-1',
+      supplier_name: 'Apex Precision Hydraulics Ltd',
+      location: 'Depot Manchester • Bay 1',
+      in_stock: 15,
+      reorder_level: 5,
+      unit_cost: 110.0,
+      status: 'in_stock',
+      version: 1,
+      created_at: new Date('2026-02-15T08:00:00Z').toISOString(),
+      updated_at: new Date('2026-02-15T08:00:00Z').toISOString()
+    }
+  ],
+  stock_transactions: [
+    {
+      id: 'tx-1',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      inventory_item_id: 'inv-1',
+      item_name: 'Industrial Hydraulic Cylinder Seal Kit',
+      sku: 'HYD-SEAL-044',
+      transaction_type: 'inbound',
+      quantity: 25,
+      previous_stock: 0,
+      new_stock: 25,
+      unit_price: 38.5,
+      reference_type: 'purchase_order',
+      reference_id: 'po-1',
+      idempotency_key: 'idem-seed-001',
+      reference_note: 'Initial warehouse inventory intake',
+      performed_by: 'Sarah Connor',
+      created_at: new Date('2026-10-15T09:00:00Z').toISOString()
+    },
+    {
+      id: 'tx-2',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      inventory_item_id: 'inv-1',
+      item_name: 'Industrial Hydraulic Cylinder Seal Kit',
+      sku: 'HYD-SEAL-044',
+      transaction_type: 'outbound',
+      quantity: 7,
+      previous_stock: 25,
+      new_stock: 18,
+      unit_price: 38.5,
+      reference_type: 'work_order',
+      reference_id: 'wo-1',
+      idempotency_key: 'idem-seed-002',
+      reference_note: 'Dispatched for hydraulic lift repair work order',
+      performed_by: 'David Kim',
+      created_at: new Date('2026-10-20T14:30:00Z').toISOString()
+    }
+  ],
+  assets: [
+    {
+      id: 'ast-1',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      asset_tag: 'AST-2026-001',
+      name: 'Hydraulic Ramp Lift #4 (Model HR-400)',
+      category: 'heavy_machinery',
+      status: 'available',
+      assigned_to: 'w1',
+      assigned_to_name: 'Marcus Vance',
+      department: 'Field Operations',
+      location: 'Warehouse Central • Dock Bay 4',
+      serial_number: 'HR400-8849-B',
+      purchase_date: '2025-06-15',
+      purchase_cost: 24500.0,
+      supplier_id: 'sup-1',
+      last_service_date: '2026-10-10',
+      next_service_date: '2027-04-10',
+      metadata: {
+        warranty_months: 24,
+        operational_hours: 1420
+      },
+      maintenance_history: [
+        {
+          id: 'maint-1',
+          date: '2026-10-10',
+          type: 'scheduled',
+          description: 'Annual hydraulic cylinder inspection and seal lubrication',
+          cost: 450.0,
+          performed_by: 'David Kim',
+          next_service_due: '2027-04-10',
+          created_at: new Date('2026-10-10T11:00:00Z').toISOString()
+        }
+      ],
+      created_at: new Date('2025-06-15T08:00:00Z').toISOString(),
+      updated_at: new Date('2026-10-10T11:00:00Z').toISOString()
+    },
+    {
+      id: 'ast-2',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      asset_tag: 'AST-2026-002',
+      name: 'Cummins 500kW Standby Diesel Generator',
+      category: 'equipment',
+      status: 'available',
+      assigned_to: 'w2',
+      assigned_to_name: 'Sarah Connor',
+      department: 'Central Facilities',
+      location: 'Substation B Power Enclosure',
+      serial_number: 'CUMM-500-9921',
+      purchase_date: '2024-11-20',
+      purchase_cost: 68000.0,
+      supplier_id: 'sup-1',
+      last_service_date: '2026-09-01',
+      next_service_date: '2026-12-01',
+      metadata: {
+        fuel_capacity_gal: 250,
+        rated_kw: 500
+      },
+      maintenance_history: [
+        {
+          id: 'maint-2',
+          date: '2026-09-01',
+          type: 'inspection',
+          description: 'Quarterly load bank transfer test and oil sampling',
+          cost: 320.0,
+          performed_by: 'Marcus Vance',
+          next_service_due: '2026-12-01',
+          created_at: new Date('2026-09-01T10:00:00Z').toISOString()
+        }
+      ],
+      created_at: new Date('2024-11-20T08:00:00Z').toISOString(),
+      updated_at: new Date('2026-09-01T10:00:00Z').toISOString()
+    },
+    {
+      id: 'ast-apex-1',
+      organization_id: '22222222-2222-2222-2222-222222222222',
+      asset_tag: 'AST-APEX-001',
+      name: 'Apex Field Service Van #12',
+      category: 'vehicle',
+      status: 'assigned',
+      assigned_to: 'w-apex-1',
+      assigned_to_name: 'Marcus Brody',
+      department: 'Mobile Dispatch',
+      location: 'Depot Fleet Lot B',
+      serial_number: 'VIN-982189028',
+      purchase_date: '2025-01-10',
+      purchase_cost: 42000.0,
+      supplier_id: 'sup-apex-1',
+      last_service_date: '2026-08-15',
+      next_service_date: '2027-02-15',
+      metadata: {
+        mileage: 18450
+      },
+      maintenance_history: [],
+      created_at: new Date('2025-01-10T08:00:00Z').toISOString(),
+      updated_at: new Date('2026-08-15T08:00:00Z').toISOString()
+    }
+  ],
+  purchase_orders: [
+    {
+      id: 'po-1',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      po_number: 'PO-2026-001',
+      supplier_id: 'sup-1',
+      supplier_name: 'Grainger Industrial Supply',
+      order_date: '2026-10-10',
+      status: 'received',
+      total_amount: 962.5,
+      items: [
+        {
+          item_id: 'inv-1',
+          sku: 'HYD-SEAL-044',
+          name: 'Industrial Hydraulic Cylinder Seal Kit',
+          quantity: 25,
+          unit_price: 38.5,
+          total: 962.5
+        }
+      ],
+      notes: 'Q4 initial warehouse replenishment batch',
+      created_at: new Date('2026-10-10T08:00:00Z').toISOString(),
+      updated_at: new Date('2026-10-15T09:00:00Z').toISOString()
+    }
+  ],
   auditLogs: []
 };
 

@@ -79,6 +79,27 @@ export const queryKeys = {
     notes: (woId) => ['workOrders', woId, 'notes'],
     photos: (woId) => ['workOrders', woId, 'photos']
   },
+  inventory: {
+    all: ['inventory'],
+    list: (filters = {}) => ['inventory', 'list', filters],
+    detail: (id) => ['inventory', 'detail', id],
+    stats: () => ['inventory', 'stats'],
+    lowStock: () => ['inventory', 'lowStock'],
+    transactions: (filters = {}) => ['inventory', 'transactions', filters]
+  },
+  assets: {
+    all: ['assets'],
+    list: (filters = {}) => ['assets', 'list', filters],
+    detail: (id) => ['assets', 'detail', id],
+    stats: () => ['assets', 'stats']
+  },
+  suppliers: {
+    all: ['suppliers'],
+    list: (filters = {}) => ['suppliers', 'list', filters],
+    detail: (id) => ['suppliers', 'detail', id],
+    stats: () => ['suppliers', 'stats'],
+    purchases: (supplierId) => ['suppliers', supplierId, 'purchases']
+  },
   audit: {
     all: ['audit'],
     list: (filters = {}) => ['audit', 'list', filters]

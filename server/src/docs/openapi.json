@@ -738,6 +738,308 @@
             "nullable": true
           }
         }
+      },
+      "InventoryItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "inv-1"
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string",
+            "example": "HYD-SEAL-044"
+          },
+          "name": {
+            "type": "string",
+            "example": "Industrial Hydraulic Cylinder Seal Kit"
+          },
+          "category": {
+            "type": "string",
+            "example": "Hydraulics"
+          },
+          "location": {
+            "type": "string",
+            "example": "Warehouse Central • Aisle 4, Bin B-12"
+          },
+          "supplier_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "supplier_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "in_stock": {
+            "type": "integer",
+            "example": 18
+          },
+          "reorder_level": {
+            "type": "integer",
+            "example": 8
+          },
+          "unit_cost": {
+            "type": "number",
+            "example": 38.5
+          },
+          "status": {
+            "type": "string",
+            "enum": ["in_stock", "low_stock", "out_of_stock"]
+          },
+          "version": {
+            "type": "integer",
+            "example": 1
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateInventoryItemInput": {
+        "type": "object",
+        "required": ["sku", "name", "category"],
+        "properties": {
+          "sku": {
+            "type": "string",
+            "example": "HYD-SEAL-044"
+          },
+          "name": {
+            "type": "string",
+            "example": "Industrial Hydraulic Cylinder Seal Kit"
+          },
+          "category": {
+            "type": "string",
+            "example": "Hydraulics"
+          },
+          "location": {
+            "type": "string",
+            "example": "Warehouse Central • Aisle 4, Bin B-12"
+          },
+          "supplier_id": {
+            "type": "string"
+          },
+          "in_stock": {
+            "type": "integer",
+            "default": 0
+          },
+          "reorder_level": {
+            "type": "integer",
+            "default": 5
+          },
+          "unit_cost": {
+            "type": "number",
+            "default": 0
+          }
+        }
+      },
+      "StockTransaction": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "tx-1"
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "inventory_item_id": {
+            "type": "string",
+            "example": "inv-1"
+          },
+          "item_name": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "transaction_type": {
+            "type": "string",
+            "enum": ["inbound", "outbound", "adjustment", "scrap", "transfer"]
+          },
+          "quantity": {
+            "type": "integer",
+            "example": 10
+          },
+          "previous_stock": {
+            "type": "integer",
+            "example": 12
+          },
+          "new_stock": {
+            "type": "integer",
+            "example": 22
+          },
+          "unit_price": {
+            "type": "number"
+          },
+          "reference_type": {
+            "type": "string"
+          },
+          "reference_id": {
+            "type": "string"
+          },
+          "reference_note": {
+            "type": "string"
+          },
+          "idempotency_key": {
+            "type": "string"
+          },
+          "performed_by": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Asset": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "ast-1"
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "asset_tag": {
+            "type": "string",
+            "example": "AST-2026-001"
+          },
+          "name": {
+            "type": "string",
+            "example": "Hydraulic Ramp Lift #4 (Model HR-400)"
+          },
+          "category": {
+            "type": "string",
+            "enum": ["vehicle", "heavy_machinery", "diagnostic_tool", "equipment", "facility"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["available", "assigned", "maintenance", "retired", "damaged"]
+          },
+          "assigned_to": {
+            "type": "string",
+            "nullable": true
+          },
+          "assigned_to_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "department": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "serial_number": {
+            "type": "string"
+          },
+          "purchase_date": {
+            "type": "string"
+          },
+          "purchase_cost": {
+            "type": "number"
+          },
+          "last_service_date": {
+            "type": "string",
+            "nullable": true
+          },
+          "next_service_date": {
+            "type": "string",
+            "nullable": true
+          },
+          "maintenance_history": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "date": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "cost": {
+                  "type": "number"
+                },
+                "performed_by": {
+                  "type": "string"
+                },
+                "next_service_due": {
+                  "type": "string",
+                  "nullable": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "Supplier": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "sup-1"
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Grainger Industrial Supply"
+          },
+          "code": {
+            "type": "string",
+            "example": "SUP-GRAINGER"
+          },
+          "contact_name": {
+            "type": "string",
+            "example": "Dan Miller"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "orders@grainger-supply.com"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+1 800-472-4643"
+          },
+          "address": {
+            "type": "string"
+          },
+          "payment_terms": {
+            "type": "string",
+            "example": "Net 30"
+          },
+          "category": {
+            "type": "string",
+            "example": "Industrial Hardware & Parts"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["active", "inactive", "preferred"]
+          }
+        }
       }
     }
   },
@@ -2460,6 +2762,580 @@
         "responses": {
           "200": {
             "description": "Work order and linked service request closed"
+          }
+        }
+      }
+    },
+    "/inventory": {
+      "get": {
+        "summary": "List warehouse inventory items with filters and search",
+        "tags": ["Inventory"],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "low_stock",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated inventory items list"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "summary": "Register new inventory item in catalog",
+        "tags": ["Inventory"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "": "#/components/schemas/CreateInventoryItemInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Inventory item created"
+          },
+          "409": {
+            "description": "SKU already exists in organization"
+          }
+        }
+      }
+    },
+    "/inventory/stats": {
+      "get": {
+        "summary": "Inventory aggregated stock metrics and valuation",
+        "tags": ["Inventory"],
+        "responses": {
+          "200": {
+            "description": "Inventory stats retrieved"
+          }
+        }
+      }
+    },
+    "/inventory/low-stock": {
+      "get": {
+        "summary": "Retrieve items below minimum stock threshold (low-stock alerts)",
+        "tags": ["Inventory"],
+        "responses": {
+          "200": {
+            "description": "Low stock items list"
+          }
+        }
+      }
+    },
+    "/inventory/transactions": {
+      "get": {
+        "summary": "Retrieve organization-wide stock transaction audit ledger",
+        "tags": ["Inventory"],
+        "responses": {
+          "200": {
+            "description": "Paginated stock transactions"
+          }
+        }
+      }
+    },
+    "/inventory/{id}": {
+      "get": {
+        "summary": "Get inventory item details",
+        "tags": ["Inventory"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Inventory item found"
+          },
+          "404": {
+            "description": "Item not found"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update inventory item metadata",
+        "tags": ["Inventory"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item updated"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Soft-delete inventory item",
+        "tags": ["Inventory"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item deleted"
+          }
+        }
+      }
+    },
+    "/inventory/{id}/transactions": {
+      "get": {
+        "summary": "Retrieve stock transaction history for specific item",
+        "tags": ["Inventory"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item transactions history"
+          }
+        }
+      }
+    },
+    "/inventory/{id}/stock-in": {
+      "post": {
+        "summary": "Receive stock into warehouse (Stock-In)",
+        "tags": ["Inventory"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stock received and transaction logged"
+          }
+        }
+      }
+    },
+    "/inventory/{id}/stock-out": {
+      "post": {
+        "summary": "Dispatch stock from warehouse (Stock-Out)",
+        "tags": ["Inventory"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stock dispatched"
+          },
+          "400": {
+            "description": "Insufficient stock or invalid quantity"
+          }
+        }
+      }
+    },
+    "/inventory/{id}/adjust": {
+      "post": {
+        "summary": "Reconcile stock count discrepancy with mandatory audit reason",
+        "tags": ["Inventory"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stock reconciled"
+          }
+        }
+      }
+    },
+    "/assets": {
+      "get": {
+        "summary": "List tracked physical assets and machinery",
+        "tags": ["Assets"],
+        "responses": {
+          "200": {
+            "description": "Asset list"
+          }
+        }
+      },
+      "post": {
+        "summary": "Register new physical asset with tag",
+        "tags": ["Assets"],
+        "responses": {
+          "201": {
+            "description": "Asset registered"
+          },
+          "409": {
+            "description": "Asset tag conflict"
+          }
+        }
+      }
+    },
+    "/assets/stats": {
+      "get": {
+        "summary": "Asset fleet telemetry statistics",
+        "tags": ["Assets"],
+        "responses": {
+          "200": {
+            "description": "Asset stats"
+          }
+        }
+      }
+    },
+    "/assets/{id}": {
+      "get": {
+        "summary": "Get asset details and maintenance history",
+        "tags": ["Assets"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Asset retrieved"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update asset details",
+        "tags": ["Assets"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Asset updated"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Soft-delete asset",
+        "tags": ["Assets"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Asset soft-deleted"
+          }
+        }
+      }
+    },
+    "/assets/{id}/assign": {
+      "post": {
+        "summary": "Assign asset ownership to workforce member / department",
+        "tags": ["Assets"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Asset assigned"
+          }
+        }
+      }
+    },
+    "/assets/{id}/status": {
+      "post": {
+        "summary": "Update asset operational status",
+        "tags": ["Assets"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status updated"
+          }
+        }
+      }
+    },
+    "/assets/{id}/maintenance": {
+      "post": {
+        "summary": "Record maintenance and service event in asset history",
+        "tags": ["Assets"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Maintenance logged"
+          }
+        }
+      }
+    },
+    "/suppliers": {
+      "get": {
+        "summary": "List authorized vendor suppliers",
+        "tags": ["Suppliers"],
+        "responses": {
+          "200": {
+            "description": "Suppliers list"
+          }
+        }
+      },
+      "post": {
+        "summary": "Register new vendor supplier profile",
+        "tags": ["Suppliers"],
+        "responses": {
+          "201": {
+            "description": "Supplier registered"
+          },
+          "409": {
+            "description": "Supplier code conflict"
+          }
+        }
+      }
+    },
+    "/suppliers/stats": {
+      "get": {
+        "summary": "Supplier network statistics and total procurement spend",
+        "tags": ["Suppliers"],
+        "responses": {
+          "200": {
+            "description": "Supplier stats"
+          }
+        }
+      }
+    },
+    "/suppliers/{id}": {
+      "get": {
+        "summary": "Get supplier profile details",
+        "tags": ["Suppliers"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Supplier details"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update supplier profile",
+        "tags": ["Suppliers"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Supplier updated"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Soft-delete supplier",
+        "tags": ["Suppliers"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Supplier soft-deleted"
+          }
+        }
+      }
+    },
+    "/suppliers/{id}/purchases": {
+      "get": {
+        "summary": "List purchase orders for supplier",
+        "tags": ["Suppliers"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Purchase orders list"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create purchase order for supplier",
+        "tags": ["Suppliers"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Purchase order created"
+          }
+        }
+      }
+    },
+    "/suppliers/purchases/{id}/receive": {
+      "post": {
+        "summary": "Receive purchase order and automatically replenish warehouse stock",
+        "tags": ["Suppliers"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PO received and stock replenished"
           }
         }
       }
