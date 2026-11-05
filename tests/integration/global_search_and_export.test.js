@@ -153,6 +153,33 @@ test('Integration Test: Global Search, Multi-Field Filters & Permission-Aware Da
     assert.equal(res.body.pagination.totalItems, 0);
   });
 
+  await t.test('1.10 Multi-field filtering combining category, status, and query term', async () => {
+    const res = await request(app)
+      .get('/api/search?type=projects&status=in_progress&q=Metro')
+      .set('Authorization', SARAH_TOKEN)
+      .set('X-Tenant-Id', ACME_TENANT_ID);
+
+    assert.equal(res.status, 200);
+    assert.equal(res.body.success, true);
+    assert.ok(res.body.data.length > 0);
+    for (const item of res.body.data) {
+      assert.equal(item.entity_type, 'projects');
+      assert.equal(item.status, 'in_progress');
+      assert.ok(item.title.includes('Metro') || item.subtitle.includes('Metro'));
+    }
+  });
+
+  await t.test('1.11 Date range filtering accurately scopes records between from_date and to_date', async () => {
+    const res = await request(app)
+      .get('/api/search?type=projects&from_date=2026-01-01&to_date=2026-12-31')
+      .set('Authorization', SARAH_TOKEN)
+      .set('X-Tenant-Id', ACME_TENANT_ID);
+
+    assert.equal(res.status, 200);
+    assert.equal(res.body.success, true);
+    assert.ok(res.body.data.length > 0);
+  });
+
   // =========================================================================
   // 2. Permission-Aware Search Isolation
   // =========================================================================
@@ -271,6 +298,33 @@ test('Integration Test: Global Search, Multi-Field Filters & Permission-Aware Da
     assert.ok(errText.includes('1000'));
   });
 
+  await t.test('3.8 Formula injection protection neutralizes cells with leading =, +, -, or @ characters', async () => {
+    const { mockDatabase } = await import('../../server/src/config/supabase.js');
+    const dangerousTask = {
+      id: 'tsk-injection-test',
+      organization_id: ACME_TENANT_ID,
+      title: '=2+5*cmd',
+      description: '@HYPERLINK("http://evil.com")',
+      status: 'todo',
+      priority: 'high',
+      due_date: '2026-12-01',
+      created_at: new Date().toISOString()
+    };
+    mockDatabase.tasks.push(dangerousTask);
+
+    try {
+      const res = await request(app)
+        .get('/api/export?entity=tasks&search=2%2B5*cmd')
+        .set('Authorization', SARAH_TOKEN)
+        .set('X-Tenant-Id', ACME_TENANT_ID);
+
+      assert.equal(res.status, 200);
+      assert.ok(res.text.includes("'=2+5*cmd"), 'Formula starting with = must be prepended with apostrophe');
+    } finally {
+      mockDatabase.tasks = mockDatabase.tasks.filter((t) => t.id !== 'tsk-injection-test');
+    }
+  });
+
   // =========================================================================
   // 4. Role Authorization & Cross-Tenant Boundary Enforcement
   // =========================================================================
@@ -290,6 +344,26 @@ test('Integration Test: Global Search, Multi-Field Filters & Permission-Aware Da
   await t.test('4.2 Customer attempting to export inventory receives 403 Forbidden', async () => {
     const res = await request(app)
       .get('/api/export?entity=inventory')
+      .set('Authorization', RACHEL_TOKEN)
+      .set('X-Tenant-Id', ACME_TENANT_ID);
+
+    assert.equal(res.status, 403);
+    assert.equal(res.body.success, false);
+  });
+
+  await t.test('4.2b Customer attempting to export tasks receives 403 Forbidden', async () => {
+    const res = await request(app)
+      .get('/api/export?entity=tasks')
+      .set('Authorization', RACHEL_TOKEN)
+      .set('X-Tenant-Id', ACME_TENANT_ID);
+
+    assert.equal(res.status, 403);
+    assert.equal(res.body.success, false);
+  });
+
+  await t.test('4.2c Customer attempting to export customers receives 403 Forbidden', async () => {
+    const res = await request(app)
+      .get('/api/export?entity=customers')
       .set('Authorization', RACHEL_TOKEN)
       .set('X-Tenant-Id', ACME_TENANT_ID);
 

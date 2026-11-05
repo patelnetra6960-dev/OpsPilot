@@ -48,6 +48,7 @@ export const exportDataSchema = z.object({
   from_date: z.string().trim().optional(),
   to_date: z.string().trim().optional(),
   search: z.string().trim().optional(),
+  q: z.string().trim().optional(),
   limit: z.coerce
     .number()
     .int()

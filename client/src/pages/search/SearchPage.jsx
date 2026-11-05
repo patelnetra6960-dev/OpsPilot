@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Search,
   Download,
@@ -60,10 +60,14 @@ export const SearchPage = () => {
     });
   }, [isCustomer, isEmployee]);
 
+  const [searchParams] = useSearchParams();
+  const initialQ = searchParams.get('q') || searchParams.get('query') || '';
+  const initialType = searchParams.get('type') || 'all';
+
   // Search and filter states
-  const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [selectedType, setSelectedType] = useState('all');
+  const [searchTerm, setSearchTerm] = useState(initialQ);
+  const [debouncedSearch, setDebouncedSearch] = useState(initialQ);
+  const [selectedType, setSelectedType] = useState(initialType);
   const [statusFilter, setStatusFilter] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
   const [fromDate, setFromDate] = useState('');
@@ -72,6 +76,19 @@ export const SearchPage = () => {
   const [sortOrder, setSortOrder] = useState('desc');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
+
+  // Sync state if URL query params change dynamically
+  useEffect(() => {
+    const q = searchParams.get('q') || searchParams.get('query') || '';
+    const t = searchParams.get('type') || 'all';
+    if (q !== undefined && q !== '') {
+      setSearchTerm(q);
+      setDebouncedSearch(q);
+    }
+    if (t) {
+      setSelectedType(t);
+    }
+  }, [searchParams]);
 
   // Export panel states
   const [exportEntity, setExportEntity] = useState(availableExportEntities[0]?.value || 'projects');

@@ -58,6 +58,111 @@ export class SearchService {
     return data || null;
   }
 
+  async fetchWorkforce(organizationId) {
+    if (env.isMockMode || !supabaseAdmin) {
+      return (mockDatabase.workforce || []).filter(
+        (w) => w.organization_id === organizationId && !w.deleted_at
+      );
+    }
+    const { data, error } = await supabaseAdmin
+      .from('workforce_members')
+      .select('*')
+      .eq('organization_id', organizationId)
+      .is('deleted_at', null);
+    if (error) throw error;
+    return data || [];
+  }
+
+  async fetchCustomers(organizationId) {
+    if (env.isMockMode || !supabaseAdmin) {
+      return (mockDatabase.customers || []).filter(
+        (c) => c.organization_id === organizationId && !c.deleted_at
+      );
+    }
+    const { data, error } = await supabaseAdmin
+      .from('customers')
+      .select('*')
+      .eq('organization_id', organizationId)
+      .is('deleted_at', null);
+    if (error) throw error;
+    return data || [];
+  }
+
+  async fetchProjects(organizationId) {
+    if (env.isMockMode || !supabaseAdmin) {
+      return (mockDatabase.projects || []).filter(
+        (p) => p.organization_id === organizationId && !p.deleted_at
+      );
+    }
+    const { data, error } = await supabaseAdmin
+      .from('projects')
+      .select('*')
+      .eq('organization_id', organizationId)
+      .is('deleted_at', null);
+    if (error) throw error;
+    return data || [];
+  }
+
+  async fetchTasks(organizationId) {
+    if (env.isMockMode || !supabaseAdmin) {
+      return (mockDatabase.tasks || []).filter(
+        (t) => t.organization_id === organizationId && !t.deleted_at
+      );
+    }
+    const { data, error } = await supabaseAdmin
+      .from('tasks')
+      .select('*')
+      .eq('organization_id', organizationId)
+      .is('deleted_at', null);
+    if (error) throw error;
+    return data || [];
+  }
+
+  async fetchServiceRequests(organizationId) {
+    if (env.isMockMode || !supabaseAdmin) {
+      return (mockDatabase.serviceRequests || []).filter(
+        (sr) => sr.organization_id === organizationId && !sr.deleted_at
+      );
+    }
+    const { data, error } = await supabaseAdmin
+      .from('service_requests')
+      .select('*')
+      .eq('organization_id', organizationId)
+      .is('deleted_at', null);
+    if (error) throw error;
+    return data || [];
+  }
+
+  async fetchInventory(organizationId) {
+    if (env.isMockMode || !supabaseAdmin) {
+      return (mockDatabase.inventory_items || []).filter(
+        (inv) => inv.organization_id === organizationId && !inv.deleted_at
+      );
+    }
+    const { data, error } = await supabaseAdmin
+      .from('inventory_items')
+      .select('*')
+      .eq('organization_id', organizationId)
+      .is('deleted_at', null);
+    if (error) throw error;
+    return data || [];
+  }
+
+  async fetchInvoices(organizationId) {
+    if (env.isMockMode || !supabaseAdmin) {
+      return (mockDatabase.invoices || []).filter(
+        (inv) => inv.organization_id === organizationId && !inv.deleted_at
+      );
+    }
+    const { data, error } = await supabaseAdmin
+      .from('invoices')
+      .select('*')
+      .eq('organization_id', organizationId)
+      .is('deleted_at', null);
+    if (error) throw error;
+    return data || [];
+  }
+
   /**
    * Safe CSV cell formatter with Formula Injection / CSV Injection protection
    */
@@ -113,11 +218,22 @@ export class SearchService {
     // Resolve customer identity if user is a customer
     let customerRecord = null;
     if (perms.isCustomer) {
-      customerRecord = await this.getCustomerForUser(userId, organizationId);
+      if (userContext.customerId) {
+        customerRecord = { id: userContext.customerId };
+      } else {
+        customerRecord = await this.getCustomerForUser(userId, organizationId);
+      }
       if (!customerRecord) {
         return {
           data: [],
-          pagination: { page, limit, totalItems: 0, totalPages: 0 }
+          pagination: {
+            page,
+            limit,
+            totalItems: 0,
+            totalPages: 0,
+            hasNextPage: false,
+            hasPreviousPage: false
+          }
         };
       }
     }
@@ -137,7 +253,7 @@ export class SearchService {
     // 1. Workforce Members (Employees) — Excluded from Customers
     // =========================================================================
     if (!perms.isCustomer && (type === 'all' || type === 'employees')) {
-      const workforce = mockDatabase.workforce || [];
+      const workforce = await this.fetchWorkforce(organizationId);
       const filtered = workforce.filter((w) => {
         if (w.organization_id !== organizationId || w.deleted_at) return false;
         if (statusFilter && (w.status || '').toLowerCase() !== statusFilter) return false;
@@ -174,7 +290,7 @@ export class SearchService {
     // 2. Customers — Excluded from Customers (Anti-IDOR)
     // =========================================================================
     if (!perms.isCustomer && (type === 'all' || type === 'customers')) {
-      const customers = mockDatabase.customers || [];
+      const customers = await this.fetchCustomers(organizationId);
       const filtered = customers.filter((c) => {
         if (c.organization_id !== organizationId || c.deleted_at) return false;
         if (statusFilter && (c.status || '').toLowerCase() !== statusFilter) return false;
@@ -210,7 +326,7 @@ export class SearchService {
     // 3. Projects — Customers see only their own projects
     // =========================================================================
     if (type === 'all' || type === 'projects') {
-      const projects = mockDatabase.projects || [];
+      const projects = await this.fetchProjects(organizationId);
       const filtered = projects.filter((p) => {
         if (p.organization_id !== organizationId || p.deleted_at) return false;
         if (perms.isCustomer && p.customer_id !== customerRecord?.id) return false;
@@ -247,7 +363,7 @@ export class SearchService {
     // 4. Tasks — Internal staff only (excluded from Customers)
     // =========================================================================
     if (!perms.isCustomer && (type === 'all' || type === 'tasks')) {
-      const tasks = mockDatabase.tasks || [];
+      const tasks = await this.fetchTasks(organizationId);
       const filtered = tasks.filter((t) => {
         if (t.organization_id !== organizationId || t.deleted_at) return false;
         if (statusFilter && (t.status || '').toLowerCase() !== statusFilter) return false;
@@ -284,7 +400,7 @@ export class SearchService {
     // 5. Service Requests — Customers see only their own
     // =========================================================================
     if (type === 'all' || type === 'service_requests') {
-      const requests = mockDatabase.serviceRequests || [];
+      const requests = await this.fetchServiceRequests(organizationId);
       const filtered = requests.filter((sr) => {
         if (sr.organization_id !== organizationId || sr.deleted_at) return false;
         if (perms.isCustomer && sr.customer_id !== customerRecord?.id) return false;
@@ -322,7 +438,7 @@ export class SearchService {
     // 6. Inventory Items — Internal staff only (excluded from Customers)
     // =========================================================================
     if (!perms.isCustomer && (type === 'all' || type === 'inventory')) {
-      const inventory = mockDatabase.inventory_items || [];
+      const inventory = await this.fetchInventory(organizationId);
       const filtered = inventory.filter((inv) => {
         if (inv.organization_id !== organizationId || inv.deleted_at) return false;
         if (statusFilter && (inv.status || '').toLowerCase() !== statusFilter) return false;
@@ -359,7 +475,7 @@ export class SearchService {
     // 7. Invoices — Managers/Admins see all; Customers see ONLY their own
     // =========================================================================
     if ((perms.isManager || perms.isCustomer) && (type === 'all' || type === 'invoices')) {
-      const invoices = mockDatabase.invoices || [];
+      const invoices = await this.fetchInvoices(organizationId);
       const filtered = invoices.filter((inv) => {
         if (inv.organization_id !== organizationId || inv.deleted_at) return false;
         if (perms.isCustomer && inv.customer_id !== customerRecord?.id) return false;
@@ -461,13 +577,17 @@ export class SearchService {
 
     let customerRecord = null;
     if (perms.isCustomer) {
-      customerRecord = await this.getCustomerForUser(userId, organizationId);
+      if (userContext.customerId) {
+        customerRecord = { id: userContext.customerId };
+      } else {
+        customerRecord = await this.getCustomerForUser(userId, organizationId);
+      }
     }
 
     const maxLimit = Math.min(1000, Number(options.limit) || 500);
     const statusFilter = (options.status || '').toLowerCase();
     const priorityFilter = (options.priority || '').toLowerCase();
-    const searchTerm = (options.search || '').toLowerCase();
+    const searchTerm = (options.search || options.q || '').toLowerCase();
 
     const matchesDate = (dateStr) => {
       if (!dateStr) return true;
@@ -484,7 +604,7 @@ export class SearchService {
 
     switch (entity) {
       case 'employees': {
-        const rows = (mockDatabase.workforce || [])
+        const rows = (await this.fetchWorkforce(organizationId))
           .filter((w) => {
             if (w.organization_id !== organizationId || w.deleted_at) return false;
             if (statusFilter && (w.status || '').toLowerCase() !== statusFilter) return false;
@@ -514,7 +634,7 @@ export class SearchService {
       }
 
       case 'customers': {
-        const rows = (mockDatabase.customers || [])
+        const rows = (await this.fetchCustomers(organizationId))
           .filter((c) => {
             if (c.organization_id !== organizationId || c.deleted_at) return false;
             if (statusFilter && (c.status || '').toLowerCase() !== statusFilter) return false;
@@ -542,7 +662,7 @@ export class SearchService {
       }
 
       case 'projects': {
-        const rows = (mockDatabase.projects || [])
+        const rows = (await this.fetchProjects(organizationId))
           .filter((p) => {
             if (p.organization_id !== organizationId || p.deleted_at) return false;
             if (perms.isCustomer && p.customer_id !== customerRecord?.id) return false;
@@ -572,7 +692,7 @@ export class SearchService {
       }
 
       case 'tasks': {
-        const rows = (mockDatabase.tasks || [])
+        const rows = (await this.fetchTasks(organizationId))
           .filter((t) => {
             if (t.organization_id !== organizationId || t.deleted_at) return false;
             if (statusFilter && (t.status || '').toLowerCase() !== statusFilter) return false;
@@ -600,7 +720,7 @@ export class SearchService {
       }
 
       case 'service_requests': {
-        const rows = (mockDatabase.serviceRequests || [])
+        const rows = (await this.fetchServiceRequests(organizationId))
           .filter((sr) => {
             if (sr.organization_id !== organizationId || sr.deleted_at) return false;
             if (perms.isCustomer && sr.customer_id !== customerRecord?.id) return false;
@@ -630,7 +750,7 @@ export class SearchService {
       }
 
       case 'inventory': {
-        const rows = (mockDatabase.inventory_items || [])
+        const rows = (await this.fetchInventory(organizationId))
           .filter((inv) => {
             if (inv.organization_id !== organizationId || inv.deleted_at) return false;
             if (statusFilter && (inv.status || '').toLowerCase() !== statusFilter) return false;
@@ -658,7 +778,7 @@ export class SearchService {
       }
 
       case 'invoices': {
-        const rows = (mockDatabase.invoices || [])
+        const rows = (await this.fetchInvoices(organizationId))
           .filter((inv) => {
             if (inv.organization_id !== organizationId || inv.deleted_at) return false;
             if (perms.isCustomer && inv.customer_id !== customerRecord?.id) return false;
