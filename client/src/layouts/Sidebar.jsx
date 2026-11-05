@@ -21,7 +21,8 @@ import {
   BarChart3,
   Inbox,
   Wrench,
-  Activity
+  Activity,
+  Search
 } from 'lucide-react';
 import { setSidebarOpen } from '../store/uiSlice.js';
 
@@ -77,6 +78,7 @@ export const Sidebar = () => {
           { label: 'Service Requests', path: '/services', icon: Inbox },
           { label: 'Inventory & Parts', path: '/inventory', icon: Boxes },
           { label: 'Expenses', path: '/expenses', icon: Receipt },
+          { label: 'Global Search & Export', path: '/search', icon: Search },
           { label: 'Document Vault', path: '/documents', icon: FolderLock }
         ]
       },
@@ -94,6 +96,7 @@ export const Sidebar = () => {
           { label: 'My Shift Schedule', path: '/portal/schedule', icon: CalendarCheck },
           { label: 'Clock-In & Hours', path: '/portal/attendance', icon: Clock },
           { label: 'Assigned Work Orders', path: '/portal/tasks', icon: Send },
+          { label: 'Search & Records', path: '/search', icon: Search },
           { label: 'My Certifications', path: '/portal/documents', icon: FolderLock }
         ]
       },
@@ -109,6 +112,7 @@ export const Sidebar = () => {
         items: [
           { label: 'Service Hub', path: '/customer', icon: LayoutDashboard },
           { label: 'My Work Orders', path: '/customer/services', icon: Send },
+          { label: 'Search My Records', path: '/search', icon: Search },
           { label: 'Request Service', path: '/customer/request', icon: CalendarCheck }
         ]
       },
@@ -145,6 +149,7 @@ export const Sidebar = () => {
           { label: 'Service Requests', path: '/services', icon: Inbox },
           { label: 'Inventory & Parts', path: '/inventory', icon: Boxes },
           { label: 'Expenses', path: '/expenses', icon: Receipt },
+          { label: 'Global Search & Export', path: '/search', icon: Search },
           { label: 'Document Vault', path: '/documents', icon: FolderLock }
         ]
       },

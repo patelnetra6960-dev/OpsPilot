@@ -3491,6 +3491,78 @@
           "200": { "description": "Download invoice file attachment" }
         }
       }
+    },
+    "/search": {
+      "get": {
+        "summary": "Unified global search across employees, customers, projects, tasks, service requests, inventory, and invoices",
+        "tags": ["Search"],
+        "parameters": [
+          { "name": "q", "in": "query", "schema": { "type": "string" }, "description": "Search keyword or term" },
+          { "name": "type", "in": "query", "schema": { "type": "string", "enum": ["all", "employees", "customers", "projects", "tasks", "service_requests", "inventory", "invoices"] }, "description": "Target entity category" },
+          { "name": "status", "in": "query", "schema": { "type": "string" }, "description": "Status filter" },
+          { "name": "priority", "in": "query", "schema": { "type": "string" }, "description": "Priority filter" },
+          { "name": "from_date", "in": "query", "schema": { "type": "string", "format": "date" }, "description": "Filter from ISO date" },
+          { "name": "to_date", "in": "query", "schema": { "type": "string", "format": "date" }, "description": "Filter to ISO date" },
+          { "name": "sortBy", "in": "query", "schema": { "type": "string" } },
+          { "name": "sortOrder", "in": "query", "schema": { "type": "string", "enum": ["asc", "desc"] } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "maximum": 100, "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "Search results retrieved successfully" },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden - Cross-tenant or role violation" }
+        }
+      }
+    },
+    "/export": {
+      "get": {
+        "summary": "Permission-aware CSV / JSON data export for domain entities",
+        "tags": ["Export"],
+        "parameters": [
+          { "name": "entity", "in": "query", "required": true, "schema": { "type": "string", "enum": ["employees", "customers", "projects", "tasks", "service_requests", "inventory", "invoices"] } },
+          { "name": "format", "in": "query", "schema": { "type": "string", "enum": ["csv", "json"], "default": "csv" } },
+          { "name": "status", "in": "query", "schema": { "type": "string" } },
+          { "name": "priority", "in": "query", "schema": { "type": "string" } },
+          { "name": "from_date", "in": "query", "schema": { "type": "string", "format": "date" } },
+          { "name": "to_date", "in": "query", "schema": { "type": "string", "format": "date" } },
+          { "name": "search", "in": "query", "schema": { "type": "string" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "maximum": 1000, "default": 500 } }
+        ],
+        "responses": {
+          "200": { "description": "Data exported successfully (CSV download or JSON response)" },
+          "403": { "description": "Forbidden - Customer attempting to export internal records or Employee exporting invoices" }
+        }
+      },
+      "post": {
+        "summary": "Permission-aware CSV / JSON data export with body filters",
+        "tags": ["Export"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["entity"],
+                "properties": {
+                  "entity": { "type": "string", "enum": ["employees", "customers", "projects", "tasks", "service_requests", "inventory", "invoices"] },
+                  "format": { "type": "string", "enum": ["csv", "json"], "default": "csv" },
+                  "status": { "type": "string" },
+                  "priority": { "type": "string" },
+                  "from_date": { "type": "string" },
+                  "to_date": { "type": "string" },
+                  "search": { "type": "string" },
+                  "limit": { "type": "integer", "maximum": 1000, "default": 500 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Data exported successfully" },
+          "403": { "description": "Forbidden - Role violation" }
+        }
+      }
     }
   }
 }

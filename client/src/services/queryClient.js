@@ -115,6 +115,10 @@ export const queryKeys = {
     payments: (id) => ['invoices', id, 'payments'],
     pdf: (id) => ['invoices', id, 'pdf']
   },
+  search: {
+    all: ['search'],
+    results: (params = {}) => ['search', 'results', params]
+  },
   audit: {
     all: ['audit'],
     list: (filters = {}) => ['audit', 'list', filters]

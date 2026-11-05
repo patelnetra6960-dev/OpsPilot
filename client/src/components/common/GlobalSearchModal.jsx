@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import {
@@ -24,9 +24,14 @@ import {
   BarChart3,
   Inbox,
   Wrench,
-  Activity
+  Activity,
+  CreditCard,
+  FileText,
+  RefreshCw,
+  ExternalLink
 } from 'lucide-react';
 import { closeSearchModal, toggleTheme, addToast } from '../../store/uiSlice.js';
+import { useGlobalSearchQuery } from '../../features/search/index.js';
 
 export const GlobalSearchModal = () => {
   const dispatch = useDispatch();
@@ -305,15 +310,61 @@ export const GlobalSearchModal = () => {
     );
   }
 
-  const filteredItems = searchIndex.filter((item) => {
-    if (!query.trim()) return true;
-    const q = query.toLowerCase();
-    return (
-      item.title.toLowerCase().includes(q) ||
-      item.subtitle.toLowerCase().includes(q) ||
-      item.category.toLowerCase().includes(q)
-    );
-  });
+  const trimmedQuery = query.trim();
+  const { data: liveData, isLoading: isLiveLoading } = useGlobalSearchQuery(
+    { q: trimmedQuery, limit: 6 },
+    { enabled: Boolean(searchModalOpen && trimmedQuery.length >= 1) }
+  );
+
+  const getEntityIcon = (entityType) => {
+    switch (entityType) {
+      case 'employees':
+        return Users;
+      case 'customers':
+        return Building2;
+      case 'projects':
+        return Briefcase;
+      case 'tasks':
+        return Activity;
+      case 'service_requests':
+        return Inbox;
+      case 'inventory':
+        return Boxes;
+      case 'invoices':
+        return CreditCard;
+      default:
+        return FileText;
+    }
+  };
+
+  const liveItems = useMemo(() => {
+    if (!liveData?.data || liveData.data.length === 0) return [];
+    return liveData.data.map((item) => ({
+      id: `live-${item.entity_type}-${item.id}`,
+      title: item.title,
+      subtitle: `${item.subtitle} • Status: ${item.status || 'Active'}`,
+      category: item.entity_type.replace(/_/g, ' ').toUpperCase(),
+      icon: getEntityIcon(item.entity_type),
+      action: () => item.url && navigate(item.url)
+    }));
+  }, [liveData, navigate]);
+
+  const filteredItems = useMemo(() => {
+    const staticFiltered = searchIndex.filter((item) => {
+      if (!trimmedQuery) return true;
+      const q = trimmedQuery.toLowerCase();
+      return (
+        item.title.toLowerCase().includes(q) ||
+        item.subtitle.toLowerCase().includes(q) ||
+        item.category.toLowerCase().includes(q)
+      );
+    });
+
+    if (trimmedQuery) {
+      return [...liveItems, ...staticFiltered];
+    }
+    return staticFiltered;
+  }, [trimmedQuery, liveItems, searchIndex]);
 
   useEffect(() => {
     setSelectedIndex(0);
@@ -395,6 +446,9 @@ export const GlobalSearchModal = () => {
             placeholder="Search pages, workforce, dispatches, settings... (↑↓ to navigate, ↵ to open)"
             className="w-full bg-transparent text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none"
           />
+          {isLiveLoading && (
+            <RefreshCw className="w-4 h-4 text-indigo-500 animate-spin mr-2 shrink-0" />
+          )}
           {query && (
             <button
               type="button"
@@ -502,7 +556,17 @@ export const GlobalSearchModal = () => {
               to select
             </span>
           </div>
-          <span>OpsPilot Global Command</span>
+          <button
+            type="button"
+            onClick={() => {
+              dispatch(closeSearchModal());
+              navigate(query ? `/search?q=${encodeURIComponent(query)}` : '/search');
+            }}
+            className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
+          >
+            <span>Full Search & Reports</span>
+            <ExternalLink className="w-3 h-3" />
+          </button>
         </div>
       </div>
     </div>

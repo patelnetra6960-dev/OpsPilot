@@ -38,11 +38,13 @@ export const sendPaginated = (
       page: pagination.page || 1,
       limit: pagination.limit || data.length,
       total: pagination.total ?? data.length,
+      totalItems: pagination.totalItems ?? pagination.total ?? data.length,
       totalPages:
         pagination.totalPages ||
         Math.ceil((pagination.total || data.length) / (pagination.limit || 1)),
       hasNextPage: Boolean(pagination.hasNextPage),
-      hasPrevPage: Boolean(pagination.hasPrevPage)
+      hasPrevPage: Boolean(pagination.hasPrevPage),
+      hasPreviousPage: Boolean(pagination.hasPreviousPage ?? pagination.hasPrevPage)
     },
     meta: {
       timestamp: new Date().toISOString(),

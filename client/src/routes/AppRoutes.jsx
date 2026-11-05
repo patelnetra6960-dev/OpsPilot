@@ -50,6 +50,7 @@ import WorkOrdersPage from '../pages/workorders/WorkOrdersPage.jsx';
 import InventoryPage from '../pages/inventory/InventoryPage.jsx';
 import ExpensesPage from '../pages/expenses/ExpensesPage.jsx';
 import AnalyticsPage from '../pages/analytics/AnalyticsPage.jsx';
+import SearchPage from '../pages/search/SearchPage.jsx';
 
 // Dynamic Role Home Component for root path ("/")
 const DynamicRoleHome = () => {
@@ -138,6 +139,7 @@ export const AppRoutes = () => {
           <Route path="/expenses" element={<ExpensesPage />} />
           <Route path="/invoices" element={<InvoicesPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route path="/search" element={<SearchPage />} />
           <Route path="/clients" element={<ClientsPage />} />
           <Route path="/documents" element={<DocumentsPage />} />
           <Route path="/audit" element={<AuditPage />} />
