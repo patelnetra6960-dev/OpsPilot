@@ -270,19 +270,133 @@ export const mockDatabase = {
       id: 'cust-acme-1',
       organization_id: '11111111-1111-1111-1111-111111111111',
       name: 'Metro Health System',
+      company_name: 'Metro Health System Inc.',
+      contact_name: 'Rachel Green',
       email: 'rachel.green@metrohealth.com',
+      phone: '+1 (555) 234-8901',
       user_id: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
       sla_tier: 'critical',
-      status: 'active'
+      status: 'active',
+      customer_code: 'CUST-ACME-001',
+      lead_status: 'active',
+      follow_up_date: '2026-11-20',
+      follow_up_notes: 'Quarterly review of telemetry cooling loops and equipment warranties',
+      address: {
+        street: '742 Evergreen Terrace, Suite 400',
+        city: 'Metropolis',
+        state: 'NY',
+        postal_code: '10001',
+        country: 'USA'
+      },
+      created_at: new Date('2026-02-15T08:00:00Z').toISOString(),
+      updated_at: new Date('2026-02-15T08:00:00Z').toISOString()
+    },
+    {
+      id: 'cust-acme-2',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      name: 'Pacific Freight Express',
+      company_name: 'Pacific Freight Express LLC',
+      contact_name: 'Marcus Vance',
+      email: 'marcus.v@pacificfreight.com',
+      phone: '+1 (555) 345-1209',
+      user_id: null,
+      sla_tier: 'premium',
+      status: 'active',
+      customer_code: 'CUST-ACME-002',
+      lead_status: 'active',
+      follow_up_date: '2026-11-18',
+      follow_up_notes: 'Follow up on DC fast charging transformer deployment',
+      address: {
+        street: '108 Harbor Way, Pier 9',
+        city: 'Seattle',
+        state: 'WA',
+        postal_code: '98101',
+        country: 'USA'
+      },
+      created_at: new Date('2026-03-10T10:00:00Z').toISOString(),
+      updated_at: new Date('2026-03-10T10:00:00Z').toISOString()
+    },
+    {
+      id: 'cust-acme-3',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      name: 'Metro Retail Distribution Co.',
+      company_name: 'Metro Retail Distribution Co.',
+      contact_name: 'Olivia Parker',
+      email: 'olivia.p@metrologistics.com',
+      phone: '+1 (555) 456-7890',
+      user_id: null,
+      sla_tier: 'standard',
+      status: 'lead',
+      customer_code: 'CUST-ACME-003',
+      lead_status: 'lead',
+      follow_up_date: '2026-11-15',
+      follow_up_notes: 'Initial demo of automated conveyor belt sensor telemetry',
+      address: {
+        street: '450 Industrial Parkway',
+        city: 'Chicago',
+        state: 'IL',
+        postal_code: '60601',
+        country: 'USA'
+      },
+      created_at: new Date('2026-04-01T09:00:00Z').toISOString(),
+      updated_at: new Date('2026-04-01T09:00:00Z').toISOString()
     },
     {
       id: 'cust-apex-1',
       organization_id: '22222222-2222-2222-2222-222222222222',
       name: 'Pinnacle Energy Corp',
+      company_name: 'Pinnacle Energy Corporation',
+      contact_name: 'Elena Rostova',
       email: 'contact@pinnacle.com',
+      phone: '+44 20 7946 0912',
       user_id: null,
       sla_tier: 'premium',
-      status: 'active'
+      status: 'active',
+      customer_code: 'CUST-APEX-001',
+      lead_status: 'active',
+      follow_up_date: null,
+      follow_up_notes: null,
+      address: {
+        street: '22 Bishopsgate',
+        city: 'London',
+        state: 'Greater London',
+        postal_code: 'EC2N 4BQ',
+        country: 'UK'
+      },
+      created_at: new Date('2026-02-20T11:00:00Z').toISOString(),
+      updated_at: new Date('2026-02-20T11:00:00Z').toISOString()
+    }
+  ],
+  customer_notes: [
+    {
+      id: 'cn-1',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      customer_id: 'cust-acme-1',
+      author_id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      author_name: 'Alex Rivera',
+      note: 'Client requested priority 2-hour SLA response for surgical ward HVAC systems and backup generator loops.',
+      created_at: new Date('2026-10-15T10:30:00Z').toISOString()
+    },
+    {
+      id: 'cn-2',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      customer_id: 'cust-acme-1',
+      author_id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+      author_name: 'Sarah Chen',
+      note: 'Verified MRI chilling telemetry connectivity. Sensor calibrated on 2026-10-28.',
+      created_at: new Date('2026-10-28T14:15:00Z').toISOString()
+    }
+  ],
+  customer_feedback: [
+    {
+      id: 'fb-1',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      customer_id: 'cust-acme-1',
+      service_request_id: 'sr-1',
+      rating: 5,
+      comments:
+        'Technician arrived within 45 minutes and fixed the flow sensor promptly. Excellent work!',
+      created_at: new Date('2026-11-01T14:20:00Z').toISOString()
     }
   ],
   serviceRequests: [
@@ -292,8 +406,17 @@ export const mockDatabase = {
       customer_id: 'cust-acme-1',
       request_code: 'SR-2026-001',
       title: 'MRI Cooling Loop Flow Failure',
+      description: 'Chilled water flow in MRI suite Bay 3 dropped below safe operating threshold.',
+      location: 'Main Medical Tower - Radiology Bay 3',
+      service_type: 'repair',
       status: 'assigned',
-      urgency: 'critical'
+      urgency: 'critical',
+      step: 3,
+      eta: 'Today at 02:30 PM',
+      assigned_to: 'w1',
+      assigned_technician: 'David Miller',
+      created_at: new Date('2026-11-04T08:30:00Z').toISOString(),
+      updated_at: new Date('2026-11-04T09:00:00Z').toISOString()
     },
     {
       id: 'sr-2',
@@ -301,17 +424,35 @@ export const mockDatabase = {
       customer_id: 'cust-apex-1',
       request_code: 'SR-APEX-001',
       title: 'Substation Transformer Overheating',
+      description: 'Transformer 4 thermal sensor reporting 88C under normal load.',
+      location: 'Substation Yard East',
+      service_type: 'safety',
       status: 'new',
-      urgency: 'high'
+      urgency: 'high',
+      step: 1,
+      eta: 'Awaiting Dispatch',
+      assigned_to: null,
+      assigned_technician: null,
+      created_at: new Date('2026-11-03T11:00:00Z').toISOString(),
+      updated_at: new Date('2026-11-03T11:00:00Z').toISOString()
     },
     {
       id: 'sr-3',
       organization_id: '11111111-1111-1111-1111-111111111111',
-      customer_id: 'cust-acme-2', // Different customer in Acme
+      customer_id: 'cust-acme-2',
       request_code: 'SR-2026-003',
       title: 'Ventilation Fan Sensor Offline',
-      status: 'pending',
-      urgency: 'medium'
+      description: 'Fleet garage exhaust sensor communication lost.',
+      location: 'Fleet Depot Bay 7',
+      service_type: 'maintenance',
+      status: 'in_review',
+      urgency: 'normal',
+      step: 2,
+      eta: 'Tomorrow at 10:00 AM',
+      assigned_to: 'w3',
+      assigned_technician: 'Liam Patel',
+      created_at: new Date('2026-11-04T12:00:00Z').toISOString(),
+      updated_at: new Date('2026-11-04T12:00:00Z').toISOString()
     }
   ],
   invoices: [
@@ -320,16 +461,106 @@ export const mockDatabase = {
       organization_id: '11111111-1111-1111-1111-111111111111',
       customer_id: 'cust-acme-1',
       invoice_number: 'INV-2026-001',
+      issue_date: '2026-11-01',
+      due_date: '2026-11-30',
+      subtotal: 2950.0,
+      tax: 250.0,
       total: 3200.0,
-      status: 'pending'
+      status: 'pending',
+      desc: 'Monthly Scheduled Chiller & HVAC Facility Maintenance',
+      items: [
+        {
+          id: 'ii-1',
+          description: 'Preventative Chiller Maintenance',
+          quantity: 1,
+          unit_price: 2450.0,
+          total_price: 2450.0
+        },
+        {
+          id: 'ii-2',
+          description: 'High-Pressure Refrigerant Seal Replacement',
+          quantity: 2,
+          unit_price: 250.0,
+          total_price: 500.0
+        }
+      ],
+      created_at: new Date('2026-11-01T08:00:00Z').toISOString()
     },
     {
       id: 'inv-2',
       organization_id: '22222222-2222-2222-2222-222222222222',
       customer_id: 'cust-apex-1',
       invoice_number: 'INV-APEX-001',
+      issue_date: '2026-10-15',
+      due_date: '2026-11-15',
+      subtotal: 6800.0,
+      tax: 700.0,
       total: 7500.0,
-      status: 'paid'
+      status: 'paid',
+      desc: 'High-Voltage Switchgear Preventive Maintenance',
+      items: [
+        {
+          id: 'ii-3',
+          description: 'Switchgear Busbar Inspection & Thermal Scan',
+          quantity: 1,
+          unit_price: 6800.0,
+          total_price: 6800.0
+        }
+      ],
+      created_at: new Date('2026-10-15T09:00:00Z').toISOString()
+    },
+    {
+      id: 'inv-3',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      customer_id: 'cust-acme-1',
+      invoice_number: 'INV-2026-092',
+      issue_date: '2026-10-01',
+      due_date: '2026-10-31',
+      subtotal: 1650.0,
+      tax: 150.0,
+      total: 1800.0,
+      status: 'paid',
+      desc: 'Quarterly Sensor Calibration & Safety Certifications',
+      items: [
+        {
+          id: 'ii-4',
+          description: 'Precision Temperature Sensor Recalibration (x6)',
+          quantity: 6,
+          unit_price: 200.0,
+          total_price: 1200.0
+        },
+        {
+          id: 'ii-5',
+          description: 'OSHA / Facility Safety Certification Documentation',
+          quantity: 1,
+          unit_price: 450.0,
+          total_price: 450.0
+        }
+      ],
+      created_at: new Date('2026-10-01T08:00:00Z').toISOString()
+    },
+    {
+      id: 'inv-4',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      customer_id: 'cust-acme-2',
+      invoice_number: 'INV-2026-044',
+      issue_date: '2026-10-20',
+      due_date: '2026-11-20',
+      subtotal: 4100.0,
+      tax: 400.0,
+      total: 4500.0,
+      status: 'pending',
+      desc: 'EV Fast Charger Installation & High-Voltage Transformers',
+      items: [
+        {
+          id: 'ii-6',
+          description: 'Transformer Commissioning',
+          quantity: 1,
+          unit_price: 4100.0,
+          total_price: 4100.0
+        }
+      ],
+      created_at: new Date('2026-10-20T08:00:00Z').toISOString()
     }
   ],
   expenses: [

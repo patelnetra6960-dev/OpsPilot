@@ -37,7 +37,19 @@ export const queryKeys = {
   customers: {
     all: ['customers'],
     list: (filters = {}) => ['customers', 'list', filters],
-    detail: (id) => ['customers', 'detail', id]
+    detail: (id) => ['customers', 'detail', id],
+    notes: (id) => ['customers', id, 'notes'],
+    history: (id) => ['customers', id, 'history']
+  },
+  customerPortal: {
+    all: ['customerPortal'],
+    overview: () => ['customerPortal', 'overview'],
+    profile: () => ['customerPortal', 'profile'],
+    serviceRequests: (filters = {}) => ['customerPortal', 'serviceRequests', filters],
+    serviceRequestDetail: (id) => ['customerPortal', 'serviceRequests', id],
+    projects: () => ['customerPortal', 'projects'],
+    invoices: () => ['customerPortal', 'invoices'],
+    invoiceDetail: (id) => ['customerPortal', 'invoices', id]
   },
   projects: {
     all: ['projects'],

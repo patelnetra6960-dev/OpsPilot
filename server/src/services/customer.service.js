@@ -1,5 +1,6 @@
 import BaseService from './base.service.js';
 import customerRepository from '../repositories/customer.repository.js';
+import auditService from './audit.service.js';
 import { ConflictError } from '../utils/errors.js';
 import { mockDatabase, supabaseAdmin } from '../config/supabase.js';
 import env from '../config/env.js';
@@ -42,8 +43,87 @@ export class CustomerService extends BaseService {
     return {
       ...payload,
       email,
-      customer_code: payload.customer_code || `CUST-${Math.floor(100000 + Math.random() * 900000)}`
+      customer_code: payload.customer_code || `CUST-${Math.floor(100000 + Math.random() * 900000)}`,
+      sla_tier: payload.sla_tier || 'standard',
+      status: payload.status || 'active',
+      lead_status: payload.lead_status || 'active'
     };
+  }
+
+  async afterCreate(createdRecord, organizationId, context = {}) {
+    await auditService.recordSecurityEvent({
+      organizationId,
+      userId: context.user?.id,
+      action: 'CUSTOMER_CREATED',
+      entityType: 'CUSTOMER',
+      entityId: createdRecord.id,
+      metadata: { name: createdRecord.name, email: createdRecord.email }
+    });
+    return createdRecord;
+  }
+
+  /**
+   * Get notes thread for customer
+   */
+  async getNotes(customerId, organizationId) {
+    this.assertTenant(organizationId);
+    await this.getById(customerId, organizationId);
+    return customerRepository.findNotes(customerId, organizationId);
+  }
+
+  /**
+   * Add internal note for customer
+   */
+  async addNote(customerId, organizationId, payload, context = {}) {
+    this.assertTenant(organizationId);
+    await this.getById(customerId, organizationId);
+
+    const note = await customerRepository.addNote(customerId, organizationId, {
+      note: payload.note,
+      author_id: context.user?.id || null,
+      author_name: context.user?.full_name || 'Ops Team Member'
+    });
+
+    await auditService.recordSecurityEvent({
+      organizationId,
+      userId: context.user?.id,
+      action: 'CUSTOMER_NOTE_ADDED',
+      entityType: 'CUSTOMER',
+      entityId: customerId,
+      metadata: { noteId: note.id }
+    });
+
+    return note;
+  }
+
+  /**
+   * Get interaction and transaction history
+   */
+  async getHistory(customerId, organizationId) {
+    this.assertTenant(organizationId);
+    await this.getById(customerId, organizationId);
+    return customerRepository.findHistory(customerId, organizationId);
+  }
+
+  /**
+   * Update lead stage and follow-up
+   */
+  async updateFollowUp(customerId, organizationId, payload, context = {}) {
+    this.assertTenant(organizationId);
+    await this.getById(customerId, organizationId);
+
+    const updated = await customerRepository.updateFollowUp(customerId, organizationId, payload);
+
+    await auditService.recordSecurityEvent({
+      organizationId,
+      userId: context.user?.id,
+      action: 'CUSTOMER_FOLLOWUP_UPDATED',
+      entityType: 'CUSTOMER',
+      entityId: customerId,
+      metadata: { lead_status: payload.lead_status, follow_up_date: payload.follow_up_date }
+    });
+
+    return updated;
   }
 
   /**
