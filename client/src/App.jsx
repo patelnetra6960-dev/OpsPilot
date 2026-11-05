@@ -7,6 +7,7 @@ import { fetchMyOrganizations } from './store/tenantSlice.js';
 import { addToast } from './store/uiSlice.js';
 import { authService } from './services/authService.js';
 import { supabase } from './services/supabaseClient.js';
+import { SocketProvider } from './features/notifications/context/SocketContext.jsx';
 
 export function App() {
   const dispatch = useDispatch();
@@ -97,7 +98,9 @@ export function App() {
 
   return (
     <BrowserRouter>
-      <AppRoutes />
+      <SocketProvider>
+        <AppRoutes />
+      </SocketProvider>
     </BrowserRouter>
   );
 }

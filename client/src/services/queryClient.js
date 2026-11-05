@@ -119,6 +119,11 @@ export const queryKeys = {
     all: ['search'],
     results: (params = {}) => ['search', 'results', params]
   },
+  notifications: {
+    all: ['notifications'],
+    list: (filters = {}) => ['notifications', 'list', filters],
+    unreadCount: () => ['notifications', 'unreadCount']
+  },
   audit: {
     all: ['audit'],
     list: (filters = {}) => ['audit', 'list', filters]

@@ -1,6 +1,7 @@
 import BaseService from './base.service.js';
 import taskRepository from '../repositories/task.repository.js';
 import auditService from './audit.service.js';
+import notificationService from './notification.service.js';
 
 export class TaskService extends BaseService {
   constructor() {
@@ -28,6 +29,13 @@ export class TaskService extends BaseService {
         organizationId,
         createdRecord.assigned_to
       );
+
+      await notificationService.notifyTaskAssigned({
+        organizationId,
+        task: createdRecord,
+        assignedUserId: createdRecord.assigned_to,
+        assignedByName: context.user?.full_name || 'Manager'
+      });
     }
 
     await auditService.recordSecurityEvent({
@@ -52,6 +60,13 @@ export class TaskService extends BaseService {
     const oldColumn = existing.column_name || existing.column || 'todo';
     const updated = await taskRepository.transitionStatus(taskId, organizationId, newColumn);
 
+    await notificationService.notifyTaskStatusUpdated({
+      organizationId,
+      task: updated,
+      updatedByName: context.user?.full_name || 'Team member',
+      previousStatus: oldColumn
+    });
+
     await auditService.recordSecurityEvent({
       organizationId,
       userId: context.user?.id,
@@ -72,8 +87,15 @@ export class TaskService extends BaseService {
 
   async assignMember(taskId, organizationId, workforceMemberId, context = {}) {
     this.assertTenant(organizationId);
-    await this.getById(taskId, organizationId);
+    const existing = await this.getById(taskId, organizationId);
     const assignment = await taskRepository.assignMember(taskId, organizationId, workforceMemberId);
+
+    await notificationService.notifyTaskAssigned({
+      organizationId,
+      task: existing,
+      assignedUserId: workforceMemberId,
+      assignedByName: context.user?.full_name || 'Manager'
+    });
 
     await auditService.recordSecurityEvent({
       organizationId,

@@ -1,6 +1,7 @@
 import BaseService from './base.service.js';
 import projectRepository from '../repositories/project.repository.js';
 import auditService from './audit.service.js';
+import notificationService from './notification.service.js';
 
 export class ProjectService extends BaseService {
   constructor() {
@@ -27,6 +28,14 @@ export class ProjectService extends BaseService {
       entityId: createdRecord.id,
       metadata: { code: createdRecord.project_code, name: createdRecord.name }
     });
+
+    notificationService.notifyProjectUpdated({
+      organizationId,
+      project: createdRecord,
+      updatedByName: context.user?.full_name || 'Project Manager',
+      action: 'created'
+    });
+
     return createdRecord;
   }
 

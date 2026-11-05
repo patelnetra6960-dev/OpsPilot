@@ -3,6 +3,7 @@ import { supabaseAdmin, mockDatabase } from '../config/supabase.js';
 import env from '../config/env.js';
 import { ValidationError, NotFoundError, ForbiddenError, ConflictError } from '../utils/errors.js';
 import auditService from './audit.service.js';
+import notificationService from './notification.service.js';
 
 export class ExpenseService {
   /**
@@ -176,6 +177,7 @@ export class ExpenseService {
 
     const payload = {
       claim_code: claimCode,
+      user_id: userId,
       workforce_member_id: workforceMemberId,
       workforce_name: workforceMemberName,
       work_order_id: expenseData.work_order_id || null,
@@ -289,6 +291,14 @@ export class ExpenseService {
       metadata: { claimCode: current.claim_code }
     });
 
+    await notificationService.notifyExpenseReviewed({
+      organizationId,
+      expense: current,
+      reviewerName: approverName,
+      status: 'approved',
+      reason: notes
+    });
+
     return updated;
   }
 
@@ -336,6 +346,14 @@ export class ExpenseService {
       entityType: 'EXPENSE',
       entityId: id,
       metadata: { claimCode: current.claim_code, reason: rejection_reason }
+    });
+
+    await notificationService.notifyExpenseReviewed({
+      organizationId,
+      expense: current,
+      reviewerName: approverName,
+      status: 'rejected',
+      reason: rejection_reason
     });
 
     return updated;

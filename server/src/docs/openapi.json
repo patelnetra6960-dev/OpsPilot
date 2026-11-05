@@ -3563,6 +3563,66 @@
           "403": { "description": "Forbidden - Role violation" }
         }
       }
+    },
+    "/notifications": {
+      "get": {
+        "summary": "List paginated notifications for current authenticated user",
+        "tags": ["Notifications"],
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "maximum": 100, "default": 20 } },
+          { "name": "is_read", "in": "query", "schema": { "type": "string", "enum": ["true", "false"] } },
+          { "name": "type", "in": "query", "schema": { "type": "string", "enum": ["info", "success", "warning", "error", "dispatch", "alert"] } }
+        ],
+        "responses": {
+          "200": { "description": "Notifications retrieved successfully" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/notifications/unread-count": {
+      "get": {
+        "summary": "Get total count of unread notifications for badge",
+        "tags": ["Notifications"],
+        "responses": {
+          "200": { "description": "Unread notification count retrieved" }
+        }
+      }
+    },
+    "/notifications/mark-all-read": {
+      "post": {
+        "summary": "Mark all notifications as read for current user",
+        "tags": ["Notifications"],
+        "responses": {
+          "200": { "description": "All notifications marked as read" }
+        }
+      }
+    },
+    "/notifications/{id}/read": {
+      "patch": {
+        "summary": "Mark single notification as read",
+        "tags": ["Notifications"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Notification marked as read" },
+          "404": { "description": "Notification not found" }
+        }
+      }
+    },
+    "/notifications/{id}": {
+      "delete": {
+        "summary": "Delete a notification",
+        "tags": ["Notifications"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Notification deleted successfully" },
+          "404": { "description": "Notification not found" }
+        }
+      }
     }
   }
 }

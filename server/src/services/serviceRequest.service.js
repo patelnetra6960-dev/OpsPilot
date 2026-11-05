@@ -202,6 +202,13 @@ export class ServiceRequestService extends BaseService {
       actionUrl: '/customer/services'
     });
 
+    await notificationService.notifyServiceRequestUpdated({
+      organizationId,
+      serviceRequest: updated,
+      updatedByName: context.user?.full_name || 'Operations Manager',
+      customerUserId: existing.customer_id
+    });
+
     return updated;
   }
 
@@ -252,6 +259,13 @@ export class ServiceRequestService extends BaseService {
       message: `Your request ${existing.request_code} could not be approved. Reason: ${rejection_reason}`,
       type: 'warning',
       actionUrl: '/customer/services'
+    });
+
+    await notificationService.notifyServiceRequestUpdated({
+      organizationId,
+      serviceRequest: updated,
+      updatedByName: context.user?.full_name || 'Operations Manager',
+      customerUserId: existing.customer_id
     });
 
     return updated;

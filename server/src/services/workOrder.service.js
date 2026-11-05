@@ -352,6 +352,13 @@ export class WorkOrderService extends BaseService {
       metadata: { from: existing.status, to: status, reason }
     });
 
+    await notificationService.notifyWorkOrderUpdated({
+      organizationId,
+      workOrder: updated,
+      updatedByName: context.user?.full_name || 'Operations',
+      targetUserId: updated.assigned_to
+    });
+
     return updated;
   }
 
@@ -616,6 +623,13 @@ export class WorkOrderService extends BaseService {
       entityType: 'WORK_ORDER',
       entityId: id,
       metadata: { closing_notes }
+    });
+
+    await notificationService.notifyWorkOrderUpdated({
+      organizationId,
+      workOrder: updated,
+      updatedByName: context.user?.full_name || 'Operations Manager',
+      targetUserId: updated.assigned_to
     });
 
     return updated;
