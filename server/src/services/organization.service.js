@@ -2,6 +2,95 @@ import crypto from 'crypto';
 import organizationRepository from '../repositories/organization.repository.js';
 import { supabaseAdmin, mockDatabase } from '../config/supabase.js';
 import env from '../config/env.js';
+import subscriptionService from './subscription.service.js';
+
+function buildDefaultSettings(tier = 'starter', customSettings = {}) {
+  const trialDays = tier === 'enterprise' ? 30 : 14;
+  const trialEndIso = new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000).toISOString();
+  const nowIso = new Date().toISOString();
+
+  return {
+    theme: customSettings.theme || 'system',
+    timezone: customSettings.timezone || 'UTC',
+    currency: customSettings.currency || 'USD',
+    locale: customSettings.locale || 'en-US',
+    date_format: customSettings.date_format || 'YYYY-MM-DD',
+    fiscal_year_start: customSettings.fiscal_year_start || 1,
+    branding: {
+      logo_url: null,
+      primary_color: '#4F46E5',
+      accent_color: '#06B6D4',
+      website: '',
+      contact_email: '',
+      contact_phone: '',
+      address: {
+        street: '',
+        city: '',
+        state: '',
+        postal_code: '',
+        country: ''
+      },
+      ...(customSettings.branding || {})
+    },
+    preferences: {
+      timezone: customSettings.timezone || customSettings.preferences?.timezone || 'UTC',
+      locale: customSettings.locale || customSettings.preferences?.locale || 'en-US',
+      currency: customSettings.currency || customSettings.preferences?.currency || 'USD',
+      date_format: customSettings.date_format || customSettings.preferences?.date_format || 'YYYY-MM-DD',
+      fiscal_year_start: customSettings.fiscal_year_start || customSettings.preferences?.fiscal_year_start || 1,
+      business_hours: customSettings.businessHours || customSettings.preferences?.business_hours || {
+        monday: { open: '08:00', close: '17:00', closed: false },
+        tuesday: { open: '08:00', close: '17:00', closed: false },
+        wednesday: { open: '08:00', close: '17:00', closed: false },
+        thursday: { open: '08:00', close: '17:00', closed: false },
+        friday: { open: '08:00', close: '17:00', closed: false },
+        saturday: { open: '09:00', close: '14:00', closed: false },
+        sunday: { open: '00:00', close: '00:00', closed: true }
+      }
+    },
+    notifications: {
+      email_alerts: true,
+      sms_alerts: true,
+      push_alerts: true,
+      webhook_url: null,
+      events: {
+        shift_reminders: true,
+        dispatch_alerts: true,
+        overdue_tasks: true,
+        invoice_due: true,
+        expense_approvals: true,
+        audit_security: false
+      },
+      ...(customSettings.notifications || {})
+    },
+    subscription: {
+      plan_tier: tier,
+      status: 'trialing',
+      billing_cycle: 'monthly',
+      trial_ends_at: trialEndIso,
+      current_period_start: nowIso,
+      current_period_end: trialEndIso,
+      cancel_at_period_end: false,
+      history: [
+        {
+          id: `sub-init-${Date.now()}`,
+          date: nowIso,
+          action: 'trial_started',
+          from_tier: null,
+          to_tier: tier,
+          billing_cycle: 'monthly',
+          amount: 0,
+          currency: customSettings.currency || 'USD',
+          status: 'trial_active',
+          invoice_number: `TRL-${Date.now().toString().slice(-6)}`,
+          notes: `${trialDays}-Day ${tier} trial initialized`
+        }
+      ],
+      ...(customSettings.subscription || {})
+    },
+    ...customSettings
+  };
+}
 
 export const organizationService = {
   /**
@@ -90,6 +179,8 @@ export const organizationService = {
         .replace(/[^a-z0-9]/g, '-')
         .replace(/-+/g, '-');
 
+    const defaultSettings = buildDefaultSettings(subscription_tier, settings);
+
     if (env.isMockMode || !supabaseAdmin) {
       const newOrg = {
         id: `org-${Date.now()}`,
@@ -97,7 +188,7 @@ export const organizationService = {
         slug: formattedSlug,
         subscription_tier,
         is_active: true,
-        settings,
+        settings: defaultSettings,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         role: 'owner'
@@ -127,7 +218,7 @@ export const organizationService = {
         name,
         slug: formattedSlug,
         subscription_tier,
-        settings
+        settings: defaultSettings
       })
       .select()
       .single();
@@ -189,6 +280,20 @@ export const organizationService = {
   },
 
   /**
+   * Get Organization Settings with Complete Enterprise Branding, Preferences & Subscriptions
+   */
+  async getSettings(orgId) {
+    const org = await this.getById(orgId);
+    if (!org) {
+      const err = new Error(`Organization '${orgId}' not found`);
+      err.status = 404;
+      err.code = 'NOT_FOUND';
+      throw err;
+    }
+    return buildDefaultSettings(org.subscription_tier, org.settings || {});
+  },
+
+  /**
    * Update Organization Settings
    */
   async updateSettings(orgId, settingsUpdates) {
@@ -200,15 +305,67 @@ export const organizationService = {
       throw err;
     }
 
+    const currentSettings = buildDefaultSettings(org.subscription_tier, org.settings || {});
+
+    // Sync top-level & preferences fields bidirectionally
+    const tz =
+      settingsUpdates.timezone ||
+      settingsUpdates.preferences?.timezone ||
+      currentSettings.preferences?.timezone ||
+      'UTC';
+    const loc =
+      settingsUpdates.locale ||
+      settingsUpdates.preferences?.locale ||
+      currentSettings.preferences?.locale ||
+      'en-US';
+    const cur =
+      settingsUpdates.currency ||
+      settingsUpdates.preferences?.currency ||
+      currentSettings.preferences?.currency ||
+      'USD';
+    const df =
+      settingsUpdates.date_format ||
+      settingsUpdates.preferences?.date_format ||
+      currentSettings.preferences?.date_format ||
+      'YYYY-MM-DD';
+
     const mergedSettings = {
-      ...(org.settings || {}),
-      ...settingsUpdates
+      ...currentSettings,
+      ...settingsUpdates,
+      timezone: tz,
+      locale: loc,
+      currency: cur,
+      date_format: df,
+      branding: {
+        ...(currentSettings.branding || {}),
+        ...(settingsUpdates.branding || {})
+      },
+      preferences: {
+        ...(currentSettings.preferences || {}),
+        ...(settingsUpdates.preferences || {}),
+        timezone: tz,
+        locale: loc,
+        currency: cur,
+        date_format: df
+      },
+      notifications: {
+        ...(currentSettings.notifications || {}),
+        ...(settingsUpdates.notifications || {}),
+        events: {
+          ...(currentSettings.notifications?.events || {}),
+          ...(settingsUpdates.notifications?.events || {})
+        }
+      }
     };
 
     if (env.isMockMode || !supabaseAdmin) {
-      const idx = (mockDatabase.organizations || []).findIndex((o) => o.id === orgId);
-      mockDatabase.organizations[idx].settings = mergedSettings;
-      mockDatabase.organizations[idx].updated_at = new Date().toISOString();
+      const idx = (mockDatabase.organizations || []).findIndex(
+        (o) => o.id === orgId || o.slug === orgId
+      );
+      if (idx !== -1) {
+        mockDatabase.organizations[idx].settings = mergedSettings;
+        mockDatabase.organizations[idx].updated_at = new Date().toISOString();
+      }
       return mergedSettings;
     }
 
@@ -245,6 +402,9 @@ export const organizationService = {
       err.code = 'FORBIDDEN_CANNOT_ASSIGN_OWNER';
       throw err;
     }
+
+    // Enforce Backend Subscription Resource Limit
+    await subscriptionService.checkResourceLimit(organizationId, 'members');
 
     if (env.isMockMode || !supabaseAdmin) {
       const existing = (mockDatabase.memberships || []).find(
@@ -562,6 +722,9 @@ export const organizationService = {
     departmentId = null,
     invitedBy
   }) {
+    // Enforce Backend Subscription Resource Limit
+    await subscriptionService.checkResourceLimit(organizationId, 'members');
+
     const cleanEmail = email.trim().toLowerCase();
 
     // Check if user already an active member of this organization
@@ -744,6 +907,9 @@ export const organizationService = {
         throw err;
       }
 
+      // Enforce Backend Subscription Resource Limit
+      await subscriptionService.checkResourceLimit(inv.organization_id, 'members');
+
       // 1. Mark invitation accepted
       inv.status = 'accepted';
       inv.updated_at = new Date().toISOString();
@@ -801,6 +967,9 @@ export const organizationService = {
       err.code = 'INVALID_INVITATION_TOKEN';
       throw err;
     }
+
+    // Enforce Backend Subscription Resource Limit
+    await subscriptionService.checkResourceLimit(inv.organization_id, 'members');
 
     // Multi-step inserts
     await supabaseAdmin

@@ -46,8 +46,8 @@ export const organizationController = {
    * Get organization settings
    */
   getSettings: asyncHandler(async (req, res) => {
-    const org = await organizationService.getById(req.tenant.id);
-    return sendSuccess(res, org?.settings || {}, 'Organization settings retrieved');
+    const settings = await organizationService.getSettings(req.tenant.id);
+    return sendSuccess(res, settings, 'Organization settings retrieved');
   }),
 
   /**

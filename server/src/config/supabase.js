@@ -57,7 +57,84 @@ export const mockDatabase = {
       slug: 'acme-logistics',
       subscription_tier: 'enterprise',
       is_active: true,
-      settings: { timezone: 'America/New_York', currency: 'USD' },
+      settings: {
+        theme: 'system',
+        timezone: 'America/New_York',
+        currency: 'USD',
+        locale: 'en-US',
+        date_format: 'YYYY-MM-DD',
+        fiscal_year_start: 1,
+        branding: {
+          logo_url: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=128',
+          primary_color: '#4F46E5',
+          accent_color: '#06B6D4',
+          website: 'https://acme-logistics.global',
+          contact_email: 'alex.director@acme.com',
+          contact_phone: '+1 (555) 392-8100',
+          address: {
+            street: '100 Harbor Way, Suite 400',
+            city: 'New York',
+            state: 'NY',
+            postal_code: '10004',
+            country: 'United States'
+          }
+        },
+        preferences: {
+          timezone: 'America/New_York',
+          locale: 'en-US',
+          currency: 'USD',
+          date_format: 'YYYY-MM-DD',
+          fiscal_year_start: 1,
+          business_hours: {
+            monday: { open: '08:00', close: '18:00', closed: false },
+            tuesday: { open: '08:00', close: '18:00', closed: false },
+            wednesday: { open: '08:00', close: '18:00', closed: false },
+            thursday: { open: '08:00', close: '18:00', closed: false },
+            friday: { open: '08:00', close: '18:00', closed: false },
+            saturday: { open: '09:00', close: '14:00', closed: false },
+            sunday: { open: '00:00', close: '00:00', closed: true }
+          }
+        },
+        notifications: {
+          email_alerts: true,
+          sms_alerts: true,
+          push_alerts: true,
+          webhook_url: 'https://hooks.acme-logistics.global/opspilot',
+          events: {
+            shift_reminders: true,
+            dispatch_alerts: true,
+            overdue_tasks: true,
+            invoice_due: true,
+            expense_approvals: true,
+            audit_security: false
+          }
+        },
+        subscription: {
+          plan_tier: 'enterprise',
+          status: 'active',
+          billing_cycle: 'yearly',
+          trial_ends_at: null,
+          current_period_start: '2026-01-01T00:00:00.000Z',
+          current_period_end: '2027-01-01T00:00:00.000Z',
+          cancel_at_period_end: false,
+          payment_method: 'Simulated Amex •••• 8821',
+          history: [
+            {
+              id: 'sub-hist-acme-01',
+              date: '2026-01-01T00:00:00.000Z',
+              action: 'plan_upgraded',
+              from_tier: 'growth',
+              to_tier: 'enterprise',
+              billing_cycle: 'yearly',
+              amount: 7990.0,
+              currency: 'USD',
+              status: 'simulated_paid',
+              invoice_number: 'INV-ACM-2026-001',
+              notes: 'Annual Enterprise Plan agreement executed'
+            }
+          ]
+        }
+      },
       created_at: new Date('2026-01-01').toISOString(),
       updated_at: new Date('2026-01-01').toISOString()
     },
@@ -67,7 +144,84 @@ export const mockDatabase = {
       slug: 'apex-field-services',
       subscription_tier: 'growth',
       is_active: true,
-      settings: { timezone: 'Europe/London', currency: 'GBP' },
+      settings: {
+        theme: 'system',
+        timezone: 'Europe/London',
+        currency: 'GBP',
+        locale: 'en-GB',
+        date_format: 'DD/MM/YYYY',
+        fiscal_year_start: 4,
+        branding: {
+          logo_url: 'https://images.unsplash.com/photo-1572021335469-31706a17aaef?w=128',
+          primary_color: '#0D9488',
+          accent_color: '#F59E0B',
+          website: 'https://apexfields.co.uk',
+          contact_email: 'marcus.lead@apex.com',
+          contact_phone: '+44 20 7946 0912',
+          address: {
+            street: '14 Bishopsgate',
+            city: 'London',
+            state: 'Greater London',
+            postal_code: 'EC2N 4BQ',
+            country: 'United Kingdom'
+          }
+        },
+        preferences: {
+          timezone: 'Europe/London',
+          locale: 'en-GB',
+          currency: 'GBP',
+          date_format: 'DD/MM/YYYY',
+          fiscal_year_start: 4,
+          business_hours: {
+            monday: { open: '08:30', close: '17:30', closed: false },
+            tuesday: { open: '08:30', close: '17:30', closed: false },
+            wednesday: { open: '08:30', close: '17:30', closed: false },
+            thursday: { open: '08:30', close: '17:30', closed: false },
+            friday: { open: '08:30', close: '17:00', closed: false },
+            saturday: { open: '00:00', close: '00:00', closed: true },
+            sunday: { open: '00:00', close: '00:00', closed: true }
+          }
+        },
+        notifications: {
+          email_alerts: true,
+          sms_alerts: false,
+          push_alerts: true,
+          webhook_url: null,
+          events: {
+            shift_reminders: true,
+            dispatch_alerts: true,
+            overdue_tasks: true,
+            invoice_due: true,
+            expense_approvals: true,
+            audit_security: true
+          }
+        },
+        subscription: {
+          plan_tier: 'growth',
+          status: 'trialing',
+          billing_cycle: 'monthly',
+          trial_ends_at: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
+          current_period_start: '2026-02-01T00:00:00.000Z',
+          current_period_end: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
+          cancel_at_period_end: false,
+          payment_method: 'Simulated Visa •••• 1184',
+          history: [
+            {
+              id: 'sub-hist-apex-01',
+              date: '2026-02-01T00:00:00.000Z',
+              action: 'trial_started',
+              from_tier: null,
+              to_tier: 'growth',
+              billing_cycle: 'monthly',
+              amount: 0.0,
+              currency: 'GBP',
+              status: 'trial_active',
+              invoice_number: 'TRL-APX-2026-001',
+              notes: '14-Day Growth Tier Trial'
+            }
+          ]
+        }
+      },
       created_at: new Date('2026-02-01').toISOString(),
       updated_at: new Date('2026-02-01').toISOString()
     }

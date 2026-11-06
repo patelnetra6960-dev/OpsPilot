@@ -14,13 +14,66 @@ export const updateOrganizationSchema = z.object({
   is_active: z.boolean().optional()
 });
 
-export const updateSettingsSchema = z.object({
+export const brandingSchema = z.object({
+  logo_url: z.string().nullable().optional(),
+  primary_color: z.string().regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, 'Must be a valid hex color').optional(),
+  accent_color: z.string().regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, 'Must be a valid hex color').optional(),
+  website: z.string().url().or(z.literal('')).optional(),
+  contact_email: z.string().email().or(z.literal('')).optional(),
+  contact_phone: z.string().optional(),
+  address: z
+    .object({
+      street: z.string().optional(),
+      city: z.string().optional(),
+      state: z.string().optional(),
+      postal_code: z.string().optional(),
+      country: z.string().optional()
+    })
+    .optional()
+});
+
+export const preferencesSchema = z.object({
   timezone: z.string().optional(),
+  locale: z.string().optional(),
   currency: z.string().length(3).optional(),
+  date_format: z.string().optional(),
+  fiscal_year_start: z.number().int().min(1).max(12).optional(),
+  business_hours: z.record(z.any()).optional()
+});
+
+export const notificationPreferencesSchema = z.object({
+  email_alerts: z.boolean().optional(),
+  sms_alerts: z.boolean().optional(),
+  push_alerts: z.boolean().optional(),
+  webhook_url: z.string().url().nullable().or(z.literal('')).optional(),
+  events: z
+    .object({
+      shift_reminders: z.boolean().optional(),
+      dispatch_alerts: z.boolean().optional(),
+      overdue_tasks: z.boolean().optional(),
+      invoice_due: z.boolean().optional(),
+      expense_approvals: z.boolean().optional(),
+      audit_security: z.boolean().optional()
+    })
+    .optional()
+});
+
+export const updateSettingsSchema = z.object({
+  // Direct top-level fields (backward compatibility)
+  timezone: z.string().optional(),
+  locale: z.string().optional(),
+  currency: z.string().length(3).optional(),
+  date_format: z.string().optional(),
   businessHours: z.record(z.any()).optional(),
   notificationPreferences: z.record(z.any()).optional(),
   theme: z.enum(['light', 'dark', 'system']).optional(),
-  customSettings: z.record(z.any()).optional()
+  customSettings: z.record(z.any()).optional(),
+
+  // Structured enterprise sections
+  branding: brandingSchema.optional(),
+  preferences: preferencesSchema.optional(),
+  notifications: notificationPreferencesSchema.optional(),
+  subscription: z.record(z.any()).optional()
 });
 
 export const createInvitationSchema = z.object({
@@ -49,6 +102,9 @@ export const updateMemberRoleSchema = z.object({
 export default {
   createOrganizationSchema,
   updateOrganizationSchema,
+  brandingSchema,
+  preferencesSchema,
+  notificationPreferencesSchema,
   updateSettingsSchema,
   createInvitationSchema,
   acceptInvitationSchema,

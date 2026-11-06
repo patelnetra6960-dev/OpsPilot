@@ -2,13 +2,18 @@ import BaseService from './base.service.js';
 import projectRepository from '../repositories/project.repository.js';
 import auditService from './audit.service.js';
 import notificationService from './notification.service.js';
+import subscriptionService from './subscription.service.js';
 
 export class ProjectService extends BaseService {
   constructor() {
     super(projectRepository, 'Project');
   }
 
-  async beforeCreate(payload, _organizationId) {
+  async beforeCreate(payload, organizationId) {
+    if (organizationId) {
+      await subscriptionService.checkResourceLimit(organizationId, 'projects');
+    }
+
     const code = payload.project_code || `PRJ-${Date.now().toString().slice(-6)}`;
     return {
       ...payload,

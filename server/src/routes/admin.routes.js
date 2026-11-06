@@ -4,6 +4,12 @@ import { sendSuccess } from '../utils/responseHandler.js';
 import asyncHandler from '../middleware/asyncHandler.js';
 import { mockDatabase, supabaseAdmin } from '../config/supabase.js';
 import env from '../config/env.js';
+import subscriptionController from '../controllers/subscription.controller.js';
+import { validate } from '../middleware/validateMiddleware.js';
+import {
+  superAdminOverrideSchema,
+  updatePlanSchema
+} from '../validators/subscription.validator.js';
 
 const router = Router();
 
@@ -71,6 +77,25 @@ router.get(
     if (error) throw error;
     return sendSuccess(res, data || [], 'All platform organizations fetched');
   })
+);
+
+/**
+ * Super Admin Subscription Management Controls
+ */
+router.get('/subscriptions', subscriptionController.getSuperAdminSubscriptions);
+router.get('/subscriptions/metrics', subscriptionController.getSuperAdminMetrics);
+router.get('/subscriptions/plans', subscriptionController.getPlans);
+
+router.put(
+  '/subscriptions/plans/:tier',
+  validate(updatePlanSchema),
+  subscriptionController.superAdminUpdatePlan
+);
+
+router.patch(
+  '/subscriptions/organizations/:orgId/override',
+  validate(superAdminOverrideSchema),
+  subscriptionController.superAdminOverride
 );
 
 export default router;

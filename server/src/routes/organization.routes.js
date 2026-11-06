@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import organizationController from '../controllers/organization.controller.js';
+import subscriptionController from '../controllers/subscription.controller.js';
 import {
   requireAuth,
   requireTenantRole,
@@ -17,6 +18,11 @@ import {
   addMemberSchema,
   updateMemberRoleSchema
 } from '../validators/organization.validator.js';
+import {
+  upgradeSubscriptionSchema,
+  downgradeSubscriptionSchema,
+  cancelSubscriptionSchema
+} from '../validators/subscription.validator.js';
 
 const router = Router();
 
@@ -55,6 +61,37 @@ router.patch(
   requireTenantRole(['owner', 'admin']),
   validate(updateSettingsSchema),
   organizationController.updateSettings
+);
+
+// Organization Subscription & Usage Management
+router.get('/current/subscription', requireTenant, subscriptionController.getCurrentSubscription);
+router.get('/current/subscription/plans', subscriptionController.getPlans);
+router.post(
+  '/current/subscription/upgrade',
+  requireTenant,
+  requireTenantRole(['owner', 'admin']),
+  validate(upgradeSubscriptionSchema),
+  subscriptionController.upgrade
+);
+router.post(
+  '/current/subscription/downgrade',
+  requireTenant,
+  requireTenantRole(['owner', 'admin']),
+  validate(downgradeSubscriptionSchema),
+  subscriptionController.downgrade
+);
+router.post(
+  '/current/subscription/cancel',
+  requireTenant,
+  requireTenantRole(['owner', 'admin']),
+  validate(cancelSubscriptionSchema),
+  subscriptionController.cancel
+);
+router.post(
+  '/current/subscription/reactivate',
+  requireTenant,
+  requireTenantRole(['owner', 'admin']),
+  subscriptionController.reactivate
 );
 
 // Member management

@@ -2,6 +2,7 @@ import BaseService from './base.service.js';
 import taskRepository from '../repositories/task.repository.js';
 import auditService from './audit.service.js';
 import notificationService from './notification.service.js';
+import subscriptionService from './subscription.service.js';
 
 export class TaskService extends BaseService {
   constructor() {
@@ -9,6 +10,10 @@ export class TaskService extends BaseService {
   }
 
   async beforeCreate(payload, organizationId, context = {}) {
+    if (organizationId) {
+      await subscriptionService.checkResourceLimit(organizationId, 'tasks');
+    }
+
     const code = payload.task_code || `TSK-${Date.now().toString().slice(-4)}`;
     return {
       ...payload,
