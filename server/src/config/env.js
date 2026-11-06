@@ -17,7 +17,9 @@ const envSchema = z.object({
   SUPABASE_ANON_KEY: z.string().default('mock-anon-key'),
   SUPABASE_SERVICE_ROLE_KEY: z.string().default('mock-service-role-key'),
   DATABASE_URL: z.string().optional().default(''),
-  JWT_SECRET: z.string().optional().default('opspilot-local-dev-secret-key-change-in-prod')
+  JWT_SECRET: z.string().optional().default('opspilot-local-dev-secret-key-change-in-prod'),
+  GEMINI_API_KEY: z.string().optional().default(''),
+  OPENAI_API_KEY: z.string().optional().default('')
 });
 
 /**
@@ -60,6 +62,8 @@ export const env = {
   SUPABASE_SERVICE_ROLE_KEY: parsedEnv.SUPABASE_SERVICE_ROLE_KEY,
   DATABASE_URL: parsedEnv.DATABASE_URL,
   JWT_SECRET: parsedEnv.JWT_SECRET,
+  GEMINI_API_KEY: parsedEnv.GEMINI_API_KEY || process.env.GEMINI_API_KEY || '',
+  OPENAI_API_KEY: parsedEnv.OPENAI_API_KEY || process.env.OPENAI_API_KEY || '',
   isProduction: parsedEnv.NODE_ENV === 'production',
   isTest: parsedEnv.NODE_ENV === 'test',
   isMockMode:

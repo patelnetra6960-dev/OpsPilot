@@ -22,7 +22,8 @@ import {
   Inbox,
   Wrench,
   Activity,
-  Search
+  Search,
+  Sparkles
 } from 'lucide-react';
 import { setSidebarOpen } from '../store/uiSlice.js';
 
@@ -49,6 +50,7 @@ export const Sidebar = () => {
             path: '/super-admin/subscriptions',
             icon: CreditCard
           },
+          { label: 'AI Business Assistant', path: '/assistant', icon: Sparkles },
           { label: 'System Diagnostics', path: '/super-admin/system-health', icon: Server },
           { label: 'Global Audit Trail', path: '/super-admin/audit', icon: History }
         ]
@@ -64,6 +66,7 @@ export const Sidebar = () => {
         title: 'Operations Command',
         items: [
           { label: 'Dispatch Center', path: '/manager', icon: LayoutDashboard },
+          { label: 'AI Business Assistant', path: '/assistant', icon: Sparkles },
           { label: 'Team Shift Rota', path: '/shifts', icon: CalendarCheck },
           { label: 'Work Orders', path: '/workorders', icon: Wrench },
           { label: 'Field Dispatches', path: '/dispatch', icon: Send },
@@ -159,6 +162,7 @@ export const Sidebar = () => {
         title: 'Business & Analytics',
         items: [
           { label: 'Analytics & KPIs', path: '/analytics', icon: BarChart3 },
+          { label: 'AI Business Assistant', path: '/assistant', icon: Sparkles },
           { label: 'Clients & Accounts', path: '/clients', icon: Building2 },
           { label: 'Invoices & Billing', path: '/invoices', icon: CreditCard },
           { label: 'Audit Trail', path: '/audit', icon: History }

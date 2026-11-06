@@ -25,6 +25,7 @@ import automationRoutes from './automation.routes.js';
 import shiftRoutes from './shift.routes.js';
 import attendanceRoutes from './attendance.routes.js';
 import subscriptionRoutes from './subscription.routes.js';
+import aiRoutes from './ai.routes.js';
 
 const router = Router();
 
@@ -36,6 +37,7 @@ router.use('/health', healthRoutes);
 router.use('/auth', authRoutes);
 router.use('/organizations', organizationRoutes);
 router.use('/subscriptions', subscriptionRoutes);
+router.use('/ai', aiRoutes);
 router.use('/workforce', workforceRoutes);
 router.use('/shifts', shiftRoutes);
 router.use('/attendance', attendanceRoutes);

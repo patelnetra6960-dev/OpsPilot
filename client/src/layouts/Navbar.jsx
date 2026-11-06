@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { Building2, ChevronDown, Check, ShieldCheck, UserCheck, Menu, Search } from 'lucide-react';
+import { Building2, ChevronDown, Check, ShieldCheck, UserCheck, Menu, Search, Sparkles } from 'lucide-react';
 import { setCurrentTenant } from '../store/tenantSlice.js';
 import { switchDemoPersona } from '../store/authSlice.js';
 import { toggleSidebar, openSearchModal, addToast } from '../store/uiSlice.js';
@@ -10,6 +10,7 @@ import TenantBadge from '../components/common/TenantBadge.jsx';
 import { ThemeToggle } from '../components/ui/index.js';
 import NotificationDropdown from '../components/common/NotificationDropdown.jsx';
 import ProfileDropdown from '../components/common/ProfileDropdown.jsx';
+import AIAssistantDrawer from '../components/ai/AIAssistantDrawer.jsx';
 import { DEMO_PERSONAS, getDefaultRouteForRole } from '../utils/demoPersonas.js';
 
 export const Navbar = () => {
@@ -20,6 +21,7 @@ export const Navbar = () => {
   const { currentTenant, availableTenants } = useSelector((state) => state.tenant);
   const [tenantDropdownOpen, setTenantDropdownOpen] = useState(false);
   const [personaDropdownOpen, setPersonaDropdownOpen] = useState(false);
+  const [aiDrawerOpen, setAiDrawerOpen] = useState(false);
 
   const handleSelectTenant = (tenant) => {
     dispatch(setCurrentTenant(tenant));
@@ -162,6 +164,19 @@ export const Navbar = () => {
         {/* Notification Panel */}
         <NotificationDropdown />
 
+        {/* AI Business Assistant Trigger for Managers / Admins */}
+        {['owner', 'admin', 'manager', 'superadmin'].includes(user?.role) && (
+          <button
+            type="button"
+            onClick={() => setAiDrawerOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-xs hover:shadow-sm transition"
+            title="Open OpsPilot AI Business Assistant"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-200 animate-pulse" />
+            <span className="hidden sm:inline">Ask AI</span>
+          </button>
+        )}
+
         {/* Theme Toggle Button */}
         <ThemeToggle />
 
@@ -224,6 +239,9 @@ export const Navbar = () => {
         {/* Profile Menu Dropdown */}
         <ProfileDropdown />
       </div>
+
+      {/* Slide-over Ambient AI Assistant Drawer */}
+      <AIAssistantDrawer isOpen={aiDrawerOpen} onClose={() => setAiDrawerOpen(false)} />
     </header>
   );
 };
