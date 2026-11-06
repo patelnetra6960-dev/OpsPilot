@@ -21,6 +21,7 @@ import { useAuth } from '../hooks/useAuth.js';
 import { useWorkforceStatsQuery } from '../features/workforce/index.js';
 import { useCurrentOrganizationQuery } from '../features/organizations/index.js';
 import { useAuditLogsQuery } from '../features/audit/index.js';
+import { useOrganizationAnalyticsQuery } from '../features/analytics/index.js';
 import { PROTOTYPE_ANALYTICS } from '../data/prototypeData.js';
 
 export const DashboardPage = () => {
@@ -31,6 +32,9 @@ export const DashboardPage = () => {
   const { data: stats, isLoading: statsLoading } = useWorkforceStatsQuery();
   const { data: orgData } = useCurrentOrganizationQuery({
     enabled: Boolean(currentTenant?.id)
+  });
+  const { data: orgAnalytics } = useOrganizationAnalyticsQuery({
+    range: timeRange.toLowerCase() === 'today' ? '7d' : timeRange.toLowerCase() === 'ytd' ? 'year' : '30d'
   });
 
   const canViewAudit = isAdmin || isOwner;
@@ -250,7 +254,7 @@ export const DashboardPage = () => {
 
             {/* SVG / CSS Bar Chart Visualization */}
             <div className="h-56 flex items-end justify-between gap-3 pt-6 px-2">
-              {PROTOTYPE_ANALYTICS.monthlyRevenueVsExpense.map((item, idx) => {
+              {(orgAnalytics?.trends?.monthlyRevenueVsExpense || PROTOTYPE_ANALYTICS.monthlyRevenueVsExpense).map((item, idx) => {
                 const max = 100000;
                 const revHeight = (item.revenue / max) * 100;
                 const expHeight = (item.expense / max) * 100;

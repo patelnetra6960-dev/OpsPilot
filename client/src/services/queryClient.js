@@ -124,6 +124,12 @@ export const queryKeys = {
     list: (filters = {}) => ['notifications', 'list', filters],
     unreadCount: () => ['notifications', 'unreadCount']
   },
+  analytics: {
+    all: ['analytics'],
+    organization: (filters = {}) => ['analytics', 'organization', filters],
+    manager: (filters = {}) => ['analytics', 'manager', filters],
+    platform: (filters = {}) => ['analytics', 'platform', filters]
+  },
   audit: {
     all: ['audit'],
     list: (filters = {}) => ['audit', 'list', filters]

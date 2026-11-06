@@ -20,6 +20,7 @@ import expensesRoutes from './expenses.routes.js';
 import invoicesRoutes from './invoices.routes.js';
 import searchRoutes, { exportRouter } from './search.routes.js';
 import notificationRoutes from './notification.routes.js';
+import analyticsRoutes from './analytics.routes.js';
 
 const router = Router();
 
@@ -46,6 +47,7 @@ router.use('/invoices', invoicesRoutes);
 router.use('/search', searchRoutes);
 router.use('/export', exportRouter);
 router.use('/notifications', notificationRoutes);
+router.use('/analytics', analyticsRoutes);
 router.use('/audit', auditRoutes);
 router.use('/storage', storageRoutes);
 router.use('/admin', adminRoutes);

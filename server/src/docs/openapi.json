@@ -3623,6 +3623,68 @@
           "404": { "description": "Notification not found" }
         }
       }
+    },
+    "/analytics/organization": {
+      "get": {
+        "summary": "Get organization executive analytics and operational dashboard telemetry",
+        "tags": ["Analytics"],
+        "parameters": [
+          { "name": "range", "in": "query", "schema": { "type": "string", "enum": ["7d", "30d", "90d", "year", "all", "custom"], "default": "30d" } },
+          { "name": "startDate", "in": "query", "schema": { "type": "string", "format": "date" } },
+          { "name": "endDate", "in": "query", "schema": { "type": "string", "format": "date" } }
+        ],
+        "responses": {
+          "200": { "description": "Organization analytics retrieved successfully" },
+          "401": { "description": "Authentication required" },
+          "403": { "description": "Tenant permission boundary violation" }
+        }
+      }
+    },
+    "/analytics/manager": {
+      "get": {
+        "summary": "Get manager team productivity, workload, and overdue task telemetry",
+        "tags": ["Analytics"],
+        "parameters": [
+          { "name": "range", "in": "query", "schema": { "type": "string", "enum": ["7d", "30d", "90d", "year", "all", "custom"], "default": "30d" } },
+          { "name": "startDate", "in": "query", "schema": { "type": "string", "format": "date" } },
+          { "name": "endDate", "in": "query", "schema": { "type": "string", "format": "date" } }
+        ],
+        "responses": {
+          "200": { "description": "Manager analytics retrieved successfully" },
+          "401": { "description": "Authentication required" },
+          "403": { "description": "Manager or Admin permissions required" }
+        }
+      }
+    },
+    "/analytics/platform": {
+      "get": {
+        "summary": "Get platform-wide registered organization metrics and SaaS telemetry (Super Admin only)",
+        "tags": ["Analytics"],
+        "parameters": [
+          { "name": "range", "in": "query", "schema": { "type": "string", "enum": ["7d", "30d", "90d", "year", "all", "custom"], "default": "30d" } }
+        ],
+        "responses": {
+          "200": { "description": "Platform analytics retrieved successfully" },
+          "401": { "description": "Authentication required" },
+          "403": { "description": "Super Admin authorization required" }
+        }
+      }
+    },
+    "/analytics/export": {
+      "get": {
+        "summary": "Export permission-aware analytics report in CSV format",
+        "tags": ["Analytics"],
+        "parameters": [
+          { "name": "type", "in": "query", "schema": { "type": "string", "enum": ["executive", "manager", "platform"], "default": "executive" } },
+          { "name": "range", "in": "query", "schema": { "type": "string", "enum": ["7d", "30d", "90d", "year", "all", "custom"], "default": "30d" } },
+          { "name": "format", "in": "query", "schema": { "type": "string", "enum": ["csv", "json"], "default": "csv" } }
+        ],
+        "responses": {
+          "200": { "description": "CSV report attachment", "content": { "text/csv": {} } },
+          "401": { "description": "Authentication required" },
+          "403": { "description": "Access forbidden" }
+        }
+      }
     }
   }
 }

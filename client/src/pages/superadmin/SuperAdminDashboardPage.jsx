@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   Building2,
   Users,
@@ -8,17 +8,22 @@ import {
   Search,
   ShieldCheck,
   Server,
-  RefreshCw
+  RefreshCw,
+  Download,
+  Send,
+  PieChart
 } from 'lucide-react';
 import { useDispatch } from 'react-redux';
-import { Card, Badge, Button, Input, Select, Modal, Table } from '../../components/ui/index.js';
+import { Card, Badge, Button, Input, Select, Modal, Table, Skeleton } from '../../components/ui/index.js';
 import { addToast } from '../../store/uiSlice.js';
+import { useSuperAdminAnalyticsQuery, downloadAnalyticsReport } from '../../features/analytics/index.js';
 
 export const SuperAdminDashboardPage = () => {
   const dispatch = useDispatch();
   const [search, setSearch] = useState('');
   const [filterTier, setFilterTier] = useState('all');
   const [modalOpen, setModalOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   // New Tenant Form State
   const [newOrgName, setNewOrgName] = useState('');
@@ -26,65 +31,40 @@ export const SuperAdminDashboardPage = () => {
   const [newTier, setNewTier] = useState('growth');
   const [adminEmail, setAdminEmail] = useState('');
 
-  const [tenants, setTenants] = useState([
-    {
-      id: '11111111-1111-1111-1111-111111111111',
-      name: 'Acme Logistics Global',
-      slug: 'acme-logistics',
-      tier: 'enterprise',
-      status: 'active',
-      users_count: 84,
-      storage_mb: 4820,
-      created_at: '2026-01-15'
-    },
-    {
-      id: '22222222-2222-2222-2222-222222222222',
-      name: 'Apex Field Services',
-      slug: 'apex-field-services',
-      tier: 'growth',
-      status: 'active',
-      users_count: 36,
-      storage_mb: 1420,
-      created_at: '2026-02-10'
-    },
-    {
-      id: '33333333-3333-3333-3333-333333333333',
-      name: 'Metro Haulage & Freight',
-      slug: 'metro-haulage',
-      tier: 'starter',
-      status: 'active',
-      users_count: 12,
-      storage_mb: 310,
-      created_at: '2026-03-01'
-    },
-    {
-      id: '44444444-4444-4444-4444-444444444444',
-      name: 'Vanguard Industrial Ops',
-      slug: 'vanguard-ops',
-      tier: 'enterprise',
-      status: 'active',
-      users_count: 120,
-      storage_mb: 9240,
-      created_at: '2026-03-12'
+  const { data: analyticsData, isLoading, refetch } = useSuperAdminAnalyticsQuery();
+
+  const platform = analyticsData?.platform || {};
+  const orgActivity = analyticsData?.organizationActivity || [];
+  const growthTimeline = analyticsData?.growthTimeline || [];
+
+  const handleExportPlatformReport = async () => {
+    try {
+      setIsExporting(true);
+      await downloadAnalyticsReport({ type: 'platform' });
+      dispatch(
+        addToast({
+          type: 'success',
+          title: 'Platform Report Downloaded',
+          message: 'Super Admin platform analytics CSV has been downloaded.'
+        })
+      );
+    } catch {
+      dispatch(
+        addToast({
+          type: 'error',
+          title: 'Export Failed',
+          message: 'Unable to export platform report.'
+        })
+      );
+    } finally {
+      setIsExporting(false);
     }
-  ]);
+  };
 
   const handleCreateTenant = (e) => {
     e.preventDefault();
     if (!newOrgName || !newSlug) return;
 
-    const newTenant = {
-      id: `org-${Date.now()}`,
-      name: newOrgName,
-      slug: newSlug,
-      tier: newTier,
-      status: 'active',
-      users_count: 1,
-      storage_mb: 25,
-      created_at: new Date().toISOString().split('T')[0]
-    };
-
-    setTenants([newTenant, ...tenants]);
     setModalOpen(false);
     setNewOrgName('');
     setNewSlug('');
@@ -94,12 +74,13 @@ export const SuperAdminDashboardPage = () => {
       addToast({
         type: 'success',
         title: 'Tenant Provisioned',
-        message: `${newTenant.name} partition initialized with isolated RLS`
+        message: `${newOrgName} partition initialized with isolated RLS`
       })
     );
+    refetch();
   };
 
-  const filteredTenants = tenants.filter((t) => {
+  const filteredTenants = orgActivity.filter((t) => {
     const matchSearch =
       t.name.toLowerCase().includes(search.toLowerCase()) ||
       t.slug.toLowerCase().includes(search.toLowerCase());
@@ -139,25 +120,34 @@ export const SuperAdminDashboardPage = () => {
       )
     },
     {
-      key: 'users_count',
-      label: 'Active Users',
+      key: 'userCount',
+      label: 'Members',
       sortable: true,
-      render: (val) => <span className="font-mono text-xs">{val} members</span>
+      render: (val) => <span className="font-mono text-xs">{val} users</span>
     },
     {
-      key: 'storage_mb',
-      label: 'Vault Usage',
+      key: 'workOrderCount',
+      label: 'Work Orders',
       sortable: true,
-      render: (val) => <span className="font-mono text-xs">{(val / 1024).toFixed(1)} GB</span>
+      render: (val) => <span className="font-mono text-xs">{val} dispatches</span>
+    },
+    {
+      key: 'invoicedAmount',
+      label: 'Total Invoiced',
+      sortable: true,
+      render: (val) => (
+        <span className="font-mono font-bold text-slate-900 dark:text-white text-xs">
+          ${(val || 0).toLocaleString()}
+        </span>
+      )
     },
     {
       key: 'status',
-      label: 'RLS Status',
-      render: () => (
-        <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-          <ShieldCheck className="w-3.5 h-3.5" />
-          <span>Enforced</span>
-        </div>
+      label: 'Status',
+      render: (val) => (
+        <Badge variant={val === 'active' ? 'success' : 'warning'} size="sm" className="capitalize">
+          {val}
+        </Badge>
       )
     },
     {
@@ -190,20 +180,30 @@ export const SuperAdminDashboardPage = () => {
         <div>
           <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold border border-indigo-200 dark:border-indigo-800/80 mb-1">
             <ShieldCheck className="w-3 h-3" />
-            <span>Platform Master Governance</span>
+            <span>Platform Master Governance & Intelligence</span>
           </div>
           <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
             Super Admin Control Center
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Global multi-tenant infrastructure, tenant provisioning, and platform health telemetry.
+            Global multi-tenant infrastructure, tenant provisioning, cross-organization statistics, and platform health telemetry.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="secondary" size="sm" onClick={() => window.location.reload()}>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={isExporting}
+            onClick={handleExportPlatformReport}
+          >
+            <Download className="w-3.5 h-3.5 mr-1.5" />
+            <span>{isExporting ? 'Exporting...' : 'Export Platform CSV'}</span>
+          </Button>
+
+          <Button variant="secondary" size="sm" onClick={() => refetch()}>
             <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
-            <span>Refresh Telemetry</span>
+            <span>Refresh</span>
           </Button>
 
           <Button variant="primary" size="sm" onClick={() => setModalOpen(true)}>
@@ -213,137 +213,179 @@ export const SuperAdminDashboardPage = () => {
         </div>
       </div>
 
-      {/* Global Platform KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          {
-            title: 'Active Tenants',
-            value: tenants.length,
-            sub: '+2 this month',
-            icon: Building2,
-            color: 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60'
-          },
-          {
-            title: 'Global Platform Users',
-            value: '252',
-            sub: 'Across all active orgs',
-            icon: Users,
-            color: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60'
-          },
-          {
-            title: 'Platform MRR',
-            value: '$12,480',
-            sub: '100% collected on Stripe',
-            icon: DollarSign,
-            color: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60'
-          },
-          {
-            title: 'System Health',
-            value: '99.99%',
-            sub: '28ms API average latency',
-            icon: Activity,
-            color: 'text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-950/60'
-          }
-        ].map((kpi, idx) => {
-          const Icon = kpi.icon;
-          return (
-            <Card key={idx} variant="elevated" className="p-4 flex items-center justify-between">
-              <div>
-                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                  {kpi.title}
-                </span>
-                <div className="text-2xl font-black text-slate-900 dark:text-white mt-1">
-                  {kpi.value}
+      {/* Global Platform KPIs (Prompt 27 Requirement) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        {/* Total Organizations */}
+        <Card variant="elevated" className="p-4 space-y-2">
+          <div className="flex items-center justify-between text-slate-500">
+            <span className="text-[11px] font-bold uppercase tracking-wider">Registered Orgs</span>
+            <div className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+              <Building2 className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div>
+            <div className="text-2xl font-black text-slate-900 dark:text-white">
+              {isLoading ? <Skeleton className="h-7 w-16" /> : platform.totalOrganizations ?? 0}
+            </div>
+            <p className="text-[10px] text-slate-400 mt-0.5">
+              {platform.activeOrganizations ?? 0} active, {platform.suspendedOrganizations ?? 0} suspended
+            </p>
+          </div>
+        </Card>
+
+        {/* Global Platform Users */}
+        <Card variant="elevated" className="p-4 space-y-2">
+          <div className="flex items-center justify-between text-slate-500">
+            <span className="text-[11px] font-bold uppercase tracking-wider">Platform Users</span>
+            <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
+              <Users className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div>
+            <div className="text-2xl font-black text-slate-900 dark:text-white">
+              {isLoading ? <Skeleton className="h-7 w-16" /> : platform.totalUsers ?? 0}
+            </div>
+            <p className="text-[10px] text-slate-400 mt-0.5">Across all registered tenants</p>
+          </div>
+        </Card>
+
+        {/* Total Work Orders */}
+        <Card variant="elevated" className="p-4 space-y-2">
+          <div className="flex items-center justify-between text-slate-500">
+            <span className="text-[11px] font-bold uppercase tracking-wider">Platform Dispatches</span>
+            <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
+              <Send className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div>
+            <div className="text-2xl font-black text-slate-900 dark:text-white">
+              {isLoading ? <Skeleton className="h-7 w-16" /> : platform.totalWorkOrders ?? 0}
+            </div>
+            <p className="text-[10px] text-slate-400 mt-0.5">Total jobs executed</p>
+          </div>
+        </Card>
+
+        {/* Platform Volume */}
+        <Card variant="elevated" className="p-4 space-y-2">
+          <div className="flex items-center justify-between text-slate-500">
+            <span className="text-[11px] font-bold uppercase tracking-wider">Platform Volume</span>
+            <div className="p-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400">
+              <DollarSign className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div>
+            <div className="text-2xl font-black text-slate-900 dark:text-white">
+              {isLoading ? (
+                <Skeleton className="h-7 w-20" />
+              ) : (
+                `$${(platform.totalPlatformVolume ?? 0).toLocaleString()}`
+              )}
+            </div>
+            <p className="text-[10px] text-emerald-500 mt-0.5">Total invoiced volume</p>
+          </div>
+        </Card>
+
+        {/* System Health */}
+        <Card variant="elevated" className="p-4 space-y-2">
+          <div className="flex items-center justify-between text-slate-500">
+            <span className="text-[11px] font-bold uppercase tracking-wider">System SLA</span>
+            <div className="p-1.5 rounded-lg bg-cyan-50 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400">
+              <Activity className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div>
+            <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+              99.99%
+            </div>
+            <p className="text-[10px] text-slate-400 mt-0.5">24ms API latency</p>
+          </div>
+        </Card>
+      </div>
+
+      {/* Subscription Breakdown & Platform Growth */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-4">
+          <Card variant="default" className="p-5 space-y-4">
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <PieChart className="w-4 h-4 text-indigo-500" />
+              <span>Subscription Tier Breakdown</span>
+            </h2>
+
+            <div className="space-y-3 text-xs">
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-indigo-600" />
+                  <span className="font-semibold text-slate-900 dark:text-white">Enterprise</span>
                 </div>
-                <div className="text-[11px] text-slate-400 mt-0.5">{kpi.sub}</div>
+                <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                  {platform.byTier?.enterprise || 0} Orgs
+                </span>
               </div>
-              <div
-                className={`w-10 h-10 rounded-2xl flex items-center justify-center ${kpi.color}`}
-              >
-                <Icon className="w-5 h-5" />
+
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                  <span className="font-semibold text-slate-900 dark:text-white">Growth</span>
+                </div>
+                <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                  {platform.byTier?.growth || 0} Orgs
+                </span>
               </div>
-            </Card>
-          );
-        })}
-      </div>
 
-      {/* Platform Telemetry Diagnostics Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card variant="default" className="p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-              <Server className="w-4 h-4 text-indigo-500" />
-              <span>Database Connection Pool</span>
-            </span>
-            <Badge variant="success" size="sm">
-              Healthy
-            </Badge>
-          </div>
-          <div className="space-y-1">
-            <div className="flex justify-between text-xs text-slate-500">
-              <span>Pool Utilization:</span>
-              <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">
-                18 / 60 Conn
-              </span>
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-slate-400" />
+                  <span className="font-semibold text-slate-900 dark:text-white">Starter</span>
+                </div>
+                <span className="font-mono font-bold text-slate-500">
+                  {platform.byTier?.starter || 0} Orgs
+                </span>
+              </div>
             </div>
-            <div className="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
-              <div className="bg-emerald-500 h-full w-[30%]" />
-            </div>
-          </div>
-          <div className="text-[11px] text-slate-400">
-            PostgreSQL 15+ RDS instance running with zero deadlocks.
-          </div>
-        </Card>
+          </Card>
+        </div>
 
-        <Card variant="default" className="p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-emerald-500" />
-              <span>RLS Security Auditing</span>
-            </span>
-            <Badge variant="success" size="sm">
-              100% Verified
-            </Badge>
-          </div>
-          <p className="text-xs text-slate-500">
-            All 6 multi-tenant tables enforce{' '}
-            <code className="font-mono text-indigo-500">is_member_of(org_id)</code>. 0 leakages
-            recorded in audit logs.
-          </p>
-          <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
-            Universal soft-delete policy active.
-          </div>
-        </Card>
-
-        <Card variant="default" className="p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+        <div className="lg:col-span-8">
+          <Card variant="default" className="p-5 space-y-4">
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <Activity className="w-4 h-4 text-cyan-500" />
-              <span>Real-Time Event Stream</span>
-            </span>
-            <Badge variant="primary" size="sm">
-              Active
-            </Badge>
-          </div>
-          <p className="text-xs text-slate-500">
-            Supabase Realtime CDC stream active on shifts, work orders, and attendance clock-ins.
-          </p>
-          <div className="text-[11px] text-slate-400">
-            Avg broadcast latency:{' '}
-            <strong className="text-slate-800 dark:text-slate-200 font-mono">14ms</strong>
-          </div>
-        </Card>
+              <span>Platform Tenant Growth Timeline</span>
+            </h2>
+
+            <div className="h-40 flex items-end justify-between gap-3 pt-4 px-2">
+              {growthTimeline.map((item, idx) => {
+                const max = Math.max(...growthTimeline.map((g) => g.organizations)) || 5;
+                const height = Math.min(100, Math.max(15, (item.organizations / max) * 100));
+                return (
+                  <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full justify-end">
+                    <div className="w-full flex justify-center h-full items-end">
+                      <div
+                        style={{ height: `${height}%` }}
+                        className="w-3/4 rounded-t-lg bg-indigo-600 hover:bg-indigo-500 transition cursor-pointer relative group"
+                      >
+                        <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-slate-900 text-white text-[10px] py-0.5 px-1.5 rounded font-mono pointer-events-none transition whitespace-nowrap z-20">
+                          {item.organizations} orgs
+                        </div>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-mono text-slate-400">{item.month}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        </div>
       </div>
 
-      {/* Tenant Directory Section */}
+      {/* Platform Tenant Directory Section (Prompt 27 Requirement) */}
       <Card variant="default" className="p-5 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h2 className="text-base font-bold text-slate-900 dark:text-white">
-              Platform Tenant Directory
+              Platform Tenant Directory & Live Activity
             </h2>
             <p className="text-xs text-slate-500">
-              Inspect, partition, and monitor all provisioned organizations.
+              Inspect partition metrics, work order volumes, and financial activity across organizations.
             </p>
           </div>
 
@@ -373,18 +415,26 @@ export const SuperAdminDashboardPage = () => {
           </div>
         </div>
 
-        <Table
-          columns={columns}
-          data={filteredTenants}
-          emptyMessage="No tenants matched search criteria."
-        />
+        {isLoading ? (
+          <div className="space-y-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-12 rounded-xl" />
+            ))}
+          </div>
+        ) : (
+          <Table
+            columns={columns}
+            data={filteredTenants}
+            emptyMessage="No tenants matched search criteria."
+          />
+        )}
       </Card>
 
-      {/* Provision Tenant Modal */}
+      {/* Modal for Provisioning Tenant */}
       <Modal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        title="Provision New Enterprise Tenant"
+        title="Provision New Organization Partition"
         size="md"
         footer={
           <div className="flex justify-end gap-2">
@@ -392,64 +442,65 @@ export const SuperAdminDashboardPage = () => {
               Cancel
             </Button>
             <Button variant="primary" onClick={handleCreateTenant}>
-              Provision Tenant
+              Create Tenant
             </Button>
           </div>
         }
       >
-        <form onSubmit={handleCreateTenant} className="space-y-4">
-          <Input
-            label="Organization Name"
-            placeholder="e.g. Pacific Freight Carriers"
-            value={newOrgName}
-            onChange={(e) => {
-              setNewOrgName(e.target.value);
-              setNewSlug(
-                e.target.value
-                  .toLowerCase()
-                  .replace(/[^a-z0-9]/g, '-')
-                  .replace(/-+/g, '-')
-                  .replace(/^-|-$/g, '')
-              );
-            }}
-            required
-          />
+        <form onSubmit={handleCreateTenant} className="space-y-4 text-xs">
+          <div>
+            <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+              Organization Name
+            </label>
+            <Input
+              required
+              placeholder="e.g. Horizon Transport"
+              value={newOrgName}
+              onChange={(e) => {
+                setNewOrgName(e.target.value);
+                setNewSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '-'));
+              }}
+            />
+          </div>
 
-          <Input
-            label="Subdomain / Slug"
-            placeholder="pacific-freight"
-            value={newSlug}
-            onChange={(e) => setNewSlug(e.target.value)}
-            required
-          />
+          <div>
+            <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+              Tenant Slug
+            </label>
+            <Input
+              required
+              placeholder="e.g. horizon-transport"
+              value={newSlug}
+              onChange={(e) => setNewSlug(e.target.value)}
+            />
+          </div>
 
-          <Input
-            label="Initial Owner Admin Email"
-            type="email"
-            placeholder="director@pacificfreight.com"
-            value={adminEmail}
-            onChange={(e) => setAdminEmail(e.target.value)}
-            required
-          />
+          <div>
+            <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+              Primary Administrator Email
+            </label>
+            <Input
+              required
+              type="email"
+              placeholder="admin@horizon-transport.com"
+              value={adminEmail}
+              onChange={(e) => setAdminEmail(e.target.value)}
+            />
+          </div>
 
-          <Select
-            label="Subscription Tier"
-            value={newTier}
-            onChange={(e) => setNewTier(e.target.value)}
-            options={[
-              { value: 'starter', label: 'Starter Tier ($99/mo)' },
-              { value: 'growth', label: 'Growth Tier ($299/mo)' },
-              { value: 'enterprise', label: 'Enterprise Tier ($799/mo)' }
-            ]}
-          />
-
-          <div className="p-3 bg-slate-50 dark:bg-slate-850 rounded-xl text-xs text-slate-500 space-y-1">
-            <div className="font-semibold text-slate-700 dark:text-slate-300">
-              Automatic Provisioning Steps:
-            </div>
-            <div>• Row-Level Security partition allocation</div>
-            <div>• Storage bucket folder prefix setup</div>
-            <div>• Invitation token dispatched to owner email</div>
+          <div>
+            <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+              Subscription Plan
+            </label>
+            <Select
+              value={newTier}
+              onChange={(e) => setNewTier(e.target.value)}
+              options={[
+                { value: 'starter', label: 'Starter Tier ($49/mo)' },
+                { value: 'growth', label: 'Growth Tier ($199/mo)' },
+                { value: 'enterprise', label: 'Enterprise Tier ($599/mo)' }
+              ]}
+            />
           </div>
         </form>
       </Modal>
