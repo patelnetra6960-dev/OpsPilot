@@ -7,6 +7,7 @@ import { automationService } from '../services/automation.service.js';
 export class WorkflowScheduler {
   constructor() {
     this.timer = null;
+    this.initialTimeout = null;
     this.pollIntervalMs = env.WORKFLOW_POLL_INTERVAL_MS || 60000;
     this.queue = null;
     this.isInitialized = false;
@@ -68,7 +69,7 @@ export class WorkflowScheduler {
     logger.info(`[WorkflowScheduler] Starting scheduler with interval ${this.pollIntervalMs}ms`);
 
     // Run first tick after short delay to let server start smoothly
-    setTimeout(() => this.tick(), 1000);
+    this.initialTimeout = setTimeout(() => this.tick(), 1000);
 
     this.timer = setInterval(() => this.tick(), this.pollIntervalMs);
   }
@@ -77,6 +78,10 @@ export class WorkflowScheduler {
    * Stop recurring scheduler
    */
   async stop() {
+    if (this.initialTimeout) {
+      clearTimeout(this.initialTimeout);
+      this.initialTimeout = null;
+    }
     if (this.timer) {
       clearInterval(this.timer);
       this.timer = null;

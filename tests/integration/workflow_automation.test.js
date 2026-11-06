@@ -440,6 +440,51 @@ test('Integration Test: Workflow Automation & Background Processing Module', asy
     assert.equal(typeof res.body.data.metrics.total, 'number');
   });
 
+  await t.test('API: GET /api/v1/automations/queue/jobs lists tenant jobs and retry endpoint works', async () => {
+    // 1. Fetch job history
+    const jobsRes = await request(app)
+      .get('/api/v1/automations/queue/jobs')
+      .set('Authorization', ALEX_TOKEN)
+      .set('X-Tenant-Id', ACME_TENANT_ID);
+
+    assert.equal(jobsRes.status, 200);
+    assert.equal(jobsRes.body.success, true);
+    assert.ok(Array.isArray(jobsRes.body.data.jobs));
+
+    // 2. Add a failed job directly to the automation queue to test retry API
+    const automationQueue = queueService.getQueue('automation');
+    const failedJob = await automationQueue.add(
+      'workflows.all',
+      { organizationId: ACME_TENANT_ID, testPayload: 'retry-me' },
+      { attempts: 1 }
+    );
+    // Mark as failed for test
+    failedJob.status = 'failed';
+    failedJob.failedReason = 'Simulated test failure';
+    automationQueue.failed.push(failedJob.id);
+
+    // Call retry API endpoint
+    const retryRes = await request(app)
+      .post(`/api/v1/automations/queue/jobs/${failedJob.id}/retry`)
+      .set('Authorization', ALEX_TOKEN)
+      .set('X-Tenant-Id', ACME_TENANT_ID);
+
+    assert.equal(retryRes.status, 200);
+    assert.equal(retryRes.body.success, true);
+    assert.equal(retryRes.body.data.id, failedJob.id);
+  });
+
+  await t.test('API: GET /api/v1/automations/deduplication lists active cooldown keys', async () => {
+    const res = await request(app)
+      .get('/api/v1/automations/deduplication')
+      .set('Authorization', SARAH_TOKEN)
+      .set('X-Tenant-Id', ACME_TENANT_ID);
+
+    assert.equal(res.status, 200);
+    assert.equal(res.body.success, true);
+    assert.ok(Array.isArray(res.body.data));
+  });
+
   // =========================================================================
   // 10. Multi-Tenant Boundary & Role Authorization
   // =========================================================================
