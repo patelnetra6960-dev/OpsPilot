@@ -9,6 +9,9 @@ import apiV1Router from './routes/index.js';
 
 const app = express();
 
+// Production reverse proxy / load balancer trust (AWS ALB, Cloudflare, Nginx, Render)
+app.set('trust proxy', 1);
+
 // Disable Express fingerprinting header
 app.disable('x-powered-by');
 
@@ -33,8 +36,9 @@ app.use(requestLogger);
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Quick developer redirect for API docs
+// Quick developer redirect for API docs & Direct infrastructure healthcheck
 app.get('/docs', (_req, res) => res.redirect('/api/v1/docs/'));
+app.get('/health', (_req, res) => res.redirect('/api/v1/health'));
 
 // Apply rate limiting across API routes
 app.use('/api', defaultRateLimiter);

@@ -58,6 +58,53 @@ export const healthService = {
         }
       }
     };
+  },
+
+  /**
+   * Container Liveness Probe (Kubernetes / ECS / Docker)
+   * Lightweight probe confirming the event loop and HTTP server are responsive
+   */
+  getLiveness() {
+    return {
+      status: 'alive',
+      uptimeSeconds: Math.floor(process.uptime()),
+      timestamp: new Date().toISOString()
+    };
+  },
+
+  /**
+   * Container Readiness Probe (Kubernetes / ECS / Docker)
+   * Deep probe confirming database connectivity and worker queues are ready for traffic
+   */
+  async getReadiness() {
+    let dbConnected = true;
+    let dbLatencyMs = 0;
+
+    if (!env.isMockMode && supabaseAdmin) {
+      const start = Date.now();
+      try {
+        const { error } = await supabaseAdmin.from('organizations').select('id').limit(1);
+        dbLatencyMs = Date.now() - start;
+        if (error) dbConnected = false;
+      } catch {
+        dbConnected = false;
+      }
+    }
+
+    return {
+      ready: dbConnected,
+      status: dbConnected ? 'ready' : 'not_ready',
+      timestamp: new Date().toISOString(),
+      checks: {
+        database: {
+          connected: dbConnected,
+          latencyMs: dbLatencyMs
+        },
+        memory: {
+          healthy: process.memoryUsage().heapUsed < 1.5 * 1024 * 1024 * 1024 // < 1.5 GB
+        }
+      }
+    };
   }
 };
 

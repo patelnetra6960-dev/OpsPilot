@@ -20,6 +20,8 @@
     "test:integration": "node --test tests/integration/**/*.test.js",
     "test:e2e": "playwright test",
     "test": "npm run test:unit && npm run test:server && npm run test:integration && npm run test:e2e",
+    "test:smoke": "node scripts/smoke-test.js",
+    "verify:rls": "node scripts/verify-rls.js",
     "check:env": "node scripts/check-env.js",
     "migrate": "node server/src/database/migrate.js",
     "db:start": "supabase start",
