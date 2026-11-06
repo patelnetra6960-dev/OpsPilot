@@ -203,6 +203,11 @@ export class InvoiceService {
     const { role, userId } = userContext;
     const isManager = this.isBillingManager(role);
 
+    // Strict RBAC: Non-manager internal staff are forbidden from viewing organization financial invoices
+    if (!isManager && (role === 'employee' || role === 'technician')) {
+      throw new ForbiddenError('Staff members are not authorized to access organization financial invoices');
+    }
+
     const queryFilters = { ...query };
 
     // IDOR protection: Customers can only query their own invoices

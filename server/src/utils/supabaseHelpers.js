@@ -195,35 +195,7 @@ export const validateStorageUpload = ({ bucket, fileName, fileSize, mimeType }) 
     };
   }
 
-  const bucketConfig = STORAGE_BUCKETS[bucketKey];
-
-  if (fileSize && fileSize > bucketConfig.fileSizeLimit) {
-    const maxMb = Math.round(bucketConfig.fileSizeLimit / (1024 * 1024));
-    return {
-      isValid: false,
-      error: `File size exceeds maximum allowed limit of ${maxMb}MB for bucket '${bucket}'`,
-      code: 'FILE_SIZE_LIMIT_EXCEEDED'
-    };
-  }
-
-  if (mimeType && !bucketConfig.allowedMimeTypes.includes(mimeType.toLowerCase())) {
-    return {
-      isValid: false,
-      error: `MIME type '${mimeType}' is not permitted for bucket '${bucket}'. Allowed types: ${bucketConfig.allowedMimeTypes.join(', ')}`,
-      code: 'INVALID_MIME_TYPE'
-    };
-  }
-
-  const DANGEROUS_EXTENSIONS =
-    /\.(exe|bat|cmd|sh|php|phtml|jsp|asp|aspx|cgi|pl|py|ps1|vbs|jar|war|scr)$/i;
-  if (DANGEROUS_EXTENSIONS.test(fileName)) {
-    return {
-      isValid: false,
-      error: 'Executable and script file uploads are strictly forbidden for security reasons',
-      code: 'FORBIDDEN_FILE_EXTENSION'
-    };
-  }
-
+  // 1. Path traversal security check (must run before any extension or MIME checks)
   if (
     !fileName ||
     typeof fileName !== 'string' ||
@@ -235,6 +207,38 @@ export const validateStorageUpload = ({ bucket, fileName, fileSize, mimeType }) 
       isValid: false,
       error: 'Invalid file name. Path traversal characters are strictly prohibited.',
       code: 'INVALID_FILE_NAME'
+    };
+  }
+
+  // 2. Dangerous executable and script extension detection (anti-malware guard)
+  const DANGEROUS_EXTENSIONS =
+    /\.(exe|bat|cmd|sh|php|phtml|jsp|asp|aspx|cgi|pl|py|ps1|vbs|jar|war|scr)$/i;
+  if (DANGEROUS_EXTENSIONS.test(fileName)) {
+    return {
+      isValid: false,
+      error: 'Executable and script file uploads are strictly forbidden for security reasons',
+      code: 'FORBIDDEN_FILE_EXTENSION'
+    };
+  }
+
+  const bucketConfig = STORAGE_BUCKETS[bucketKey];
+
+  // 3. File size quota check
+  if (fileSize && fileSize > bucketConfig.fileSizeLimit) {
+    const maxMb = Math.round(bucketConfig.fileSizeLimit / (1024 * 1024));
+    return {
+      isValid: false,
+      error: `File size exceeds maximum allowed limit of ${maxMb}MB for bucket '${bucket}'`,
+      code: 'FILE_SIZE_LIMIT_EXCEEDED'
+    };
+  }
+
+  // 4. MIME type validation against bucket whitelist
+  if (mimeType && !bucketConfig.allowedMimeTypes.includes(mimeType.toLowerCase())) {
+    return {
+      isValid: false,
+      error: `MIME type '${mimeType}' is not permitted for bucket '${bucket}'. Allowed types: ${bucketConfig.allowedMimeTypes.join(', ')}`,
+      code: 'INVALID_MIME_TYPE'
     };
   }
 

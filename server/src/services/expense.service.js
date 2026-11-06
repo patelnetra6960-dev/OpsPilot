@@ -73,6 +73,12 @@ export class ExpenseService {
    */
   async listExpenses(organizationId, query = {}, userContext = {}) {
     const { role, userId } = userContext;
+
+    // Strict Customer Separation: External customer accounts are strictly forbidden from viewing internal employee expenses
+    if (role === 'customer') {
+      throw new ForbiddenError('Customer accounts are not authorized to view internal employee expenses');
+    }
+
     const isManager = this.isManagerOrAbove(role);
 
     const queryFilters = { ...query };

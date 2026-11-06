@@ -166,10 +166,11 @@ export class NotificationService {
    * 2. Task Status Updates
    */
   async notifyTaskStatusUpdated({ organizationId, task, updatedByName, previousStatus }) {
+    const statusText = task.status || task.column_name || 'UPDATED';
     const eventPayload = {
       task,
       previousStatus,
-      newStatus: task.status,
+      newStatus: statusText,
       updatedByName
     };
 
@@ -182,7 +183,7 @@ export class NotificationService {
         organizationId,
         userId: task.assigned_to,
         title: 'Task Status Updated',
-        message: `Task "${task.title}" status changed to ${task.status.toUpperCase()} by ${updatedByName || 'Team'}.`,
+        message: `Task "${task.title}" status changed to ${String(statusText).toUpperCase()} by ${updatedByName || 'Team'}.`,
         type: 'info',
         actionUrl: '/tasks',
         data: eventPayload,
