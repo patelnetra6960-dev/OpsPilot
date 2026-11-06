@@ -7,22 +7,29 @@ import { isTokenRevoked } from '../middleware/authMiddleware.js';
 
 let io = null;
 
-// Sliding window of processed event IDs for server-side deduplication
-const processedEventIds = new Set();
+// High-performance TTL sliding map for event deduplication (zero timer leaks)
+const processedEventIds = new Map();
 const EVENT_DEDUPLICATION_WINDOW_MS = 60000;
 
 export const trackEventId = (eventId) => {
   if (!eventId) return false;
+  const now = Date.now();
   if (processedEventIds.has(eventId)) {
-    return true; // Already processed
+    const expiresAt = processedEventIds.get(eventId);
+    if (expiresAt > now) {
+      return true; // Already processed within active window
+    }
   }
-  processedEventIds.add(eventId);
-  const timer = setTimeout(() => {
-    processedEventIds.delete(eventId);
-  }, EVENT_DEDUPLICATION_WINDOW_MS);
-  if (timer.unref) {
-    timer.unref();
+
+  processedEventIds.set(eventId, now + EVENT_DEDUPLICATION_WINDOW_MS);
+
+  // Prune expired entries if map grows beyond threshold
+  if (processedEventIds.size > 2000) {
+    for (const [id, exp] of processedEventIds.entries()) {
+      if (exp <= now) processedEventIds.delete(id);
+    }
   }
+
   return false;
 };
 
@@ -219,6 +226,7 @@ export const initSocketServer = (httpServer) => {
     path: '/socket.io',
     pingTimeout: 60000,
     pingInterval: 25000,
+    maxHttpBufferSize: 1e5, // 100KB payload boundary prevents memory spikes
     transports: ['websocket', 'polling']
   });
 

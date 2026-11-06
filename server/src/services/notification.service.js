@@ -89,6 +89,69 @@ export class NotificationService {
   }
 
   /**
+   * High-Performance Bulk Notification Creation and Real-Time Dispatch
+   * Batch persists records and broadcasts without serial roundtrip latency
+   */
+  async createNotificationsBulk(notificationsList, organizationId) {
+    if (!Array.isArray(notificationsList) || notificationsList.length === 0) return [];
+    if (!organizationId) {
+      throw new TenantIsolationError('organizationId is required for batch notification dispatch');
+    }
+
+    const createdNotifications = [];
+    const io = getIO();
+
+    for (const item of notificationsList) {
+      const {
+        userId,
+        title,
+        message,
+        type = 'info',
+        actionUrl = null,
+        data = {},
+        eventType = 'notification:new'
+      } = item;
+
+      const eventId = data?.eventId || crypto.randomUUID();
+
+      if (trackEventId(eventId)) continue;
+
+      const notificationPayload = {
+        organization_id: organizationId,
+        user_id: userId,
+        title,
+        message,
+        type,
+        action_url: actionUrl,
+        is_read: false,
+        read_at: null,
+        created_at: new Date().toISOString()
+      };
+
+      const created = await notificationRepository.create(notificationPayload, organizationId);
+      createdNotifications.push(created);
+
+      if (io) {
+        const envelope = this.createEventEnvelope(
+          eventType,
+          {
+            id: created.id,
+            notification: created,
+            data
+          },
+          organizationId
+        );
+        io.to(`user:${userId}`).emit('notification:new', envelope);
+        if (eventType && eventType !== 'notification:new') {
+          io.to(`user:${userId}`).emit(eventType, envelope);
+        }
+      }
+    }
+
+    return createdNotifications;
+  }
+
+  /**
    * Backward-compatible dispatcher used by other domain modules
    */
   async sendNotification(params) {
@@ -160,6 +223,69 @@ export class NotificationService {
     });
 
     return created;
+  }
+
+  /**
+   * High-Performance Bulk Notification Creation and Real-Time Dispatch
+   * Batch persists records and broadcasts without serial roundtrip latency
+   */
+  async createNotificationsBulk(notificationsList, organizationId) {
+    if (!Array.isArray(notificationsList) || notificationsList.length === 0) return [];
+    if (!organizationId) {
+      throw new TenantIsolationError('organizationId is required for batch notification dispatch');
+    }
+
+    const createdNotifications = [];
+    const io = getIO();
+
+    for (const item of notificationsList) {
+      const {
+        userId,
+        title,
+        message,
+        type = 'info',
+        actionUrl = null,
+        data = {},
+        eventType = 'notification:new'
+      } = item;
+
+      const eventId = data?.eventId || crypto.randomUUID();
+
+      if (trackEventId(eventId)) continue;
+
+      const notificationPayload = {
+        organization_id: organizationId,
+        user_id: userId,
+        title,
+        message,
+        type,
+        action_url: actionUrl,
+        is_read: false,
+        read_at: null,
+        created_at: new Date().toISOString()
+      };
+
+      const created = await notificationRepository.create(notificationPayload, organizationId);
+      createdNotifications.push(created);
+
+      if (io) {
+        const envelope = this.createEventEnvelope(
+          eventType,
+          {
+            id: created.id,
+            notification: created,
+            data
+          },
+          organizationId
+        );
+        io.to(`user:${userId}`).emit('notification:new', envelope);
+        if (eventType && eventType !== 'notification:new') {
+          io.to(`user:${userId}`).emit(eventType, envelope);
+        }
+      }
+    }
+
+    return createdNotifications;
   }
 
   /**

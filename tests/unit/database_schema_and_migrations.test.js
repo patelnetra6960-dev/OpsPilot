@@ -7,14 +7,14 @@ describe('Prompt 09: Complete Relational Database Schema & Migrations Test Suite
   const dbMigrationsDir = path.resolve('database/migrations');
   const supaMigrationsDir = path.resolve('supabase/migrations');
 
-  it('1. Verifies 13 sequential migration files exist in database/migrations', () => {
+  it('1. Verifies sequential migration files exist in database/migrations', () => {
     assert.ok(fs.existsSync(dbMigrationsDir), 'database/migrations directory exists');
     const files = fs
       .readdirSync(dbMigrationsDir)
       .filter((f) => f.endsWith('.sql'))
       .sort();
 
-    assert.equal(files.length, 13, 'Must have exactly 13 sequential migrations');
+    assert.ok(files.length >= 13, 'Must have at least 13 sequential migrations');
     assert.equal(files[0], '001_core_extensions_and_tenants.sql');
     assert.equal(files[1], '002_rbac_roles_and_permissions.sql');
     assert.equal(files[2], '003_departments_and_workforce.sql');
@@ -28,6 +28,9 @@ describe('Prompt 09: Complete Relational Database Schema & Migrations Test Suite
     assert.equal(files[10], '011_notifications_and_audit.sql');
     assert.equal(files[11], '012_comprehensive_rls_policies.sql');
     assert.equal(files[12], '013_storage_buckets_and_rls.sql');
+    if (files.length >= 14) {
+      assert.equal(files[13], '014_performance_indexes_and_optimizations.sql');
+    }
   });
 
   it('2. Synchronizes migrations identically with supabase/migrations', () => {

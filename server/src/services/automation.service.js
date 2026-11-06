@@ -126,17 +126,16 @@ export class AutomationService {
       // Also notify managers
       managerUserIds.forEach((uid) => recipients.add(uid));
 
-      for (const userId of recipients) {
-        await notificationService.createNotification({
-          organizationId,
-          userId,
-          title: `Overdue Task Alert: ${task.title}`,
-          message: `Task "${task.title}" was due on ${task.due_date.split('T')[0]} and is now overdue.`,
-          type: 'warning',
-          actionUrl: `/tasks?id=${task.id}`,
-          data: { taskId: task.id, dueDate: task.due_date, eventId: `overdue-${task.id}-${localDate}` }
-        });
-      }
+      // Safe batch notification delivery
+      const notificationItems = Array.from(recipients).map((userId) => ({
+        userId,
+        title: `Overdue Task Alert: ${task.title}`,
+        message: `Task "${task.title}" was due on ${task.due_date.split('T')[0]} and is now overdue.`,
+        type: 'warning',
+        actionUrl: `/tasks?id=${task.id}`,
+        data: { taskId: task.id, dueDate: task.due_date, eventId: `overdue-${task.id}-${localDate}` }
+      }));
+      await notificationService.createNotificationsBulk(notificationItems, organizationId);
       remindersSent++;
     }
 
@@ -252,17 +251,15 @@ export class AutomationService {
         continue;
       }
 
-      for (const userId of managerUserIds) {
-        await notificationService.createNotification({
-          organizationId,
-          userId,
-          title: `Low Stock Alert: ${item.name}`,
-          message: `Item "${item.name}" (SKU: ${item.sku}) is below threshold with only ${item.quantity} units left (Min threshold: ${item.min_stock_threshold || 10}).`,
-          type: 'alert',
-          actionUrl: `/inventory?sku=${encodeURIComponent(item.sku)}`,
-          data: { itemId: item.id, sku: item.sku, quantity: item.quantity }
-        });
-      }
+      const lowStockBatch = managerUserIds.map((userId) => ({
+        userId,
+        title: `Low Stock Alert: ${item.name}`,
+        message: `Item "${item.name}" (SKU: ${item.sku}) is below threshold with only ${item.quantity} units left (Min threshold: ${item.min_stock_threshold || 10}).`,
+        type: 'alert',
+        actionUrl: `/inventory?sku=${encodeURIComponent(item.sku)}`,
+        data: { itemId: item.id, sku: item.sku, quantity: item.quantity }
+      }));
+      await notificationService.createNotificationsBulk(lowStockBatch, organizationId);
       alertsSent++;
     }
 
@@ -343,17 +340,15 @@ export class AutomationService {
 
         const dedupKey = `sr_escalation:${req.id}:${newPriority}`;
         if (!deduplicationService.isDuplicate(dedupKey, 24 * 60 * 60 * 1000)) {
-          for (const userId of managerUserIds) {
-            await notificationService.createNotification({
-              organizationId,
-              userId,
-              title: `Service Request Escalated: #${req.ticket_number || req.id.slice(0, 8)}`,
-              message: `Service request "${req.title || req.description?.slice(0, 40)}" breached ${slaHours}h SLA and was escalated from ${previousPriority} to ${newPriority}.`,
-              type: 'alert',
-              actionUrl: `/services?id=${req.id}`,
-              data: { requestId: req.id, previousPriority, newPriority, ageHours: Math.round(ageHours) }
-            });
-          }
+          const escalationBatch = managerUserIds.map((userId) => ({
+            userId,
+            title: `Service Request Escalated: #${req.ticket_number || req.id.slice(0, 8)}`,
+            message: `Service request "${req.title || req.description?.slice(0, 40)}" breached ${slaHours}h SLA and was escalated from ${previousPriority} to ${newPriority}.`,
+            type: 'alert',
+            actionUrl: `/services?id=${req.id}`,
+            data: { requestId: req.id, previousPriority, newPriority, ageHours: Math.round(ageHours) }
+          }));
+          await notificationService.createNotificationsBulk(escalationBatch, organizationId);
         }
         escalatedCount++;
       }
@@ -409,17 +404,15 @@ export class AutomationService {
           continue;
         }
 
-        for (const userId of managerUserIds) {
-          await notificationService.createNotification({
-            organizationId,
-            userId,
-            title: `Pending Expense Approval Reminder`,
-            message: `Expense claim of $${expense.amount} (${expense.category}) submitted by ${expense.employee_name || 'Staff'} has been pending review for ${Math.round(ageHours / 24)} day(s).`,
-            type: 'warning',
-            actionUrl: `/expenses?id=${expense.id}`,
-            data: { expenseId: expense.id, amount: expense.amount, ageHours: Math.round(ageHours) }
-          });
-        }
+        const expenseBatch = managerUserIds.map((userId) => ({
+          userId,
+          title: `Pending Expense Approval Reminder`,
+          message: `Expense claim of $${expense.amount} (${expense.category}) submitted by ${expense.employee_name || 'Staff'} has been pending review for ${Math.round(ageHours / 24)} day(s).`,
+          type: 'warning',
+          actionUrl: `/expenses?id=${expense.id}`,
+          data: { expenseId: expense.id, amount: expense.amount, ageHours: Math.round(ageHours) }
+        }));
+        await notificationService.createNotificationsBulk(expenseBatch, organizationId);
         remindersSent++;
       }
     }
@@ -489,17 +482,15 @@ export class AutomationService {
           const recipients = new Set(managerUserIds);
           if (invoice.customer_id) recipients.add(invoice.customer_id);
 
-          for (const userId of recipients) {
-            await notificationService.createNotification({
-              organizationId,
-              userId,
-              title: `Overdue Invoice: #${invoice.invoice_number || invoice.id.slice(0, 8)}`,
-              message: `Invoice #${invoice.invoice_number || invoice.id.slice(0, 8)} for $${invoice.total_amount ?? invoice.total ?? 0} was due on ${invoice.due_date.split('T')[0]} and is now overdue.`,
-              type: 'warning',
-              actionUrl: `/invoices?id=${invoice.id}`,
-              data: { invoiceId: invoice.id, dueDate: invoice.due_date }
-            });
-          }
+          const overdueBatch = Array.from(recipients).map((userId) => ({
+            userId,
+            title: `Overdue Invoice: #${invoice.invoice_number || invoice.id.slice(0, 8)}`,
+            message: `Invoice #${invoice.invoice_number || invoice.id.slice(0, 8)} for $${invoice.total_amount ?? invoice.total ?? 0} was due on ${invoice.due_date.split('T')[0]} and is now overdue.`,
+            type: 'warning',
+            actionUrl: `/invoices?id=${invoice.id}`,
+            data: { invoiceId: invoice.id, dueDate: invoice.due_date }
+          }));
+          await notificationService.createNotificationsBulk(overdueBatch, organizationId);
           remindersSent++;
         }
       } else {
@@ -512,17 +503,15 @@ export class AutomationService {
             const recipients = new Set(managerUserIds);
             if (invoice.customer_id) recipients.add(invoice.customer_id);
 
-            for (const userId of recipients) {
-              await notificationService.createNotification({
-                organizationId,
-                userId,
-                title: `Upcoming Invoice Due: #${invoice.invoice_number || invoice.id.slice(0, 8)}`,
-                message: `Invoice #${invoice.invoice_number || invoice.id.slice(0, 8)} for $${invoice.total_amount ?? invoice.total ?? 0} is due on ${invoice.due_date.split('T')[0]} (in ${Math.ceil(daysRemaining)} days).`,
-                type: 'info',
-                actionUrl: `/invoices?id=${invoice.id}`,
-                data: { invoiceId: invoice.id, daysRemaining: Math.ceil(daysRemaining) }
-              });
-            }
+            const upcomingBatch = Array.from(recipients).map((userId) => ({
+              userId,
+              title: `Upcoming Invoice Due: #${invoice.invoice_number || invoice.id.slice(0, 8)}`,
+              message: `Invoice #${invoice.invoice_number || invoice.id.slice(0, 8)} for $${invoice.total_amount ?? invoice.total ?? 0} is due on ${invoice.due_date.split('T')[0]} (in ${Math.ceil(daysRemaining)} days).`,
+              type: 'info',
+              actionUrl: `/invoices?id=${invoice.id}`,
+              data: { invoiceId: invoice.id, daysRemaining: Math.ceil(daysRemaining) }
+            }));
+            await notificationService.createNotificationsBulk(upcomingBatch, organizationId);
             remindersSent++;
           }
         }
@@ -578,17 +567,15 @@ export class AutomationService {
       totalExpenses: dashboardData.expenses.approvedAmount
     };
 
-    for (const userId of managerUserIds) {
-      await notificationService.createNotification({
-        organizationId,
-        userId,
-        title: `Scheduled ${reportType === 'daily' ? 'Daily' : 'Weekly'} Executive Report`,
-        message: `Report for ${reportSummary.organizationName} (${localDate}): ${reportSummary.activeProjects} active projects, ${reportSummary.pendingTasks} pending tasks (${reportSummary.overdueTasks} overdue), work order completion rate ${reportSummary.workOrderCompletionRate}.`,
-        type: 'info',
-        actionUrl: '/analytics',
-        data: { reportType, summary: reportSummary }
-      });
-    }
+    const reportBatch = managerUserIds.map((userId) => ({
+      userId,
+      title: `Scheduled ${reportType === 'daily' ? 'Daily' : 'Weekly'} Executive Report`,
+      message: `Report for ${reportSummary.organizationName} (${localDate}): ${reportSummary.activeProjects} active projects, ${reportSummary.pendingTasks} pending tasks (${reportSummary.overdueTasks} overdue), work order completion rate ${reportSummary.workOrderCompletionRate}.`,
+      type: 'info',
+      actionUrl: '/analytics',
+      data: { reportType, summary: reportSummary }
+    }));
+    await notificationService.createNotificationsBulk(reportBatch, organizationId);
 
     logger.info(`[Automation:ScheduledReport] Org ${organizationId}: Generated and delivered ${reportType} report for ${localDate}`);
     return {
