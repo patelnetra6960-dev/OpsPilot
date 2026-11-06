@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Bell, Building2, CreditCard, Shield, Lock, Save } from 'lucide-react';
+import { User, Bell, Building2, CreditCard, Shield, Lock, Save, Zap, Activity, RefreshCw, Play, CheckCircle2, AlertTriangle, Clock } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Card, Badge, Button, Input, Select } from '../../components/ui/index.js';
 import { addToast } from '../../store/uiSlice.js';
@@ -8,6 +8,14 @@ import {
   useCurrentOrganizationQuery,
   useUpdateCurrentOrganizationMutation
 } from '../../features/organizations/api/organizationApi.js';
+import {
+  useAutomationConfigQuery,
+  useUpdateAutomationConfigMutation,
+  useQueueMetricsQuery,
+  useJobHistoryQuery,
+  useTriggerWorkflowMutation,
+  useRetryJobMutation
+} from '../../features/automations/index.js';
 
 export const SettingsPage = () => {
   const dispatch = useDispatch();
@@ -89,6 +97,79 @@ export const SettingsPage = () => {
     );
   };
 
+  // Automation hooks & state
+  const { data: autoConfigData } = useAutomationConfigQuery({
+    enabled: Boolean(currentTenant?.id) && isPlatformOrOrgAdmin
+  });
+  const updateAutoConfigMutation = useUpdateAutomationConfigMutation();
+  const { data: queueMetricsData } = useQueueMetricsQuery({
+    enabled: Boolean(currentTenant?.id) && activeTab === 'automations'
+  });
+  const { data: jobHistoryData } = useJobHistoryQuery({
+    enabled: Boolean(currentTenant?.id) && activeTab === 'automations'
+  });
+  const triggerWorkflowMutation = useTriggerWorkflowMutation();
+  const retryJobMutation = useRetryJobMutation();
+
+  const [autoSettings, setAutoSettings] = useState({
+    overdueTasks: true,
+    upcomingDeadlines: true,
+    lowStockAlerts: true,
+    serviceRequestEscalation: true,
+    expenseApprovalReminders: true,
+    invoiceDueReminders: true,
+    scheduledReports: true,
+    timezone: 'UTC',
+    slaUrgentHours: 12,
+    slaHighHours: 24,
+    slaMediumHours: 48,
+    slaLowHours: 72,
+    lowStockThreshold: 10,
+    upcomingDeadlineHours: 24
+  });
+
+  useEffect(() => {
+    if (autoConfigData?.automation) {
+      setAutoSettings((prev) => ({
+        ...prev,
+        ...autoConfigData.automation,
+        timezone: autoConfigData.timezone || prev.timezone
+      }));
+    }
+  }, [autoConfigData]);
+
+  const handleSaveAutomation = (e) => {
+    e.preventDefault();
+    updateAutoConfigMutation.mutate(autoSettings, {
+      onSuccess: () => {
+        dispatch(
+          addToast({
+            type: 'success',
+            title: 'Automations Updated',
+            message: 'Background workflow rules and schedules saved successfully'
+          })
+        );
+      }
+    });
+  };
+
+  const handleTriggerRunNow = (workflowName = 'workflows.all') => {
+    triggerWorkflowMutation.mutate(
+      { workflow: workflowName },
+      {
+        onSuccess: (res) => {
+          dispatch(
+            addToast({
+              type: 'success',
+              title: 'Workflow Enqueued',
+              message: res.message || 'Workflow job dispatched to background queue'
+            })
+          );
+        }
+      }
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -156,6 +237,19 @@ export const SettingsPage = () => {
             >
               <CreditCard className="w-4 h-4" />
               <span>Subscription & Billing</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('automations')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition ${
+                activeTab === 'automations'
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <Zap className="w-4 h-4" />
+              <span>Workflows & Automation</span>
             </button>
 
             <button
@@ -472,6 +566,341 @@ export const SettingsPage = () => {
             </Button>
           </div>
         </Card>
+      )}
+
+      {/* Tab: Workflows & Automation */}
+      {activeTab === 'automations' && (
+        <div className="space-y-6 max-w-4xl">
+          {/* Queue Telemetry Overview */}
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            <Card variant="default" className="p-3 text-center">
+              <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider block">Waiting</span>
+              <span className="text-xl font-black text-amber-500">{queueMetricsData?.metrics?.waiting ?? 0}</span>
+            </Card>
+            <Card variant="default" className="p-3 text-center">
+              <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider block">Active</span>
+              <span className="text-xl font-black text-indigo-500">{queueMetricsData?.metrics?.active ?? 0}</span>
+            </Card>
+            <Card variant="default" className="p-3 text-center">
+              <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider block">Completed</span>
+              <span className="text-xl font-black text-emerald-500">{queueMetricsData?.metrics?.completed ?? 0}</span>
+            </Card>
+            <Card variant="default" className="p-3 text-center">
+              <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider block">Failed (DLQ)</span>
+              <span className="text-xl font-black text-rose-500">{queueMetricsData?.metrics?.failed ?? 0}</span>
+            </Card>
+            <Card variant="default" className="p-3 text-center col-span-2 sm:col-span-1">
+              <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider block">Engine</span>
+              <Badge variant="primary" size="sm" className="mt-1">
+                {queueMetricsData?.driver === 'bullmq' ? 'BullMQ (Redis)' : 'Reliable Engine'}
+              </Badge>
+            </Card>
+          </div>
+
+          {/* Quick Actions */}
+          <Card variant="default" className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Activity className="w-4 h-4 text-indigo-500" />
+                Background Workflow Scheduler
+              </h3>
+              <p className="text-xs text-slate-500">
+                Scheduled background runner evaluates business rules every {Math.round((queueMetricsData?.pollIntervalMs || 60000) / 1000)}s without blocking HTTP requests.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => handleTriggerRunNow('workflows.all')}
+                disabled={triggerWorkflowMutation.isPending}
+                className="flex items-center gap-2"
+              >
+                <Play className="w-3.5 h-3.5" />
+                <span>Run All Now</span>
+              </Button>
+            </div>
+          </Card>
+
+          {/* Configuration Form */}
+          <Card variant="default" className="p-6 space-y-6">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div>
+                <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                  Automated Business Rules & SLA Horizons
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Configure real-time background scanners, deduplication cooldowns, and notification thresholds.
+                </p>
+              </div>
+              <Button variant="primary" size="sm" onClick={handleSaveAutomation} disabled={updateAutoConfigMutation.isPending}>
+                <Save className="w-4 h-4 mr-1.5" />
+                Save Automation Rules
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  Organization Time Zone
+                </label>
+                <Select
+                  value={autoSettings.timezone}
+                  onChange={(e) => setAutoSettings({ ...autoSettings, timezone: e.target.value })}
+                >
+                  <option value="America/New_York">America/New_York (Eastern Time)</option>
+                  <option value="America/Chicago">America/Chicago (Central Time)</option>
+                  <option value="America/Denver">America/Denver (Mountain Time)</option>
+                  <option value="America/Los_Angeles">America/Los_Angeles (Pacific Time)</option>
+                  <option value="Europe/London">Europe/London (GMT/BST)</option>
+                  <option value="Europe/Paris">Europe/Paris (CET)</option>
+                  <option value="Asia/Tokyo">Asia/Tokyo (JST)</option>
+                  <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
+                  <option value="UTC">UTC (Coordinated Universal Time)</option>
+                </Select>
+                <span className="text-[10px] text-slate-400 mt-1 block">
+                  Ensures reports and reminders respect local business working hours.
+                </span>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  Default Low Stock Alert Threshold
+                </label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="1000"
+                  value={autoSettings.lowStockThreshold}
+                  onChange={(e) => setAutoSettings({ ...autoSettings, lowStockThreshold: Number(e.target.value) })}
+                />
+                <span className="text-[10px] text-slate-400 mt-1 block">
+                  Items with quantity at or below this threshold trigger manager alerts.
+                </span>
+              </div>
+            </div>
+
+            {/* 7 Workflow Toggles */}
+            <div className="space-y-3 pt-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Active Business Automations
+              </h3>
+
+              {/* 1. Overdue Task Detection */}
+              <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <div className="space-y-0.5 pr-4">
+                  <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-amber-500" />
+                    1. Overdue Task Detection & Escalation
+                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    Automatically scans active tasks, updates status to overdue if past due date, and sends 24h deduplicated alerts to assignees and managers.
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={autoSettings.overdueTasks}
+                  onChange={(e) => setAutoSettings({ ...autoSettings, overdueTasks: e.target.checked })}
+                  className="w-4 h-4 text-indigo-600 rounded"
+                />
+              </div>
+
+              {/* 2. Upcoming Deadline Reminders */}
+              <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <div className="space-y-0.5 pr-4">
+                  <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-blue-500" />
+                    2. Upcoming Deadline Reminders (24h-48h Horizon)
+                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    Dispatches proactive alerts to assignees for tasks with approaching deadlines in local timezone.
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={autoSettings.upcomingDeadlines}
+                  onChange={(e) => setAutoSettings({ ...autoSettings, upcomingDeadlines: e.target.checked })}
+                  className="w-4 h-4 text-indigo-600 rounded"
+                />
+              </div>
+
+              {/* 3. Low-Stock Notifications */}
+              <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <div className="space-y-0.5 pr-4">
+                  <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
+                    3. Inventory Low-Stock Automated Alerts
+                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    Alerts warehouse managers when SKUs drop below safety stock. Deduplicates to prevent email fatigue.
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={autoSettings.lowStockAlerts}
+                  onChange={(e) => setAutoSettings({ ...autoSettings, lowStockAlerts: e.target.checked })}
+                  className="w-4 h-4 text-indigo-600 rounded"
+                />
+              </div>
+
+              {/* 4. Service Request Escalation */}
+              <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <div className="space-y-0.5 pr-4">
+                  <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <Zap className="w-3.5 h-3.5 text-purple-500" />
+                    4. Customer Service Request SLA Escalation
+                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    Escalates customer ticket priority (Low &rarr; Medium &rarr; High &rarr; Urgent) and alerts dispatchers when SLA thresholds elapse.
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={autoSettings.serviceRequestEscalation}
+                  onChange={(e) => setAutoSettings({ ...autoSettings, serviceRequestEscalation: e.target.checked })}
+                  className="w-4 h-4 text-indigo-600 rounded"
+                />
+              </div>
+
+              {/* 5. Expense Approval Reminders */}
+              <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <div className="space-y-0.5 pr-4">
+                  <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-500" />
+                    5. Pending Expense Approval Reminders
+                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    Reminds authorized managers when employee claims remain unreviewed for &gt; 48 hours.
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={autoSettings.expenseApprovalReminders}
+                  onChange={(e) => setAutoSettings({ ...autoSettings, expenseApprovalReminders: e.target.checked })}
+                  className="w-4 h-4 text-indigo-600 rounded"
+                />
+              </div>
+
+              {/* 6. Invoice Due Reminders */}
+              <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <div className="space-y-0.5 pr-4">
+                  <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-emerald-500" />
+                    6. Invoice Upcoming & Overdue Reminders
+                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    Transitions past-due invoices to overdue status and notifies billing contacts with payment references.
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={autoSettings.invoiceDueReminders}
+                  onChange={(e) => setAutoSettings({ ...autoSettings, invoiceDueReminders: e.target.checked })}
+                  className="w-4 h-4 text-indigo-600 rounded"
+                />
+              </div>
+
+              {/* 7. Scheduled Reports */}
+              <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <div className="space-y-0.5 pr-4">
+                  <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <Activity className="w-3.5 h-3.5 text-indigo-500" />
+                    7. Scheduled Daily Executive Telemetry Reports
+                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    Synthesizes operational progress, active projects, and financial totals into an automated briefing delivered in the morning.
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={autoSettings.scheduledReports}
+                  onChange={(e) => setAutoSettings({ ...autoSettings, scheduledReports: e.target.checked })}
+                  className="w-4 h-4 text-indigo-600 rounded"
+                />
+              </div>
+            </div>
+          </Card>
+
+          {/* Job History & Dead Letter Queue Table */}
+          <Card variant="default" className="p-6 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  Background Queue Job History
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Live background processing audit trail, retry policies, and error diagnostics.
+                </p>
+              </div>
+              <Badge variant="neutral" size="sm">
+                {jobHistoryData?.jobs?.length || 0} Jobs Logged
+              </Badge>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-400">
+                    <th className="py-2 px-3">Job ID</th>
+                    <th className="py-2 px-3">Workflow</th>
+                    <th className="py-2 px-3">Status</th>
+                    <th className="py-2 px-3">Attempts</th>
+                    <th className="py-2 px-3">Created</th>
+                    <th className="py-2 px-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {(!jobHistoryData?.jobs || jobHistoryData.jobs.length === 0) ? (
+                    <tr>
+                      <td colSpan={6} className="py-6 text-center text-slate-400">
+                        No background jobs in queue. Trigger "Run All Now" to enqueue a workflow.
+                      </td>
+                    </tr>
+                  ) : (
+                    jobHistoryData.jobs.map((job) => (
+                      <tr key={job.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                        <td className="py-2.5 px-3 font-mono text-[11px] text-slate-500">{job.id.slice(0, 18)}...</td>
+                        <td className="py-2.5 px-3 font-semibold text-slate-900 dark:text-white">{job.name}</td>
+                        <td className="py-2.5 px-3">
+                          <Badge
+                            variant={
+                              job.status === 'completed'
+                                ? 'success'
+                                : job.status === 'failed'
+                                ? 'danger'
+                                : job.status === 'active'
+                                ? 'primary'
+                                : 'warning'
+                            }
+                            size="sm"
+                          >
+                            {job.status}
+                          </Badge>
+                        </td>
+                        <td className="py-2.5 px-3 text-slate-500">{job.attemptsMade} / {job.opts?.attempts || 1}</td>
+                        <td className="py-2.5 px-3 text-slate-400 text-[11px]">
+                          {job.createdAt ? new Date(job.createdAt).toLocaleTimeString() : '-'}
+                        </td>
+                        <td className="py-2.5 px-3 text-right">
+                          {job.status === 'failed' && (
+                            <Button
+                              variant="outline"
+                              size="xs"
+                              onClick={() => retryJobMutation.mutate(job.id)}
+                              disabled={retryJobMutation.isPending}
+                            >
+                              Retry
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
       )}
 
       {/* Tab 5: Multi-Tenant Security */}

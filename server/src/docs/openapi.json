@@ -3685,6 +3685,99 @@
           "403": { "description": "Access forbidden" }
         }
       }
+    },
+    "/automations/config": {
+      "get": {
+        "summary": "Retrieve organization automation settings and rules",
+        "tags": ["Automations"],
+        "responses": {
+          "200": { "description": "Automation configuration object" },
+          "401": { "description": "Authentication required" },
+          "403": { "description": "Forbidden" }
+        }
+      },
+      "put": {
+        "summary": "Update organization automation settings and schedules",
+        "tags": ["Automations"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "overdueTasks": { "type": "boolean" },
+                  "upcomingDeadlines": { "type": "boolean" },
+                  "lowStockAlerts": { "type": "boolean" },
+                  "serviceRequestEscalation": { "type": "boolean" },
+                  "expenseApprovalReminders": { "type": "boolean" },
+                  "invoiceDueReminders": { "type": "boolean" },
+                  "scheduledReports": { "type": "boolean" },
+                  "timezone": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated configuration" },
+          "401": { "description": "Authentication required" },
+          "403": { "description": "Forbidden" }
+        }
+      }
+    },
+    "/automations/trigger": {
+      "post": {
+        "summary": "Trigger immediate background workflow execution",
+        "tags": ["Automations"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "workflow": { "type": "string" },
+                  "options": { "type": "object" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": { "description": "Job enqueued for background processing" },
+          "401": { "description": "Authentication required" },
+          "403": { "description": "Forbidden" }
+        }
+      }
+    },
+    "/automations/queue/metrics": {
+      "get": {
+        "summary": "Get background queue health and metrics",
+        "tags": ["Automations"],
+        "responses": {
+          "200": { "description": "Queue health metrics" }
+        }
+      }
+    },
+    "/automations/queue/jobs": {
+      "get": {
+        "summary": "List recent background automation jobs",
+        "tags": ["Automations"],
+        "responses": {
+          "200": { "description": "Job history list" }
+        }
+      }
+    },
+    "/automations/queue/jobs/{id}/retry": {
+      "post": {
+        "summary": "Retry a failed job",
+        "tags": ["Automations"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Job re-enqueued" }
+        }
+      }
     }
   }
 }

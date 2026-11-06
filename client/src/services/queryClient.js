@@ -130,6 +130,12 @@ export const queryKeys = {
     manager: (filters = {}) => ['analytics', 'manager', filters],
     platform: (filters = {}) => ['analytics', 'platform', filters]
   },
+  automations: {
+    all: ['automations'],
+    config: () => ['automations', 'config'],
+    metrics: () => ['automations', 'metrics'],
+    jobs: () => ['automations', 'jobs']
+  },
   audit: {
     all: ['audit'],
     list: (filters = {}) => ['audit', 'list', filters]

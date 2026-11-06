@@ -3,12 +3,20 @@ import app from './app.js';
 import env from './config/env.js';
 import logger from './utils/logger.js';
 import { initSocketServer } from './socket/socket.server.js';
+import { workflowScheduler } from './jobs/workflow.scheduler.js';
 
 const PORT = env.PORT || 5000;
 const httpServer = http.createServer(app);
 
 // Attach Socket.IO to HTTP server
 initSocketServer(httpServer);
+
+// Start Workflow Scheduler in background if enabled
+if (env.NODE_ENV !== 'test') {
+  workflowScheduler.start().catch((err) => {
+    logger.error('Failed to start Workflow Scheduler:', err);
+  });
+}
 
 httpServer.listen(PORT, () => {
   logger.info(`====================================================`);

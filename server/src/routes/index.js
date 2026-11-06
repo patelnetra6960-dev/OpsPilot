@@ -21,6 +21,7 @@ import invoicesRoutes from './invoices.routes.js';
 import searchRoutes, { exportRouter } from './search.routes.js';
 import notificationRoutes from './notification.routes.js';
 import analyticsRoutes from './analytics.routes.js';
+import automationRoutes from './automation.routes.js';
 
 const router = Router();
 
@@ -48,6 +49,7 @@ router.use('/search', searchRoutes);
 router.use('/export', exportRouter);
 router.use('/notifications', notificationRoutes);
 router.use('/analytics', analyticsRoutes);
+router.use('/automations', automationRoutes);
 router.use('/audit', auditRoutes);
 router.use('/storage', storageRoutes);
 router.use('/admin', adminRoutes);
