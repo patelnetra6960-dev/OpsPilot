@@ -661,6 +661,67 @@ export const organizationService = {
   },
 
   /**
+   * Verify an invitation token
+   */
+  async verifyInvitation(token) {
+    if (env.isMockMode || !supabaseAdmin) {
+      const inv = (mockDatabase.invitations || []).find(
+        (i) => i.token === token && i.status === 'pending'
+      );
+      if (!inv) {
+        const err = new Error('Invalid or expired invitation token');
+        err.status = 404;
+        err.code = 'INVALID_INVITATION_TOKEN';
+        throw err;
+      }
+      if (new Date(inv.expires_at) < new Date()) {
+        inv.status = 'expired';
+        const err = new Error('Invitation token has expired');
+        err.status = 410;
+        err.code = 'INVITATION_EXPIRED';
+        throw err;
+      }
+      const org = (mockDatabase.organizations || []).find((o) => o.id === inv.organization_id);
+      return {
+        email: inv.email,
+        role: inv.role,
+        organization_name: org ? org.name : 'Unknown Organization',
+        organization_id: inv.organization_id,
+        expires_at: inv.expires_at
+      };
+    }
+
+    const { data: inv, error } = await supabaseAdmin
+      .from('organization_invitations')
+      .select('id, email, role, organization_id, status, expires_at, organizations(name)')
+      .eq('token', token)
+      .eq('status', 'pending')
+      .single();
+
+    if (error || !inv) {
+      const err = new Error('Invalid or expired invitation token');
+      err.status = 404;
+      err.code = 'INVALID_INVITATION_TOKEN';
+      throw err;
+    }
+
+    if (new Date(inv.expires_at) < new Date()) {
+      const err = new Error('Invitation token has expired');
+      err.status = 410;
+      err.code = 'INVITATION_EXPIRED';
+      throw err;
+    }
+
+    return {
+      email: inv.email,
+      role: inv.role,
+      organization_name: inv.organizations?.name || 'Unknown Organization',
+      organization_id: inv.organization_id,
+      expires_at: inv.expires_at
+    };
+  },
+
+  /**
    * Accept Invitation (Transactional Operation: Accepts invite + creates membership + creates workforce member)
    */
   async acceptInvitation({ token, userId, fullName }) {

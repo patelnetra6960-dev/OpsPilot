@@ -20,7 +20,10 @@ import {
 
 const router = Router();
 
-// All organization routes require authentication
+// Public Invitation Token Verification
+router.get('/invitations/:token/verify', organizationController.verifyInvitation);
+
+// All subsequent organization routes require authentication
 router.use(requireAuth);
 
 // Cross-tenant user-level discovery & creation

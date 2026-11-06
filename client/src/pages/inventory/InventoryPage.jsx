@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -63,12 +64,28 @@ import {
 } from '../../components/ui/index.js';
 import { FormInput, FormSelect, FormTextarea } from '../../components/form/index.js';
 
-export const InventoryPage = () => {
+export const InventoryPage = ({ initialTab }) => {
   const { isOwner, isAdmin, isManager } = useAuth();
   const canManage = isOwner || isAdmin || isManager;
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+
+  // Determine resolved initial tab from prop, pathname, or query string
+  const resolvedTab = useMemo(() => {
+    if (initialTab) return initialTab;
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['inventory', 'assets', 'suppliers'].includes(tabParam)) return tabParam;
+    if (location.pathname.startsWith('/assets')) return 'assets';
+    if (location.pathname.startsWith('/suppliers')) return 'suppliers';
+    return 'inventory';
+  }, [initialTab, searchParams, location.pathname]);
 
   // Active top-level sub-tab: 'inventory' | 'assets' | 'suppliers'
-  const [activeTab, setActiveTab] = useState('inventory');
+  const [activeTab, setActiveTab] = useState(resolvedTab);
+
+  useEffect(() => {
+    setActiveTab(resolvedTab);
+  }, [resolvedTab]);
 
   // Search & Filter States
   const [searchTerm, setSearchTerm] = useState('');

@@ -1,8 +1,14 @@
-import { useState } from 'react';
-import { Send, Plus, MapPin, User } from 'lucide-react';
+import React, { useState } from 'react';
+import { Send, Plus, MapPin, User, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Badge, Button, Modal, Input } from '../../components/ui/index.js';
+import { Badge, Button, Modal, Input, Card } from '../../components/ui/index.js';
 import { addToast } from '../../store/uiSlice.js';
+import {
+  useWorkOrdersQuery,
+  useCreateWorkOrderMutation,
+  useChangeWorkOrderStatusMutation
+} from '../../features/services/index.js';
+import { useEmployeesQuery } from '../../features/workforce/index.js';
 
 export const DispatchPage = () => {
   const dispatch = useDispatch();
@@ -10,140 +16,127 @@ export const DispatchPage = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [priorityFilter, setPriorityFilter] = useState('all');
 
+  // Queries
+  const { data: workOrders = [], isLoading } = useWorkOrdersQuery();
+  const { data: employees = [] } = useEmployeesQuery();
+
+  const createMutation = useCreateWorkOrderMutation();
+  const changeStatusMutation = useChangeWorkOrderStatusMutation();
+
   // New Dispatch Form State
-  const [orderCode, setOrderCode] = useState('WO-8498');
   const [jobTitle, setJobTitle] = useState('');
   const [siteAddress, setSiteAddress] = useState('');
-  const [technician, setTechnician] = useState('David Kim');
+  const [assignedEmployeeId, setAssignedEmployeeId] = useState('');
   const [priority, setPriority] = useState('high');
+  const [description, setDescription] = useState('');
 
-  const [dispatches, setDispatches] = useState([
-    {
-      id: 'WO-8421',
-      title: 'Hydraulic Ramp Safety Overhaul',
-      site: 'Metro Central Bay 4',
-      technician: 'David Kim',
-      priority: 'high',
-      status: 'on_site',
-      time: 'Started 09:30 AM'
-    },
-    {
-      id: 'WO-8424',
-      title: 'Cold Storage Ambient Temp Recalibration',
-      site: 'Apex Terminal Cold Room B',
-      technician: 'Emily Davis',
-      priority: 'critical',
-      status: 'en_route',
-      time: 'Dispatched 10:15 AM'
-    },
-    {
-      id: 'WO-8430',
-      title: 'Emergency Generator Load Bank Test',
-      site: 'Harbor Gate 12 Power Station',
-      technician: 'Carlos Mendez',
-      priority: 'normal',
-      status: 'pending',
-      time: 'Awaiting Crew'
-    },
-    {
-      id: 'WO-8415',
-      title: 'Forklift Fleet Quarterly Fluid Flush',
-      site: 'Acme Central Workshop',
-      technician: 'Aisha Patel',
-      priority: 'normal',
-      status: 'completed',
-      time: 'Finished 11:45 AM'
-    }
-  ]);
-
-  const handleCreateDispatch = (e) => {
+  const handleCreateDispatch = async (e) => {
     e.preventDefault();
     if (!jobTitle.trim() || !siteAddress.trim()) return;
 
-    const newDispatch = {
-      id: orderCode || `WO-${Math.floor(1000 + Math.random() * 9000)}`,
-      title: jobTitle,
-      site: siteAddress,
-      technician: technician,
-      priority: priority,
-      status: 'pending',
-      time: 'Just Dispatched'
-    };
+    try {
+      await createMutation.mutateAsync({
+        title: jobTitle,
+        description: description || `Field dispatch to ${siteAddress}`,
+        service_address: siteAddress,
+        priority: priority.toLowerCase(),
+        assigned_to_id: assignedEmployeeId || employees[0]?.id || undefined,
+        status: 'dispatched'
+      });
 
-    setDispatches([newDispatch, ...dispatches]);
-    setModalOpen(false);
-    setJobTitle('');
-    setSiteAddress('');
-    setOrderCode(`WO-${Math.floor(1000 + Math.random() * 9000)}`);
+      setModalOpen(false);
+      setJobTitle('');
+      setSiteAddress('');
+      setDescription('');
 
-    dispatch(
-      addToast({
-        type: 'success',
-        title: 'Dispatch Created',
-        message: `${newDispatch.id} allocated to ${technician}`
-      })
-    );
+      dispatch(
+        addToast({
+          type: 'success',
+          title: 'Work Order Dispatched',
+          message: `Dispatch order successfully created and allocated.`
+        })
+      );
+    } catch (err) {
+      dispatch(
+        addToast({
+          type: 'error',
+          title: 'Dispatch Failed',
+          message: err.response?.data?.message || 'Could not create work order dispatch.'
+        })
+      );
+    }
   };
 
-  const handleAdvanceStatus = (id, currentStatus) => {
+  const handleAdvanceStatus = async (id, currentStatus) => {
     const statusMap = {
-      pending: 'en_route',
-      en_route: 'on_site',
-      on_site: 'completed'
+      scheduled: 'dispatched',
+      dispatched: 'en_route',
+      en_route: 'in_progress',
+      in_progress: 'completed'
     };
 
-    const next = statusMap[currentStatus];
+    const next = statusMap[currentStatus?.toLowerCase()];
     if (!next) return;
 
-    setDispatches(dispatches.map((d) => (d.id === id ? { ...d, status: next } : d)));
+    try {
+      await changeStatusMutation.mutateAsync({
+        id,
+        status: next,
+        notes: `Dispatcher updated status to ${next.toUpperCase()}`
+      });
 
-    dispatch(
-      addToast({
-        type: 'info',
-        title: 'Work Order Updated',
-        message: `${id} transitioned to ${next.replace('_', ' ')}`
-      })
-    );
+      dispatch(
+        addToast({
+          type: 'info',
+          title: 'Status Updated',
+          message: `Work Order advanced to ${next.toUpperCase().replace('_', ' ')}`
+        })
+      );
+    } catch (err) {
+      dispatch(
+        addToast({
+          type: 'error',
+          title: 'Update Failed',
+          message: err.response?.data?.message || 'Could not advance status.'
+        })
+      );
+    }
   };
 
-  const filteredDispatches =
-    priorityFilter === 'all' ? dispatches : dispatches.filter((d) => d.priority === priorityFilter);
-
-  const columns = [
-    { id: 'pending', label: 'Pending Dispatch', color: 'border-amber-400' },
-    { id: 'en_route', label: 'En Route', color: 'border-blue-500' },
-    { id: 'on_site', label: 'On Site (Active)', color: 'border-indigo-600' },
-    { id: 'completed', label: 'Completed', color: 'border-emerald-500' }
-  ];
+  const filteredDispatches = workOrders.filter((wo) => {
+    if (priorityFilter === 'all') return true;
+    return wo.priority?.toLowerCase() === priorityFilter.toLowerCase();
+  });
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold border border-indigo-200 dark:border-indigo-800/80 mb-1">
+          <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold border border-emerald-200 dark:border-emerald-800/80 mb-1">
             <Send className="w-3 h-3" />
-            <span>Real-Time Field Dispatch & Asset Lifecycle</span>
+            <span>Real-time Field Operations Dispatch</span>
           </div>
           <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-            Operations Field Dispatch
+            Field Dispatch Board
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Live technician assignment, asset maintenance, and real-time status kanban for{' '}
+            Monitor real-time field deployments, route tracking, and technician statuses for{' '}
             {currentTenant?.name}.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <select
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
-            className="text-xs px-2.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300"
+            className="px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200"
           >
             <option value="all">All Priorities</option>
-            <option value="critical">Critical</option>
+            <option value="urgent">Urgent / Critical</option>
             <option value="high">High</option>
-            <option value="normal">Normal</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
           </select>
 
           <Button variant="primary" size="sm" onClick={() => setModalOpen(true)}>
@@ -153,135 +146,152 @@ export const DispatchPage = () => {
         </div>
       </div>
 
-      {/* Kanban Board Columns */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {columns.map((col) => {
-          const items = filteredDispatches.filter((d) => d.status === col.id);
-          return (
-            <div
-              key={col.id}
-              className="rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-4 space-y-3 flex flex-col justify-between"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
-                  <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                    <span className={`w-2 h-2 rounded-full border-2 ${col.color}`} />
-                    <span>{col.label}</span>
-                  </span>
-                  <Badge variant="neutral" size="sm">
-                    {items.length}
-                  </Badge>
+      {/* Dispatch Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredDispatches.length === 0 ? (
+          <div className="col-span-full p-8 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl">
+            <Clock className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+              No Active Dispatches
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Create a new field work order dispatch using the button above.
+            </p>
+          </div>
+        ) : (
+          filteredDispatches.map((dispatchItem) => {
+            const st = dispatchItem.status?.toLowerCase() || 'scheduled';
+            const isCompleted = st === 'completed' || st === 'approved' || st === 'invoiced';
+            const priorityClass =
+              dispatchItem.priority === 'urgent' || dispatchItem.priority === 'critical'
+                ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-900'
+                : dispatchItem.priority === 'high'
+                  ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700';
+
+            return (
+              <Card
+                key={dispatchItem.id}
+                variant="elevated"
+                className="p-5 flex flex-col justify-between hover:shadow-md transition space-y-4"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200">
+                      {dispatchItem.work_order_code || `WO-${dispatchItem.id.slice(0, 6)}`}
+                    </span>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase ${priorityClass}`}
+                    >
+                      {dispatchItem.priority || 'Normal'}
+                    </span>
+                  </div>
+
+                  <h3 className="font-bold text-sm text-slate-900 dark:text-white mb-2 leading-snug">
+                    {dispatchItem.title}
+                  </h3>
+
+                  <div className="space-y-1.5 text-xs text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 shrink-0 text-slate-400" />
+                      <span className="truncate">
+                        {dispatchItem.service_address || 'Job Site Location'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <User className="w-3.5 h-3.5 shrink-0 text-slate-400" />
+                      <span>
+                        {dispatchItem.assigned_to?.full_name ||
+                          dispatchItem.technician ||
+                          'Assigned Field Tech'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="space-y-3">
-                  {items.length === 0 ? (
-                    <div className="p-6 text-center text-slate-400 text-xs italic">
-                      No jobs in {col.label.toLowerCase()}
-                    </div>
-                  ) : (
-                    items.map((job) => (
-                      <div
-                        key={job.id}
-                        className="p-3.5 rounded-xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 shadow-xs space-y-2.5 transition hover:shadow-md"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-mono text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
-                            {job.id}
-                          </span>
-                          <Badge
-                            variant={
-                              job.priority === 'critical'
-                                ? 'danger'
-                                : job.priority === 'high'
-                                  ? 'warning'
-                                  : 'neutral'
-                            }
-                            size="sm"
-                            className="capitalize text-[10px]"
-                          >
-                            {job.priority}
-                          </Badge>
-                        </div>
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                  <Badge
+                    variant={
+                      st === 'in_progress'
+                        ? 'primary'
+                        : isCompleted
+                          ? 'success'
+                          : st === 'en_route'
+                            ? 'warning'
+                            : 'neutral'
+                    }
+                    size="sm"
+                    className="capitalize text-[10px]"
+                  >
+                    {st.replace('_', ' ')}
+                  </Badge>
 
-                        <div className="text-xs font-semibold text-slate-900 dark:text-white leading-tight">
-                          {job.title}
-                        </div>
-
-                        <div className="space-y-1 text-[11px] text-slate-500 dark:text-slate-400">
-                          <div className="flex items-center gap-1.5">
-                            <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                            <span className="truncate">{job.site}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                            <span className="font-medium text-slate-700 dark:text-slate-300">
-                              {job.technician}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px]">
-                          <span className="text-slate-400">{job.time}</span>
-                          {col.id !== 'completed' && (
-                            <button
-                              type="button"
-                              onClick={() => handleAdvanceStatus(job.id, col.id)}
-                              className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
-                            >
-                              Advance →
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    ))
+                  {!isCompleted && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleAdvanceStatus(dispatchItem.id, st)}
+                      className="text-[11px] h-7"
+                    >
+                      Advance Status
+                    </Button>
                   )}
                 </div>
-              </div>
-            </div>
-          );
-        })}
+              </Card>
+            );
+          })
+        )}
       </div>
 
       {/* New Dispatch Modal */}
       <Modal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        title="Create Field Dispatch Order"
+        title="Create Field Operations Dispatch"
         size="md"
         footer={
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={() => setModalOpen(false)}>
               Cancel
             </Button>
-            <Button variant="primary" onClick={handleCreateDispatch}>
+            <Button
+              variant="primary"
+              onClick={handleCreateDispatch}
+              isLoading={createMutation.isPending}
+            >
               Deploy Dispatch
             </Button>
           </div>
         }
       >
         <form onSubmit={handleCreateDispatch} className="space-y-4 text-xs">
-          <Input
-            label="Work Order Code"
-            value={orderCode}
-            onChange={(e) => setOrderCode(e.target.value)}
-            required
-          />
+          <div>
+            <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+              Work Order / Job Title
+            </label>
+            <input
+              type="text"
+              required
+              value={jobTitle}
+              onChange={(e) => setJobTitle(e.target.value)}
+              placeholder="e.g. Hydraulic Ramp Safety Overhaul"
+              className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-800 bg-transparent text-slate-900 dark:text-white"
+            />
+          </div>
 
-          <Input
-            label="Job Title / Scope of Work"
-            placeholder="e.g. Forklift Hydraulic Seal Replacement"
-            value={jobTitle}
-            onChange={(e) => setJobTitle(e.target.value)}
-            required
-          />
-
-          <Input
-            label="Destination Site Address"
-            placeholder="e.g. Acme Terminal 2, Dock 14"
-            value={siteAddress}
-            onChange={(e) => setSiteAddress(e.target.value)}
-            required
-          />
+          <div>
+            <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+              Site Address / Location
+            </label>
+            <input
+              type="text"
+              required
+              value={siteAddress}
+              onChange={(e) => setSiteAddress(e.target.value)}
+              placeholder="e.g. Metro Central Bay 4 Terminal"
+              className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-800 bg-transparent text-slate-900 dark:text-white"
+            />
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -289,31 +299,46 @@ export const DispatchPage = () => {
                 Field Technician
               </label>
               <select
-                value={technician}
-                onChange={(e) => setTechnician(e.target.value)}
+                value={assignedEmployeeId}
+                onChange={(e) => setAssignedEmployeeId(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               >
-                <option>David Kim</option>
-                <option>Emily Davis</option>
-                <option>Carlos Mendez</option>
-                <option>Aisha Patel</option>
+                {employees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.first_name} {emp.last_name}
+                  </option>
+                ))}
               </select>
             </div>
 
             <div>
               <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                Priority
+                Priority SLA
               </label>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               >
-                <option value="normal">Normal</option>
-                <option value="high">High Priority</option>
-                <option value="critical">Critical Emergency</option>
+                <option value="urgent">Urgent (4hr SLA)</option>
+                <option value="high">High (8hr SLA)</option>
+                <option value="medium">Medium (24hr SLA)</option>
+                <option value="low">Low (48hr SLA)</option>
               </select>
             </div>
+          </div>
+
+          <div>
+            <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+              Dispatch Instructions (Optional)
+            </label>
+            <textarea
+              rows={2}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Provide technician notes, gate codes, safety PPE requirements..."
+              className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-800 bg-transparent text-slate-900 dark:text-white resize-none"
+            />
           </div>
         </form>
       </Modal>

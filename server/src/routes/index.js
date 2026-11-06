@@ -22,6 +22,8 @@ import searchRoutes, { exportRouter } from './search.routes.js';
 import notificationRoutes from './notification.routes.js';
 import analyticsRoutes from './analytics.routes.js';
 import automationRoutes from './automation.routes.js';
+import shiftRoutes from './shift.routes.js';
+import attendanceRoutes from './attendance.routes.js';
 
 const router = Router();
 
@@ -33,6 +35,8 @@ router.use('/health', healthRoutes);
 router.use('/auth', authRoutes);
 router.use('/organizations', organizationRoutes);
 router.use('/workforce', workforceRoutes);
+router.use('/shifts', shiftRoutes);
+router.use('/attendance', attendanceRoutes);
 router.use('/customers', customersRoutes);
 router.use('/projects', projectsRoutes);
 router.use('/tasks', tasksRoutes);

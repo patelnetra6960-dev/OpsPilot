@@ -13,6 +13,7 @@ import ResetPasswordPage from '../pages/ResetPasswordPage.jsx';
 import VerifyEmailPage from '../pages/VerifyEmailPage.jsx';
 import UnauthorizedPage from '../pages/UnauthorizedPage.jsx';
 import NotFoundPage from '../pages/NotFoundPage.jsx';
+import AcceptInvitePage from '../pages/AcceptInvitePage.jsx';
 
 // Dashboards
 import DashboardPage from '../pages/DashboardPage.jsx';
@@ -83,6 +84,8 @@ export const AppRoutes = () => {
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
+      <Route path="/invite/accept" element={<AcceptInvitePage />} />
+      <Route path="/accept-invite" element={<AcceptInvitePage />} />
 
       {/* Protected Multi-Tenant App Layout */}
       <Route element={<ProtectedRoute />}>
@@ -129,6 +132,8 @@ export const AppRoutes = () => {
           {/* Core Operations & Multi-Tenant Modules */}
           <Route path="/workforce" element={<WorkforcePage />} />
           <Route path="/shifts" element={<ShiftsPage />} />
+          <Route path="/shifts/attendance" element={<ManagerAttendancePage />} />
+          <Route path="/shifts/schedule" element={<ShiftsPage />} />
           <Route path="/dispatch" element={<DispatchPage />} />
           <Route path="/projects" element={<ProjectsPage />} />
           <Route path="/projects/:id" element={<ProjectDetailPage />} />
@@ -136,6 +141,9 @@ export const AppRoutes = () => {
           <Route path="/services" element={<ServiceRequestsPage />} />
           <Route path="/workorders" element={<WorkOrdersPage />} />
           <Route path="/inventory" element={<InventoryPage />} />
+          <Route path="/assets" element={<InventoryPage initialTab="assets" />} />
+          <Route path="/assets/:id" element={<InventoryPage initialTab="assets" />} />
+          <Route path="/suppliers" element={<InventoryPage initialTab="suppliers" />} />
           <Route path="/expenses" element={<ExpensesPage />} />
           <Route path="/invoices" element={<InvoicesPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />

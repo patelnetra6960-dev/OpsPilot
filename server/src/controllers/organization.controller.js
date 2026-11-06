@@ -148,6 +148,14 @@ export const organizationController = {
   }),
 
   /**
+   * Verify Invitation Token
+   */
+  verifyInvitation: asyncHandler(async (req, res) => {
+    const result = await organizationService.verifyInvitation(req.params.token);
+    return sendSuccess(res, result, 'Invitation token verified successfully');
+  }),
+
+  /**
    * Accept Invitation (Transactional)
    */
   acceptInvitation: asyncHandler(async (req, res) => {

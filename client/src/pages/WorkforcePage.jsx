@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useDispatch } from 'react-redux';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -25,6 +26,7 @@ import {
 import { useAuth } from '../hooks/useAuth.js';
 import { useTenant } from '../hooks/useTenant.js';
 import { useDebounce } from '../hooks/useDebounce.js';
+import { addToast } from '../store/uiSlice.js';
 
 import {
   useEmployeesQuery,
@@ -67,6 +69,7 @@ const DEPARTMENTS = [
 ];
 
 export const WorkforcePage = () => {
+  const dispatch = useDispatch();
   const { isOwner, isAdmin, isManager } = useAuth();
   const { currentTenant } = useTenant();
 
@@ -861,13 +864,32 @@ export const WorkforcePage = () => {
                         {inv.created_at ? new Date(inv.created_at).toLocaleDateString() : 'Recent'}
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={() => setInvitationToRevoke(inv)}
-                        >
-                          Revoke
-                        </Button>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const inviteUrl = `${window.location.origin}/invite/accept?token=${inv.token}`;
+                              navigator.clipboard.writeText(inviteUrl);
+                              dispatch(
+                                addToast({
+                                  type: 'info',
+                                  title: 'Link Copied',
+                                  message: 'Invitation acceptance link copied to clipboard.'
+                                })
+                              );
+                            }}
+                          >
+                            Copy Link
+                          </Button>
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            onClick={() => setInvitationToRevoke(inv)}
+                          >
+                            Revoke
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}

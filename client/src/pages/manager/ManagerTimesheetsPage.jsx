@@ -1,83 +1,91 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Card, Badge, Input, Table } from '../../components/ui/index.js';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToast } from '../../store/uiSlice.js';
+import {
+  useTimesheetsQuery,
+  useApproveTimesheetMutation
+} from '../../features/shifts/index.js';
 
 export const ManagerTimesheetsPage = () => {
   const dispatch = useDispatch();
   const { currentTenant } = useSelector((state) => state.tenant);
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
 
-  const [timesheets, setTimesheets] = useState([
-    {
-      id: 'TS-801',
-      employee: 'David Kim',
-      shift_date: '2026-11-04',
-      hours_worked: 8.5,
-      overtime: 0.5,
-      shift_type: 'Day Shift (08:00 - 16:30)',
-      notes: 'Extended shift to finalize emergency hydraulic pump repair.',
-      status: 'pending'
-    },
-    {
-      id: 'TS-802',
-      employee: 'Emily Davis',
-      shift_date: '2026-11-04',
-      hours_worked: 9.0,
-      overtime: 1.0,
-      shift_type: 'Day Shift (07:30 - 16:30)',
-      notes: 'Highway delay during dispatch return trip.',
-      status: 'pending'
-    },
-    {
-      id: 'TS-803',
-      employee: 'Carlos Mendez',
-      shift_date: '2026-11-03',
-      hours_worked: 8.0,
-      overtime: 0.0,
-      shift_type: 'Standard Shift (08:00 - 16:00)',
-      notes: 'Completed scheduled preventative maintenance on forklift fleet.',
-      status: 'approved'
+  const { data: timesheets = [], isLoading } = useTimesheetsQuery({
+    status: statusFilter !== 'all' ? statusFilter : undefined
+  });
+  const approveMutation = useApproveTimesheetMutation();
+
+  const handleApprove = async (id, name) => {
+    try {
+      await approveMutation.mutateAsync({ id, status: 'approved' });
+      dispatch(
+        addToast({
+          type: 'success',
+          title: 'Timesheet Approved',
+          message: `Hours successfully approved for ${name}.`
+        })
+      );
+    } catch (err) {
+      dispatch(
+        addToast({
+          type: 'error',
+          title: 'Approval Failed',
+          message: err.response?.data?.message || 'Could not approve timesheet.'
+        })
+      );
     }
-  ]);
-
-  const handleApprove = (id, name) => {
-    setTimesheets(timesheets.map((t) => (t.id === id ? { ...t, status: 'approved' } : t)));
-    dispatch(
-      addToast({
-        type: 'success',
-        title: 'Timesheet Approved',
-        message: `Hours approved for ${name}`
-      })
-    );
   };
 
-  const handleReject = (id, name) => {
-    setTimesheets(timesheets.map((t) => (t.id === id ? { ...t, status: 'rejected' } : t)));
-    dispatch(
-      addToast({
-        type: 'warning',
-        title: 'Timesheet Flagged',
-        message: `Revision requested for ${name}`
-      })
-    );
+  const handleReject = async (id, name) => {
+    try {
+      await approveMutation.mutateAsync({
+        id,
+        status: 'rejected',
+        notes: 'Manager requested revision'
+      });
+      dispatch(
+        addToast({
+          type: 'warning',
+          title: 'Timesheet Rejected',
+          message: `Timesheet flagged and returned for revision to ${name}.`
+        })
+      );
+    } catch (err) {
+      dispatch(
+        addToast({
+          type: 'error',
+          title: 'Rejection Failed',
+          message: err.response?.data?.message || 'Could not reject timesheet.'
+        })
+      );
+    }
   };
 
-  const filtered = timesheets.filter(
-    (t) =>
-      t.employee.toLowerCase().includes(search.toLowerCase()) ||
-      t.shift_type.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = timesheets.filter((t) => {
+    const workerName = t.worker?.full_name || t.employee || '';
+    const notes = t.notes || '';
+    return (
+      workerName.toLowerCase().includes(search.toLowerCase()) ||
+      notes.toLowerCase().includes(search.toLowerCase())
+    );
+  });
 
   const columns = [
     {
       key: 'employee',
       label: 'Technician',
       sortable: true,
-      render: (val, row) => (
+      render: (_, row) => (
         <div>
-          <div className="font-semibold text-xs text-slate-900 dark:text-white">{val}</div>
-          <div className="text-[10px] text-slate-400 font-mono">{row.shift_type}</div>
+          <div className="font-semibold text-xs text-slate-900 dark:text-white">
+            {row.worker?.full_name || 'Staff Member'}
+          </div>
+          <div className="text-[10px] text-slate-400 font-mono">
+            {row.worker?.employee_code || row.worker?.department || 'Operations'}
+          </div>
         </div>
       )
     },
@@ -85,62 +93,90 @@ export const ManagerTimesheetsPage = () => {
       key: 'shift_date',
       label: 'Shift Date',
       sortable: true,
-      render: (val) => <span className="font-mono text-xs">{val}</span>
+      render: (_, row) => {
+        const d = row.clock_in_time ? new Date(row.clock_in_time).toLocaleDateString() : 'Today';
+        return <span className="font-mono text-xs">{d}</span>;
+      }
     },
     {
       key: 'hours_worked',
       label: 'Total Hours',
       sortable: true,
-      render: (val, row) => (
+      render: (_, row) => (
         <div>
           <span className="font-mono font-bold text-xs text-slate-900 dark:text-white">
-            {val} hrs
+            {row.total_hours || '0.00'} hrs
           </span>
-          {row.overtime > 0 && (
-            <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 ml-1.5">
-              (+{row.overtime} OT)
+          {row.break_minutes > 0 && (
+            <span className="text-[10px] text-slate-400 ml-1.5 font-mono">
+              ({row.break_minutes}m break)
             </span>
           )}
         </div>
       )
     },
     {
+      key: 'geofence',
+      label: 'Geofence Verification',
+      render: (_, row) => (
+        <span
+          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+            row.clock_in_geofence_verified
+              ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400'
+              : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400'
+          }`}
+        >
+          {row.clock_in_geofence_verified ? 'Verified On-Site' : 'Proximity Warning'}
+        </span>
+      )
+    },
+    {
       key: 'notes',
-      label: 'Work Description',
+      label: 'Notes',
       render: (val) => (
-        <span className="text-xs text-slate-500 italic truncate max-w-xs block">{val}</span>
+        <span className="text-xs text-slate-500 italic truncate max-w-xs block">
+          {val || 'Standard shift log'}
+        </span>
       )
     },
     {
       key: 'status',
-      label: 'Approval Status',
-      render: (val) => (
-        <Badge
-          variant={val === 'approved' ? 'success' : val === 'rejected' ? 'danger' : 'warning'}
-          size="sm"
-          className="capitalize text-[10px]"
-        >
-          {val}
-        </Badge>
-      )
+      label: 'Status',
+      render: (_, row) => {
+        const st = row.status || 'pending_approval';
+        const isApproved = st === 'approved';
+        const isRejected = st === 'rejected';
+        return (
+          <Badge
+            variant={isApproved ? 'success' : isRejected ? 'danger' : 'warning'}
+            size="sm"
+            className="capitalize text-[10px]"
+          >
+            {st.replace('_', ' ')}
+          </Badge>
+        );
+      }
     },
     {
       key: 'id',
       label: 'Actions',
-      render: (_, row) =>
-        row.status === 'pending' ? (
-          <div className="flex items-center gap-1.5">
+      render: (_, row) => {
+        const workerName = row.worker?.full_name || 'Technician';
+        return row.status === 'pending_approval' ? (
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => handleApprove(row.id, row.employee)}
+              disabled={approveMutation.isPending}
+              onClick={() => handleApprove(row.id, workerName)}
               className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline font-semibold"
             >
               Approve
             </button>
-            <span className="text-slate-300">|</span>
+            <span className="text-slate-300 dark:text-slate-700">|</span>
             <button
               type="button"
-              onClick={() => handleReject(row.id, row.employee)}
+              disabled={approveMutation.isPending}
+              onClick={() => handleReject(row.id, workerName)}
               className="text-xs text-rose-600 dark:text-rose-400 hover:underline font-semibold"
             >
               Reject
@@ -148,9 +184,12 @@ export const ManagerTimesheetsPage = () => {
           </div>
         ) : (
           <span className="text-[11px] text-slate-400">Processed</span>
-        )
+        );
+      }
     }
   ];
+
+  const pendingCount = timesheets.filter((t) => t.status === 'pending_approval').length;
 
   return (
     <div className="space-y-6">
@@ -165,21 +204,38 @@ export const ManagerTimesheetsPage = () => {
       </div>
 
       <Card variant="default" className="p-5 space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="w-64">
             <Input
-              placeholder="Search technician..."
+              placeholder="Search technician or notes..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="text-xs"
             />
           </div>
-          <span className="text-xs text-slate-400">
-            {timesheets.filter((t) => t.status === 'pending').length} pending approval
-          </span>
+          <div className="flex items-center gap-3">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200"
+            >
+              <option value="all">All Statuses</option>
+              <option value="pending_approval">Pending Approval</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+            <span className="text-xs text-slate-400 font-medium">
+              {pendingCount} pending approval
+            </span>
+          </div>
         </div>
 
-        <Table columns={columns} data={filtered} emptyMessage="No timesheets in record." />
+        <Table
+          columns={columns}
+          data={filtered}
+          isLoading={isLoading}
+          emptyMessage="No timesheets in record."
+        />
       </Card>
     </div>
   );

@@ -1882,6 +1882,93 @@ export const mockDatabase = {
       updated_at: new Date('2026-10-15T09:00:00Z').toISOString()
     }
   ],
+  shifts: [
+    {
+      id: 'sh-1',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      workforce_member_id: 'w3',
+      start_time: '2026-11-06T08:00:00.000Z',
+      end_time: '2026-11-06T16:30:00.000Z',
+      department: 'Field Logistics',
+      location_name: 'Central Logistics Hub Bay 4',
+      location_lat: 40.7128,
+      location_lng: -74.006,
+      status: 'scheduled',
+      notes: 'Standard morning logistics shift',
+      created_at: '2026-11-01T10:00:00.000Z',
+      updated_at: '2026-11-01T10:00:00.000Z'
+    },
+    {
+      id: 'sh-2',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      workforce_member_id: 'w1',
+      start_time: '2026-11-06T07:30:00.000Z',
+      end_time: '2026-11-06T16:00:00.000Z',
+      department: 'Fleet Operations',
+      location_name: 'North Terminal Gate 2',
+      location_lat: 40.72,
+      location_lng: -74.01,
+      status: 'in_progress',
+      notes: 'Terminal dispatch coordination',
+      created_at: '2026-11-01T10:00:00.000Z',
+      updated_at: '2026-11-01T10:00:00.000Z'
+    },
+    {
+      id: 'sh-3',
+      organization_id: '22222222-2222-2222-2222-222222222222',
+      workforce_member_id: 'w4',
+      start_time: '2026-11-06T09:00:00.000Z',
+      end_time: '2026-11-06T17:00:00.000Z',
+      department: 'Operations',
+      location_name: 'London Depot',
+      location_lat: 51.5074,
+      location_lng: -0.1278,
+      status: 'scheduled',
+      notes: 'Apex field dispatch',
+      created_at: '2026-11-01T10:00:00.000Z',
+      updated_at: '2026-11-01T10:00:00.000Z'
+    }
+  ],
+  attendance: [
+    {
+      id: 'att-1',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      workforce_member_id: 'w1',
+      shift_id: 'sh-2',
+      clock_in_time: '2026-11-06T07:28:00.000Z',
+      clock_in_lat: 40.7201,
+      clock_in_lng: -74.0099,
+      clock_in_geofence_verified: true,
+      clock_out_time: null,
+      total_hours: 0,
+      break_minutes: 0,
+      status: 'pending_approval',
+      approved_by: null,
+      approved_at: null,
+      notes: 'On-time terminal clock-in',
+      created_at: '2026-11-06T07:28:00.000Z',
+      updated_at: '2026-11-06T07:28:00.000Z'
+    },
+    {
+      id: 'att-2',
+      organization_id: '11111111-1111-1111-1111-111111111111',
+      workforce_member_id: 'w3',
+      shift_id: null,
+      clock_in_time: '2026-11-05T08:00:00.000Z',
+      clock_in_lat: 40.7129,
+      clock_in_lng: -74.0061,
+      clock_in_geofence_verified: true,
+      clock_out_time: '2026-11-05T16:30:00.000Z',
+      total_hours: 8.5,
+      break_minutes: 30,
+      status: 'pending_approval',
+      approved_by: null,
+      approved_at: null,
+      notes: 'Completed full shift with 30m meal break',
+      created_at: '2026-11-05T08:00:00.000Z',
+      updated_at: '2026-11-05T16:30:00.000Z'
+    }
+  ],
   auditLogs: []
 };
 

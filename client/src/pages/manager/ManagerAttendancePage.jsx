@@ -1,44 +1,35 @@
-import { MapPin } from 'lucide-react';
+import React from 'react';
+import { MapPin, Users, Clock, ShieldCheck } from 'lucide-react';
 import { Card, Badge, Table } from '../../components/ui/index.js';
 import { useSelector } from 'react-redux';
+import { useTimesheetsQuery } from '../../features/shifts/index.js';
 
 export const ManagerAttendancePage = () => {
   const { currentTenant } = useSelector((state) => state.tenant);
+  const { data: records = [], isLoading } = useTimesheetsQuery();
 
-  const attendance = [
-    {
-      name: 'David Kim',
-      role: 'Senior Technician',
-      clock_in: '08:15 AM',
-      geofence: 'Dock 4 (Inside)',
-      status: 'on_duty',
-      shift: '08:00 - 16:30'
-    },
-    {
-      name: 'Emily Davis',
-      role: 'Fleet Logistics Specialist',
-      clock_in: '07:28 AM',
-      geofence: 'North Terminal (Inside)',
-      status: 'on_duty',
-      shift: '07:30 - 16:00'
-    },
-    {
-      name: 'Carlos Mendez',
-      role: 'Maintenance Lead',
-      clock_in: '08:02 AM',
-      geofence: 'Central Depot (Inside)',
-      status: 'on_break',
-      shift: '08:00 - 16:30'
-    },
-    {
-      name: 'Aisha Patel',
-      role: 'Quality Inspector',
-      clock_in: '--:--',
-      geofence: 'Not clocked in yet',
-      status: 'scheduled_later',
-      shift: '14:00 - 22:30'
-    }
-  ];
+  const formattedAttendance = records.map((att) => {
+    const clockInStr = att.clock_in_time
+      ? new Date(att.clock_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      : '--:--';
+    const clockOutStr = att.clock_out_time
+      ? new Date(att.clock_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      : null;
+
+    const isOnDuty = !clockOutStr;
+
+    return {
+      id: att.id,
+      name: att.worker?.full_name || 'Staff Member',
+      role: att.worker?.department || 'Field Operations',
+      clock_in: clockInStr,
+      clock_out: clockOutStr || 'Active On Site',
+      geofence: att.clock_in_geofence_verified ? 'Verified Inside Geofence' : 'Proximity Logged',
+      is_geofence_ok: att.clock_in_geofence_verified,
+      status: isOnDuty ? 'on_duty' : att.status || 'clocked_out',
+      shift: att.shift?.location_name || 'Assigned Site'
+    };
+  });
 
   const columns = [
     {
@@ -59,10 +50,23 @@ export const ManagerAttendancePage = () => {
       render: (val) => <span className="font-mono text-xs font-bold">{val}</span>
     },
     {
+      key: 'clock_out',
+      label: 'Clock-Out Time',
+      render: (val) => (
+        <span className="font-mono text-xs text-slate-600 dark:text-slate-400">{val}</span>
+      )
+    },
+    {
       key: 'geofence',
       label: 'Geofence Verification',
-      render: (val) => (
-        <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+      render: (val, row) => (
+        <span
+          className={`text-xs flex items-center gap-1 font-semibold ${
+            row.is_geofence_ok
+              ? 'text-emerald-600 dark:text-emerald-400'
+              : 'text-amber-600 dark:text-amber-400'
+          }`}
+        >
           <MapPin className="w-3.5 h-3.5" />
           <span>{val}</span>
         </span>
@@ -70,21 +74,25 @@ export const ManagerAttendancePage = () => {
     },
     {
       key: 'shift',
-      label: 'Roster Slot',
+      label: 'Work Site Location',
       render: (val) => <span className="text-xs text-slate-500">{val}</span>
     },
     {
       key: 'status',
       label: 'Status',
-      render: (val) => (
-        <Badge
-          variant={val === 'on_duty' ? 'success' : val === 'on_break' ? 'warning' : 'neutral'}
-          size="sm"
-          className="capitalize text-[10px]"
-        >
-          {val.replace('_', ' ')}
-        </Badge>
-      )
+      render: (val) => {
+        const isDuty = val === 'on_duty';
+        const isApproved = val === 'approved';
+        return (
+          <Badge
+            variant={isDuty ? 'success' : isApproved ? 'primary' : 'neutral'}
+            size="sm"
+            className="capitalize text-[10px]"
+          >
+            {val.replace('_', ' ')}
+          </Badge>
+        );
+      }
     }
   ];
 
@@ -100,10 +108,24 @@ export const ManagerAttendancePage = () => {
       </div>
 
       <Card variant="default" className="p-5 space-y-4">
-        <h2 className="text-base font-bold text-slate-900 dark:text-white">
-          Today&apos;s Active Attendance Roster
-        </h2>
-        <Table columns={columns} data={attendance} emptyMessage="No attendance records found." />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-emerald-500" />
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Live Workforce Geofence Status
+            </span>
+          </div>
+          <span className="text-xs text-slate-400 font-mono">
+            {records.filter((r) => !r.clock_out_time).length} active field workers on site
+          </span>
+        </div>
+
+        <Table
+          columns={columns}
+          data={formattedAttendance}
+          isLoading={isLoading}
+          emptyMessage="No active attendance records."
+        />
       </Card>
     </div>
   );

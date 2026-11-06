@@ -1,49 +1,40 @@
-import { Clock, MapPin } from 'lucide-react';
+import React from 'react';
+import { Clock, MapPin, Calendar } from 'lucide-react';
 import { Card, Badge, Table } from '../../components/ui/index.js';
+import { useShiftsQuery } from '../../features/shifts/index.js';
 
 export const EmployeeSchedulePage = () => {
-  const weeklySchedule = [
-    {
-      day: 'Monday',
-      date: '2026-11-02',
-      shift: '08:00 - 16:30',
-      hours: 8.0,
-      site: 'Central Dock 4',
-      status: 'completed'
-    },
-    {
-      day: 'Tuesday',
-      date: '2026-11-03',
-      shift: '08:00 - 16:30',
-      hours: 8.5,
-      site: 'Central Dock 4',
-      status: 'completed'
-    },
-    {
-      day: 'Wednesday',
-      date: '2026-11-04',
-      shift: '08:00 - 16:30',
-      hours: 8.0,
-      site: 'Metro Central Bay 4',
-      status: 'active'
-    },
-    {
-      day: 'Thursday',
-      date: '2026-11-05',
-      shift: '08:00 - 16:30',
-      hours: 8.0,
-      site: 'Harbor Gate 12',
-      status: 'scheduled'
-    },
-    {
-      day: 'Friday',
-      date: '2026-11-06',
-      shift: '08:00 - 16:30',
-      hours: 8.0,
-      site: 'Central Dock 4',
-      status: 'scheduled'
+  const { data: shifts = [], isLoading } = useShiftsQuery();
+
+  const formattedShifts = shifts.map((s) => {
+    const d = s.start_time ? new Date(s.start_time) : new Date();
+    const dayName = d.toLocaleDateString([], { weekday: 'long' });
+    const dateStr = d.toLocaleDateString();
+    const startHour = s.start_time
+      ? new Date(s.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      : '08:00';
+    const endHour = s.end_time
+      ? new Date(s.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      : '16:30';
+
+    let hrs = 8.0;
+    if (s.start_time && s.end_time) {
+      hrs = Math.max(
+        1,
+        Math.round((new Date(s.end_time).getTime() - new Date(s.start_time).getTime()) / 3600000)
+      );
     }
-  ];
+
+    return {
+      id: s.id,
+      day: dayName,
+      date: dateStr,
+      shift: `${startHour} - ${endHour}`,
+      hours: hrs,
+      site: s.location_name || 'Central Dock 4',
+      status: s.status || 'scheduled'
+    };
+  });
 
   const columns = [
     {
@@ -81,7 +72,7 @@ export const EmployeeSchedulePage = () => {
     },
     {
       key: 'hours',
-      label: 'Paid Hours',
+      label: 'Scheduled Hours',
       sortable: true,
       render: (val) => <span className="font-mono text-xs font-bold">{val} hrs</span>
     },
@@ -90,7 +81,7 @@ export const EmployeeSchedulePage = () => {
       label: 'Status',
       render: (val) => (
         <Badge
-          variant={val === 'active' ? 'primary' : val === 'completed' ? 'success' : 'neutral'}
+          variant={val === 'in_progress' ? 'primary' : val === 'completed' ? 'success' : 'neutral'}
           size="sm"
           className="capitalize text-[10px]"
         >
@@ -113,7 +104,12 @@ export const EmployeeSchedulePage = () => {
 
       <Card variant="default" className="p-5 space-y-4">
         <h2 className="text-base font-bold text-slate-900 dark:text-white">Current Week Roster</h2>
-        <Table columns={columns} data={weeklySchedule} emptyMessage="No shifts scheduled." />
+        <Table
+          columns={columns}
+          data={formattedShifts}
+          isLoading={isLoading}
+          emptyMessage="No shifts currently scheduled for your profile."
+        />
       </Card>
     </div>
   );

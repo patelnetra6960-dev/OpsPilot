@@ -77,6 +77,7 @@ export const Sidebar = () => {
           { label: 'Team Attendance', path: '/manager/attendance', icon: Users },
           { label: 'Service Requests', path: '/services', icon: Inbox },
           { label: 'Inventory & Parts', path: '/inventory', icon: Boxes },
+          { label: 'Assets & Equipment', path: '/assets', icon: Wrench },
           { label: 'Expenses', path: '/expenses', icon: Receipt },
           { label: 'Global Search & Export', path: '/search', icon: Search },
           { label: 'Document Vault', path: '/documents', icon: FolderLock }
@@ -148,6 +149,7 @@ export const Sidebar = () => {
         items: [
           { label: 'Service Requests', path: '/services', icon: Inbox },
           { label: 'Inventory & Parts', path: '/inventory', icon: Boxes },
+          { label: 'Assets & Equipment', path: '/assets', icon: Wrench },
           { label: 'Expenses', path: '/expenses', icon: Receipt },
           { label: 'Global Search & Export', path: '/search', icon: Search },
           { label: 'Document Vault', path: '/documents', icon: FolderLock }
