@@ -1,4 +1,9 @@
-# Dependencies
+node_modules/
+.env
+.env.local
+dist/
+build/
+.DS_Store# Dependencies
 node_modules/
 .pnp
 .pnp.js
