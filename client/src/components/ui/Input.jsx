@@ -1,4 +1,11 @@
-import { forwardRef, useId } from 'react';
+import { forwardRef, isValidElement, useId } from 'react';
+
+const renderIcon = (IconOrElement) => {
+  if (!IconOrElement) return null;
+  if (isValidElement(IconOrElement)) return IconOrElement;
+  const IconComponent = IconOrElement;
+  return <IconComponent className="w-4 h-4" />;
+};
 
 export const Input = forwardRef(
   (
@@ -34,7 +41,7 @@ export const Input = forwardRef(
         <div className="relative rounded-xl shadow-sm">
           {LeftIcon && (
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
-              <LeftIcon className="w-4 h-4" />
+              {renderIcon(LeftIcon)}
             </div>
           )}
 
@@ -54,7 +61,7 @@ export const Input = forwardRef(
 
           {RightIcon && (
             <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
-              <RightIcon className="w-4 h-4" />
+              {renderIcon(RightIcon)}
             </div>
           )}
         </div>

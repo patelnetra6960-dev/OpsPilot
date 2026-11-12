@@ -1,5 +1,12 @@
-import { forwardRef } from 'react';
+import { forwardRef, isValidElement } from 'react';
 import { Loader2 } from 'lucide-react';
+
+const renderButtonIcon = (IconOrElement) => {
+  if (!IconOrElement) return null;
+  if (isValidElement(IconOrElement)) return IconOrElement;
+  const IconComponent = IconOrElement;
+  return <IconComponent className="w-4 h-4 shrink-0 text-current" />;
+};
 
 const variantClasses = {
   primary:
@@ -62,9 +69,9 @@ export const Button = forwardRef(
           </>
         ) : (
           <>
-            {LeftIcon && <LeftIcon className="w-4 h-4 shrink-0 text-current" />}
+            {renderButtonIcon(LeftIcon)}
             {children}
-            {RightIcon && <RightIcon className="w-4 h-4 shrink-0 text-current" />}
+            {renderButtonIcon(RightIcon)}
           </>
         )}
       </button>

@@ -88,7 +88,11 @@ export const requireAuth = async (req, res, next) => {
         matchedUser = (mockDatabase.users || []).find(
           (u) => u.email === 'david.m@acme.com' || u.email === 'david.tech@acme.com'
         );
-      } else if (token.includes('rachel') || token === 'mock-token-customer') {
+      } else if (
+        token.includes('rachel') ||
+        token.includes('olivia') ||
+        token === 'mock-token-customer'
+      ) {
         matchedUser = (mockDatabase.users || []).find(
           (u) => u.email === 'rachel.green@metrohealth.com'
         );

@@ -292,7 +292,7 @@ export const ShiftsPage = () => {
               placeholder="Search staff or site..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              leftIcon={<Search className="w-3.5 h-3.5 text-slate-400" />}
+              leftIcon={Search}
               className="text-xs"
             />
           </div>
